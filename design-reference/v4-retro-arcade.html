@@ -1,0 +1,964 @@
+<!doctype html>
+<html
+  lang="en"
+  class="scroll-smooth bg-arcade-bg text-gray-200 overflow-x-hidden"
+>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Astro Roasts | Cosmic Damage</title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;900&family=Press+Start+2P&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Tailwind -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              "arcade-bg": "#070714",
+              "arcade-dark": "#0a0a1a",
+              "neon-cyan": "#00fff5",
+              "hot-magenta": "#ff00aa",
+              "elec-yellow": "#ffe600",
+              "laser-purple": "#a855f7",
+              "crt-green": "#39ff14",
+            },
+            fontFamily: {
+              pixel: ['"Press Start 2P"', "cursive"],
+              mono: ['"Space Mono"', "monospace"],
+              sans: ['"Inter"', "sans-serif"],
+            },
+            animation: {
+              "pulse-fast": "pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+            },
+          },
+        },
+      };
+    </script>
+
+    <!-- Custom CSS for Retro Arcade Aesthetics -->
+    <style>
+      :root {
+        --neon-cyan: #00fff5;
+        --hot-magenta: #ff00aa;
+        --crt-green: #39ff14;
+      }
+
+      /* CRT Scanline & Screen Effects */
+      body::before {
+        content: " ";
+        display: block;
+        position: fixed;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        right: 0;
+        background:
+          linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%),
+          linear-gradient(
+            90deg,
+            rgba(255, 0, 0, 0.06),
+            rgba(0, 255, 0, 0.02),
+            rgba(0, 0, 255, 0.06)
+          );
+        z-index: 9999;
+        background-size:
+          100% 2px,
+          3px 100%;
+        pointer-events: none;
+      }
+
+      .vignette {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: radial-gradient(
+          circle,
+          rgba(0, 0, 0, 0) 60%,
+          rgba(7, 7, 20, 0.8) 100%
+        );
+        pointer-events: none;
+        z-index: 9998;
+      }
+
+      /* Neon Glows */
+      .text-glow-cyan {
+        text-shadow:
+          0 0 5px var(--neon-cyan),
+          0 0 10px var(--neon-cyan);
+      }
+      .text-glow-magenta {
+        text-shadow:
+          0 0 5px var(--hot-magenta),
+          0 0 10px var(--hot-magenta);
+      }
+      .text-glow-green {
+        text-shadow:
+          0 0 5px var(--crt-green),
+          0 0 10px var(--crt-green);
+      }
+
+      .box-glow-cyan {
+        box-shadow:
+          0 0 10px rgba(0, 255, 245, 0.5),
+          inset 0 0 10px rgba(0, 255, 245, 0.2);
+        border: 2px solid var(--neon-cyan);
+      }
+      .box-glow-magenta {
+        box-shadow:
+          0 0 10px rgba(255, 0, 170, 0.5),
+          inset 0 0 10px rgba(255, 0, 170, 0.2);
+        border: 2px solid var(--hot-magenta);
+      }
+
+      .btn-arcade {
+        position: relative;
+        background: transparent;
+        text-transform: uppercase;
+        transition: all 0.2s;
+      }
+      .btn-arcade:hover {
+        background: var(--hot-magenta);
+        color: #fff;
+        box-shadow: 0 0 20px var(--hot-magenta);
+        text-shadow: none;
+      }
+      .btn-arcade-cyan:hover {
+        background: var(--neon-cyan);
+        color: #000;
+        box-shadow: 0 0 20px var(--neon-cyan);
+      }
+
+      /* Synthwave Grid Horizon */
+      .grid-container {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 60vh;
+        overflow: hidden;
+        z-index: -1;
+        perspective: 600px;
+      }
+      .grid-plane {
+        position: absolute;
+        width: 200%;
+        height: 200%;
+        bottom: -50%;
+        left: -50%;
+        background-image:
+          linear-gradient(
+            to right,
+            rgba(255, 0, 170, 0.3) 1px,
+            transparent 1px
+          ),
+          linear-gradient(
+            to bottom,
+            rgba(255, 0, 170, 0.3) 1px,
+            transparent 1px
+          );
+        background-size: 50px 50px;
+        transform: rotateX(75deg);
+        transform-origin: center top;
+        animation: gridMove 3s linear infinite;
+      }
+      .grid-plane::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          to bottom,
+          rgba(7, 7, 20, 1) 0%,
+          rgba(7, 7, 20, 0) 40%
+        );
+      }
+
+      @keyframes gridMove {
+        0% {
+          transform: rotateX(75deg) translateY(0);
+        }
+        100% {
+          transform: rotateX(75deg) translateY(50px);
+        }
+      }
+
+      /* Animations */
+      .flicker {
+        animation: flicker-anim 4s infinite;
+      }
+      @keyframes flicker-anim {
+        0%,
+        19.999%,
+        22%,
+        62.999%,
+        64%,
+        64.999%,
+        70%,
+        100% {
+          opacity: 1;
+        }
+        20%,
+        21.999%,
+        63%,
+        63.999%,
+        65%,
+        69.999% {
+          opacity: 0.3;
+        }
+      }
+
+      .blink {
+        animation: blink-anim 1s steps(2, start) infinite;
+      }
+      @keyframes blink-anim {
+        to {
+          visibility: hidden;
+        }
+      }
+
+      /* Custom Scrollbar */
+      ::-webkit-scrollbar {
+        width: 10px;
+        background: #070714;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: var(--hot-magenta);
+        border-radius: 0;
+      }
+
+      /* Input Styling */
+      input[type="text"],
+      input[type="date"],
+      input[type="time"] {
+        background: rgba(10, 10, 26, 0.8);
+        border: 2px solid #333;
+        color: var(--neon-cyan);
+        font-family: "Space Mono", monospace;
+        transition: all 0.3s;
+      }
+      input[type="text"]:focus,
+      input[type="date"]:focus,
+      input[type="time"]:focus {
+        outline: none;
+        border-color: var(--neon-cyan);
+        box-shadow: 0 0 10px rgba(0, 255, 245, 0.3);
+      }
+
+      /* Utilities */
+      .clip-edges {
+        clip-path: polygon(
+          10px 0,
+          100% 0,
+          100% calc(100% - 10px),
+          calc(100% - 10px) 100%,
+          0 100%,
+          0 10px
+        );
+      }
+    </style>
+  </head>
+  <body
+    class="antialiased font-sans selection:bg-hot-magenta selection:text-white"
+  >
+    <div class="vignette"></div>
+
+    <!-- NAVIGATION -->
+    <nav
+      class="fixed w-full top-0 z-50 bg-arcade-bg/80 backdrop-blur border-b border-hot-magenta/30 transition-all duration-300"
+      id="navbar"
+    >
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between h-20">
+          <div class="flex-shrink-0 flex items-center gap-2">
+            <span class="text-2xl">🕹️</span>
+            <span
+              class="font-pixel text-white text-sm md:text-lg tracking-tighter"
+            >
+              ASTRO<span class="text-hot-magenta flicker">ROASTS</span>
+            </span>
+          </div>
+          <div>
+            <a
+              href="#roast-machine"
+              class="font-pixel text-[10px] md:text-xs px-4 py-2 text-neon-cyan box-glow-cyan clip-edges btn-arcade-cyan inline-block"
+            >
+              INSERT COIN
+            </a>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- HERO SECTION -->
+    <section
+      class="relative min-h-screen flex items-center justify-center pt-20 pb-12 overflow-hidden"
+    >
+      <!-- Sun/Planet in Background -->
+      <div
+        class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-b from-elec-yellow via-hot-magenta to-arcade-bg rounded-full opacity-20 blur-2xl z-0 pointer-events-none"
+      ></div>
+
+      <!-- Grid -->
+      <div class="grid-container">
+        <div class="grid-plane"></div>
+      </div>
+
+      <div
+        class="relative z-10 w-full max-w-5xl mx-auto px-4 sm:px-6 text-center"
+      >
+        <div class="gsap-hero">
+          <p
+            class="font-mono text-crt-green mb-4 text-sm md:text-base tracking-widest text-glow-green"
+          >
+            >> SYSTEM INITIALIZED. PLAYER ONE READY.
+          </p>
+          <h1
+            class="font-pixel text-2xl md:text-5xl lg:text-6xl leading-tight md:leading-tight text-white mb-6"
+          >
+            ENTER BIRTH DATA<br />
+            <span
+              class="text-transparent bg-clip-text bg-gradient-to-r from-hot-magenta to-laser-purple text-glow-magenta block mt-4"
+              >RECEIVE COSMIC DAMAGE</span
+            >
+          </h1>
+          <p
+            class="font-mono text-gray-400 text-sm md:text-lg max-w-2xl mx-auto mb-10"
+          >
+            The stars have calculated your score. It's not good. Powered by
+            Swiss Ephemeris. Zero mercy included.
+          </p>
+        </div>
+
+        <!-- Arcade Input Form -->
+        <div
+          id="roast-machine"
+          class="max-w-3xl mx-auto bg-arcade-dark/80 backdrop-blur-sm p-6 md:p-10 border-2 border-neon-cyan clip-edges box-glow-cyan gsap-hero relative"
+        >
+          <!-- Decorative Corner Accents -->
+          <div
+            class="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-white"
+          ></div>
+          <div
+            class="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-white"
+          ></div>
+          <div
+            class="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-white"
+          ></div>
+          <div
+            class="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-white"
+          ></div>
+
+          <form class="space-y-6 text-left">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div>
+                <label class="block font-pixel text-[10px] text-neon-cyan mb-2"
+                  >DATE OF SPAWN</label
+                >
+                <input
+                  type="date"
+                  class="w-full p-3 font-mono text-sm clip-edges"
+                  required
+                />
+              </div>
+              <div>
+                <label class="block font-pixel text-[10px] text-neon-cyan mb-2"
+                  >TIME OF SPAWN</label
+                >
+                <input
+                  type="time"
+                  class="w-full p-3 font-mono text-sm clip-edges"
+                  required
+                />
+              </div>
+              <div>
+                <label class="block font-pixel text-[10px] text-neon-cyan mb-2"
+                  >SPAWN POINT</label
+                >
+                <input
+                  type="text"
+                  placeholder="City, Country"
+                  class="w-full p-3 font-mono text-sm clip-edges"
+                  required
+                />
+              </div>
+            </div>
+
+            <div class="pt-4 text-center">
+              <button
+                type="button"
+                class="w-full md:w-auto font-pixel text-sm md:text-base px-8 py-4 text-hot-magenta box-glow-magenta clip-edges btn-arcade inline-flex items-center justify-center gap-3 group"
+              >
+                <span class="animate-pulse-fast group-hover:animate-none"
+                  >START GAME</span
+                >
+                <span class="text-xl">🔥</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- STATS MARQUEE -->
+    <div
+      class="w-full bg-black border-y-2 border-crt-green py-3 overflow-hidden z-20 relative"
+    >
+      <div
+        class="flex whitespace-nowrap font-pixel text-[10px] md:text-xs text-crt-green tracking-widest text-glow-green space-x-10 animate-marquee"
+      >
+        <span class="inline-block"
+          >HIGH SCORE:
+          <span id="counter-score" class="text-white">0</span> SOULS
+          ROASTED</span
+        >
+        <span class="inline-block text-hot-magenta">|</span>
+        <span class="inline-block">COMBO: 12 SIGNS X 0 MERCY</span>
+        <span class="inline-block text-hot-magenta">|</span>
+        <span class="inline-block">LEVEL: MAXIMUM DESTRUCTION</span>
+        <span class="inline-block text-hot-magenta">|</span>
+        <span class="inline-block"
+          >HIGH SCORE: <span class="text-white">847293</span> SOULS
+          ROASTED</span
+        >
+        <span class="inline-block text-hot-magenta">|</span>
+        <span class="inline-block">COMBO: 12 SIGNS X 0 MERCY</span>
+        <span class="inline-block text-hot-magenta">|</span>
+        <span class="inline-block">LEVEL: MAXIMUM DESTRUCTION</span>
+      </div>
+    </div>
+    <style>
+      .animate-marquee {
+        display: inline-flex;
+        animation: marquee 20s linear infinite;
+      }
+      @keyframes marquee {
+        0% {
+          transform: translateX(0);
+        }
+        100% {
+          transform: translateX(-50%);
+        }
+      }
+    </style>
+
+    <!-- SAMPLE ROAST SCREEN -->
+    <section class="py-24 relative bg-arcade-bg overflow-hidden">
+      <div class="max-w-5xl mx-auto px-4 sm:px-6 relative z-10">
+        <div class="text-center mb-16 gsap-fade-up">
+          <h2 class="font-pixel text-xl md:text-3xl text-white mb-4">
+            MATCH RESULTS
+          </h2>
+          <p class="font-mono text-gray-400">DEMO MODE PREVIEW</p>
+        </div>
+
+        <!-- Arcade Cabinet UI -->
+        <div
+          class="bg-[#050510] border-4 border-[#222] rounded-lg p-2 md:p-6 shadow-[0_0_50px_rgba(0,0,0,0.8)] relative gsap-fade-up"
+        >
+          <!-- Inner Screen -->
+          <div
+            class="bg-black border-2 border-gray-800 rounded p-4 md:p-8 relative overflow-hidden"
+          >
+            <!-- Scanline effect for screen -->
+            <div
+              class="absolute inset-0 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[length:100%_4px,3px_100%] pointer-events-none"
+            ></div>
+
+            <!-- Header Stats -->
+            <div
+              class="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-gray-800 pb-4 mb-6"
+            >
+              <div
+                class="font-pixel text-[10px] md:text-xs text-neon-cyan space-y-2"
+              >
+                <p>PLAYER: <span class="text-white">ANONYMOUS_CRYBABY</span></p>
+                <p>CLASS: <span class="text-hot-magenta">GEMINI</span></p>
+              </div>
+              <div
+                class="flex gap-4 mt-4 md:mt-0 font-mono text-sm text-gray-300"
+              >
+                <div
+                  class="text-center px-3 py-1 border border-gray-700 bg-gray-900 clip-edges"
+                >
+                  ☀️ GEM
+                </div>
+                <div
+                  class="text-center px-3 py-1 border border-gray-700 bg-gray-900 clip-edges"
+                >
+                  🌙 SCO
+                </div>
+                <div
+                  class="text-center px-3 py-1 border border-gray-700 bg-gray-900 clip-edges"
+                >
+                  ⬆️ VIR
+                </div>
+              </div>
+            </div>
+
+            <!-- Roast Text Area -->
+            <div
+              class="font-mono text-sm md:text-base text-crt-green leading-relaxed space-y-4"
+            >
+              <p>> ANALYZING CHART DATA...</p>
+              <p class="text-white">
+                > Oh look, a Gemini Sun with a Scorpio Moon. So you're two-faced
+                AND hold a grudge forever? That's a terrifying combo. You treat
+                social interactions like a game of chess, but you're playing
+                against yourself and still losing.
+              </p>
+              <p class="text-white">
+                > With that Virgo Rising, you try to project this put-together,
+                organized aesthetic, but we all know your bedroom looks like a
+                Hot Topic exploded.
+              </p>
+            </div>
+
+            <!-- Blurred Paid Area -->
+            <div class="mt-8 relative">
+              <div
+                class="filter blur-sm opacity-50 font-mono text-sm md:text-base text-white leading-relaxed space-y-4 select-none"
+              >
+                <p>
+                  > As for your Venus in Aries... you fall in love at 100mph and
+                  get bored by Tuesday. Your romantic history is a graveyard of
+                  impulsive decisions.
+                </p>
+                <p>
+                  > Mars in Cancer means your primary weapon is passive
+                  aggression. You don't fight, you just aggressively sigh while
+                  doing the dishes.
+                </p>
+                <p>
+                  > PLUTO IN THE 4TH HOUSE REVEALS DEEP-SEATED CHILDHOOD...
+                  [DATA CORRUPTED]
+                </p>
+              </div>
+
+              <!-- Paywall Overlay -->
+              <div
+                class="absolute inset-0 flex flex-col items-center justify-center bg-black/60 backdrop-blur-[2px] z-10"
+              >
+                <p
+                  class="font-pixel text-[10px] md:text-xs text-hot-magenta mb-4 text-glow-magenta text-center px-4"
+                >
+                  WARNING: EGO DESTRUCTION IMMINENT
+                </p>
+                <button
+                  class="font-pixel text-xs md:text-sm px-6 py-3 text-elec-yellow box-glow-cyan clip-edges btn-arcade-cyan border-elec-yellow shadow-[0_0_15px_#ffe600]"
+                >
+                  INSERT $5 TO CONTINUE
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- HOW IT WORKS (STAGES) -->
+    <section
+      class="py-24 bg-arcade-dark relative border-t border-b border-gray-800"
+    >
+      <div class="max-w-6xl mx-auto px-4 sm:px-6">
+        <div class="text-center mb-16 gsap-fade-up">
+          <h2 class="font-pixel text-xl md:text-3xl text-white mb-4">
+            TUTORIAL MODE
+          </h2>
+          <p class="font-mono text-gray-400">HOW TO RUIN YOUR OWN DAY</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
+          <!-- Connecting Line Desktop -->
+          <div
+            class="hidden md:block absolute top-1/2 left-[10%] right-[10%] h-1 bg-gray-800 -translate-y-1/2 z-0"
+          ></div>
+
+          <!-- Stage 1 -->
+          <div
+            class="relative z-10 bg-arcade-bg border border-gray-800 p-8 text-center clip-edges gsap-stagger transition-all hover:border-neon-cyan hover:box-glow-cyan group"
+          >
+            <div
+              class="w-16 h-16 mx-auto bg-gray-900 border-2 border-neon-cyan rounded-full flex items-center justify-center mb-6 text-2xl group-hover:scale-110 transition-transform"
+            >
+              📊
+            </div>
+            <h3 class="font-pixel text-xs text-neon-cyan mb-3">
+              STAGE 1: ENTER STATS
+            </h3>
+            <p class="font-mono text-sm text-gray-400">
+              Input your birth date, time, and location. Exact coordinates
+              required for maximum accuracy.
+            </p>
+          </div>
+
+          <!-- Stage 2 -->
+          <div
+            class="relative z-10 bg-arcade-bg border border-gray-800 p-8 text-center clip-edges gsap-stagger transition-all hover:border-hot-magenta hover:box-glow-magenta group"
+          >
+            <div
+              class="w-16 h-16 mx-auto bg-gray-900 border-2 border-hot-magenta rounded-full flex items-center justify-center mb-6 text-2xl group-hover:scale-110 transition-transform"
+            >
+              ⚙️
+            </div>
+            <h3 class="font-pixel text-xs text-hot-magenta mb-3">
+              STAGE 2: PROCESSING
+            </h3>
+            <p class="font-mono text-sm text-gray-400">
+              Our AI interfaces with Swiss Ephemeris data. Parsing planets,
+              houses, and terrible life choices.
+            </p>
+          </div>
+
+          <!-- Stage 3 -->
+          <div
+            class="relative z-10 bg-arcade-bg border border-gray-800 p-8 text-center clip-edges gsap-stagger transition-all hover:border-elec-yellow shadow-[0_0_10px_rgba(255,230,0,0)] hover:shadow-[0_0_15px_rgba(255,230,0,0.3)] group"
+          >
+            <div
+              class="w-16 h-16 mx-auto bg-gray-900 border-2 border-elec-yellow rounded-full flex items-center justify-center mb-6 text-2xl group-hover:scale-110 transition-transform"
+            >
+              💀
+            </div>
+            <h3 class="font-pixel text-xs text-elec-yellow mb-3">
+              STAGE 3: K.O.
+            </h3>
+            <p class="font-mono text-sm text-gray-400">
+              Receive your brutal, unhinged roast. Screenshot and share to let
+              everyone know you're suffering.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PRICING / ARCADE CABINET SELECTION -->
+    <section class="py-24 relative overflow-hidden">
+      <div class="max-w-5xl mx-auto px-4 sm:px-6 relative z-10">
+        <div class="text-center mb-16 gsap-fade-up">
+          <h2 class="font-pixel text-xl md:text-3xl text-white mb-4">
+            SELECT PLAYER MODE
+          </h2>
+          <p class="font-mono text-gray-400">CHOOSE YOUR LEVEL OF PAIN</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+          <!-- Free Tier -->
+          <div
+            class="bg-arcade-dark border-2 border-neon-cyan p-8 clip-edges box-glow-cyan flex flex-col gsap-fade-up"
+          >
+            <h3 class="font-pixel text-lg text-white mb-2">DEMO MODE</h3>
+            <div class="font-mono text-3xl text-neon-cyan mb-6">FREE</div>
+
+            <ul
+              class="font-mono text-sm text-gray-300 space-y-4 mb-8 flex-grow"
+            >
+              <li class="flex items-start gap-3">
+                <span class="text-neon-cyan mt-1">✓</span>
+                <span>Sun, Moon, Rising basic drag</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <span class="text-neon-cyan mt-1">✓</span>
+                <span>Shareable stats card</span>
+              </li>
+              <li class="flex items-start gap-3 opacity-40">
+                <span class="text-gray-600 mt-1">✗</span>
+                <span class="line-through">Deep house & aspect analysis</span>
+              </li>
+              <li class="flex items-start gap-3 opacity-40">
+                <span class="text-gray-600 mt-1">✗</span>
+                <span class="line-through">Total ego annihilation</span>
+              </li>
+            </ul>
+
+            <button
+              class="w-full font-pixel text-xs py-4 text-neon-cyan border-2 border-neon-cyan hover:bg-neon-cyan hover:text-black transition-colors clip-edges"
+            >
+              PLAY DEMO
+            </button>
+          </div>
+
+          <!-- Paid Tier -->
+          <div
+            class="bg-arcade-dark border-2 border-hot-magenta p-8 clip-edges box-glow-magenta flex flex-col relative transform md:-translate-y-4 gsap-fade-up delay-100"
+          >
+            <div
+              class="absolute -top-4 right-4 bg-elec-yellow text-black font-pixel text-[8px] px-3 py-1 clip-edges animate-pulse-fast"
+            >
+              BEST VALUE
+            </div>
+
+            <h3 class="font-pixel text-lg text-white mb-2">FULL GAME</h3>
+            <div class="font-mono text-3xl text-hot-magenta mb-6">
+              $5<span class="text-sm text-gray-400 ml-2">ONE-TIME COIN</span>
+            </div>
+
+            <ul
+              class="font-mono text-sm text-gray-300 space-y-4 mb-8 flex-grow"
+            >
+              <li class="flex items-start gap-3">
+                <span class="text-hot-magenta mt-1">✓</span>
+                <span>Every planet roasted</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <span class="text-hot-magenta mt-1">✓</span>
+                <span>All 12 houses exposed</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <span class="text-hot-magenta mt-1">✓</span>
+                <span>Major aspects & transits read</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <span class="text-hot-magenta mt-1">✓</span>
+                <span>"The complete playthrough of your cosmic failures"</span>
+              </li>
+            </ul>
+
+            <button
+              class="w-full font-pixel text-xs py-4 text-white bg-hot-magenta box-glow-magenta hover:bg-white hover:text-hot-magenta transition-colors clip-edges flex justify-center items-center gap-2"
+            >
+              <span>INSERT COIN</span>
+              <span class="text-lg">🪙</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TESTIMONIALS (GAME CHAT) -->
+    <section class="py-20 bg-arcade-bg border-t border-gray-800">
+      <div class="max-w-3xl mx-auto px-4 sm:px-6">
+        <div class="mb-10 gsap-fade-up">
+          <h2
+            class="font-pixel text-lg md:text-xl text-crt-green mb-2 text-glow-green"
+          >
+            GLOBAL CHAT
+          </h2>
+          <div class="h-1 w-full bg-gray-800"></div>
+        </div>
+
+        <div
+          class="space-y-4 font-mono text-sm md:text-base bg-black p-6 border border-gray-800 rounded clip-edges shadow-[inset_0_0_20px_rgba(0,0,0,1)]"
+        >
+          <div class="gsap-chat opacity-0 translate-y-4">
+            <span class="text-gray-500">[14:02]</span>
+            <span class="text-laser-purple font-bold"
+              >&lt;xX_LeoKing_Xx&gt;</span
+            >:
+            <span class="text-gray-300"
+              >Bro this boss fight was too real. I need a healing potion for my
+              ego.</span
+            >
+          </div>
+
+          <div class="gsap-chat opacity-0 translate-y-4">
+            <span class="text-gray-500">[14:05]</span>
+            <span class="text-neon-cyan font-bold">&lt;MoonChild99&gt;</span>:
+            <span class="text-gray-300"
+              >GAME OVER for me. It called out my exact dating history down to
+              the week. 😭</span
+            >
+          </div>
+
+          <div class="gsap-chat opacity-0 translate-y-4">
+            <span class="text-gray-500">[14:12]</span>
+            <span class="text-hot-magenta font-bold">&lt;SaturnReturnz&gt;</span
+            >:
+            <span class="text-elec-yellow"
+              >🏆 Achievement Unlocked: Existential Crisis</span
+            >
+          </div>
+
+          <div class="gsap-chat opacity-0 translate-y-4">
+            <span class="text-gray-500">[14:15]</span>
+            <span class="text-crt-green font-bold">&lt;System&gt;</span>:
+            <span class="text-gray-400 italic"
+              >User SaturnReturnz has disconnected.</span
+            >
+          </div>
+
+          <div
+            class="mt-4 pt-4 border-t border-gray-800 flex items-center gap-2"
+          >
+            <span class="text-neon-cyan">></span>
+            <span class="text-gray-500 blink">_</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FINAL CTA -->
+    <section class="py-32 relative text-center bg-arcade-dark overflow-hidden">
+      <!-- Radial Glow -->
+      <div
+        class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl h-64 bg-hot-magenta opacity-10 blur-[100px] rounded-full pointer-events-none"
+      ></div>
+
+      <div class="relative z-10 max-w-4xl mx-auto px-4 sm:px-6">
+        <h2
+          class="font-pixel text-3xl md:text-6xl text-white mb-6 tracking-widest text-glow-cyan"
+        >
+          CONTINUE?
+        </h2>
+
+        <div
+          class="font-pixel text-5xl md:text-8xl text-hot-magenta mb-12 text-glow-magenta"
+          id="countdown"
+        >
+          9
+        </div>
+
+        <button
+          class="font-pixel text-sm md:text-xl px-10 py-5 text-neon-cyan box-glow-cyan clip-edges btn-arcade-cyan inline-flex items-center gap-4 hover:scale-105 transition-transform duration-300"
+        >
+          <span>PRESS START</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="bg-black py-8 border-t-4 border-gray-900">
+      <div
+        class="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col md:flex-row items-center justify-between gap-4"
+      >
+        <div class="flex items-center gap-2">
+          <span class="text-xl">🕹️</span>
+          <span class="font-pixel text-[10px] text-gray-500"
+            >ASTRO ROASTS © 2023</span
+          >
+        </div>
+
+        <div class="font-mono text-xs text-gray-600 text-center md:text-right">
+          <p>Powered by Swiss Ephemeris.</p>
+          <p>No cheat codes. No refunds for hurt feelings.</p>
+        </div>
+      </div>
+      <!-- Pixel divider bottom -->
+      <div
+        class="w-full h-2 mt-8 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4IiBoZWlnaHQ9IjgiPjxyZWN0IHdpZHRoPSI0IiBoZWlnaHQ9IjQiIGZpbGw9IiMzMzMiLz48cmVjdCB4PSI0IiB5PSI0IiB3aWR0aD0iNCIgaGVpZ2h0PSI0IiBmaWxsPSIjMzMzIi8+PC9zdmc+')] opacity-50"
+      ></div>
+    </footer>
+
+    <!-- GSAP Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", (event) => {
+        gsap.registerPlugin(ScrollTrigger);
+
+        // Navbar background on scroll
+        window.addEventListener("scroll", () => {
+          const nav = document.getElementById("navbar");
+          if (window.scrollY > 50) {
+            nav.classList.add("bg-arcade-dark", "border-hot-magenta");
+            nav.classList.remove("bg-arcade-bg/80", "border-hot-magenta/30");
+          } else {
+            nav.classList.remove("bg-arcade-dark", "border-hot-magenta");
+            nav.classList.add("bg-arcade-bg/80", "border-hot-magenta/30");
+          }
+        });
+
+        // Hero Animation
+        gsap.fromTo(
+          ".gsap-hero",
+          { y: 50, opacity: 0, filter: "blur(10px)" },
+          {
+            y: 0,
+            opacity: 1,
+            filter: "blur(0px)",
+            duration: 1,
+            stagger: 0.2,
+            ease: "power3.out",
+          },
+        );
+
+        // High Score Counter
+        gsap.to("#counter-score", {
+          innerHTML: 847293,
+          duration: 3,
+          snap: { innerHTML: 1 },
+          ease: "power1.inOut",
+          scrollTrigger: {
+            trigger: "#counter-score",
+            start: "top 90%",
+          },
+        });
+
+        // Fade up general sections
+        gsap.utils.toArray(".gsap-fade-up").forEach((element) => {
+          gsap.fromTo(
+            element,
+            { y: 40, opacity: 0 },
+            {
+              y: 0,
+              opacity: 1,
+              duration: 0.8,
+              ease: "power2.out",
+              scrollTrigger: {
+                trigger: element,
+                start: "top 85%",
+                toggleActions: "play none none reverse",
+              },
+            },
+          );
+        });
+
+        // Stagger cards (How it works)
+        gsap.fromTo(
+          ".gsap-stagger",
+          { y: 50, opacity: 0 },
+          {
+            y: 0,
+            opacity: 1,
+            duration: 0.6,
+            stagger: 0.2,
+            ease: "back.out(1.2)",
+            scrollTrigger: {
+              trigger: ".gsap-stagger",
+              start: "top 80%",
+            },
+          },
+        );
+
+        // Chat lines reveal
+        gsap.to(".gsap-chat", {
+          y: 0,
+          opacity: 1,
+          duration: 0.5,
+          stagger: 0.4,
+          ease: "steps(4)",
+          scrollTrigger: {
+            trigger: ".gsap-chat",
+            start: "top 80%",
+          },
+        });
+
+        // Countdown Timer Visual Effect
+        const countdownEl = document.getElementById("countdown");
+        let count = 9;
+        setInterval(() => {
+          count--;
+          if (count < 0) count = 9;
+          countdownEl.innerText = count;
+          // Add a little flicker effect on change
+          gsap.fromTo(
+            countdownEl,
+            { opacity: 0.5 },
+            { opacity: 1, duration: 0.1 },
+          );
+        }, 1000);
+      });
+    </script>
+  </body>
+</html>

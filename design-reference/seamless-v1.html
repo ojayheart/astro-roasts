@@ -1,0 +1,522 @@
+<!doctype html>
+<html lang="en" class="antialiased">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Astro Roasts</title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Manrope:wght@200;300;400;500&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              void: "#040406",
+              stardust: "#f0efe9",
+              ash: "#8a8a8e",
+              eclipse: "#121216",
+            },
+            fontFamily: {
+              serif: ["Cormorant", "serif"],
+              sans: ["Manrope", "sans-serif"],
+            },
+            animation: {
+              "spin-slow": "spin 8s linear infinite",
+              "spin-reverse-slow": "spin-reverse 12s linear infinite",
+              "pulse-slow": "pulse 6s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+            },
+            keyframes: {
+              "spin-reverse": {
+                from: { transform: "rotate(360deg)" },
+                to: { transform: "rotate(0deg)" },
+              },
+            },
+          },
+        },
+      };
+    </script>
+
+    <!-- GSAP -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+
+    <style>
+      body {
+        background-color: #040406;
+        color: #f0efe9;
+        overflow-x: hidden;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      /* SVG Noise Overlay */
+      .noise-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        pointer-events: none;
+        z-index: 50;
+        opacity: 0.25;
+        background: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+      }
+
+      /* Custom Input Styling overrides */
+      input:-webkit-autofill,
+      input:-webkit-autofill:hover,
+      input:-webkit-autofill:focus,
+      input:-webkit-autofill:active {
+        -webkit-box-shadow: 0 0 0 30px #040406 inset !important;
+        -webkit-text-fill-color: #f0efe9 !important;
+        transition: background-color 5000s ease-in-out 0s;
+      }
+
+      .ambient-glow {
+        background: radial-gradient(
+          circle at center,
+          rgba(30, 30, 45, 0.4) 0%,
+          rgba(4, 4, 6, 0) 70%
+        );
+      }
+
+      /* Smooth scrollbar */
+      ::-webkit-scrollbar {
+        width: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #040406;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #2a2a2e;
+        border-radius: 4px;
+      }
+    </style>
+  </head>
+  <body
+    class="selection:bg-stardust selection:text-void min-h-screen flex flex-col"
+  >
+    <!-- Texture & Background Elements -->
+    <div class="noise-overlay"></div>
+
+    <div
+      class="fixed inset-0 z-0 flex items-center justify-center pointer-events-none overflow-hidden"
+    >
+      <!-- Abstract Eclipse / Corona -->
+      <div
+        class="absolute w-[80vmin] h-[80vmin] ambient-glow rounded-full animate-pulse-slow mix-blend-screen"
+      ></div>
+      <div
+        id="moon"
+        class="absolute w-[60vmin] h-[60vmin] bg-void rounded-full shadow-[inset_-10px_-10px_40px_rgba(255,255,255,0.03)] opacity-80 border border-white/[0.02]"
+      ></div>
+    </div>
+
+    <!-- Header -->
+    <header
+      class="fixed top-0 left-0 w-full p-6 md:p-10 z-20 mix-blend-difference flex justify-between items-center pointer-events-none"
+    >
+      <div
+        class="font-sans text-xs tracking-[0.2em] uppercase text-ash font-medium"
+      >
+        Astro Roasts
+      </div>
+      <div class="font-serif italic text-ash text-sm">Swiss Ephemeris</div>
+    </header>
+
+    <!-- Main Content -->
+    <main
+      class="relative z-10 flex-grow flex items-center justify-center w-full px-6 py-24"
+    >
+      <div id="flow-container" class="max-w-lg w-full mx-auto relative">
+        <!-- ================= VIEW 1: THE FORM ================= -->
+        <div id="view-intro" class="w-full">
+          <div class="mb-14">
+            <h1
+              class="gsap-reveal font-serif text-5xl md:text-6xl font-light leading-[1.1] mb-6 text-stardust"
+            >
+              You already know <br />
+              <span class="italic text-ash">what it's going to say.</span>
+            </h1>
+            <p
+              class="gsap-reveal font-sans text-ash text-base md:text-lg font-light leading-relaxed max-w-md"
+            >
+              Based on where the planets actually were. Honest enough to sting.
+              Accurate enough to keep to yourself.
+            </p>
+          </div>
+
+          <form id="astro-form" class="space-y-8 mt-12">
+            <div class="gsap-form relative z-0 w-full group">
+              <input
+                type="text"
+                name="name"
+                id="name"
+                class="block py-3 px-0 w-full text-base text-stardust bg-transparent border-0 border-b border-white/20 appearance-none focus:outline-none focus:ring-0 focus:border-white/60 peer transition-colors duration-500 rounded-none"
+                placeholder=" "
+                required
+                autocomplete="off"
+              />
+              <label
+                for="name"
+                class="peer-focus:font-normal absolute text-base text-ash/60 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:left-0 peer-focus:text-stardust/80 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6 font-sans font-light"
+                >Your name</label
+              >
+            </div>
+
+            <div class="gsap-form grid grid-cols-2 gap-8">
+              <div class="relative z-0 w-full group">
+                <input
+                  type="text"
+                  name="date"
+                  id="date"
+                  class="block py-3 px-0 w-full text-base text-stardust bg-transparent border-0 border-b border-white/20 appearance-none focus:outline-none focus:ring-0 focus:border-white/60 peer transition-colors duration-500 rounded-none"
+                  placeholder=" "
+                  required
+                  autocomplete="off"
+                />
+                <label
+                  for="date"
+                  class="peer-focus:font-normal absolute text-base text-ash/60 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:left-0 peer-focus:text-stardust/80 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6 font-sans font-light"
+                  >YYYY-MM-DD</label
+                >
+              </div>
+              <div class="relative z-0 w-full group">
+                <input
+                  type="text"
+                  name="time"
+                  id="time"
+                  class="block py-3 px-0 w-full text-base text-stardust bg-transparent border-0 border-b border-white/20 appearance-none focus:outline-none focus:ring-0 focus:border-white/60 peer transition-colors duration-500 rounded-none"
+                  placeholder=" "
+                  required
+                  autocomplete="off"
+                />
+                <label
+                  for="time"
+                  class="peer-focus:font-normal absolute text-base text-ash/60 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:left-0 peer-focus:text-stardust/80 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6 font-sans font-light"
+                  >Exact Time</label
+                >
+              </div>
+            </div>
+
+            <div class="gsap-form relative z-0 w-full group">
+              <input
+                type="text"
+                name="place"
+                id="place"
+                class="block py-3 px-0 w-full text-base text-stardust bg-transparent border-0 border-b border-white/20 appearance-none focus:outline-none focus:ring-0 focus:border-white/60 peer transition-colors duration-500 rounded-none"
+                placeholder=" "
+                required
+                autocomplete="off"
+              />
+              <label
+                for="place"
+                class="peer-focus:font-normal absolute text-base text-ash/60 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:left-0 peer-focus:text-stardust/80 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6 font-sans font-light"
+                >City, Country</label
+              >
+            </div>
+
+            <div class="gsap-form pt-6">
+              <button
+                type="submit"
+                class="w-full bg-stardust text-void font-sans font-medium text-sm tracking-wide py-4 px-8 rounded-full hover:bg-white hover:scale-[1.02] transition-all duration-500 ease-out focus:outline-none focus:ring-2 focus:ring-stardust/50"
+              >
+                See yours
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- ================= VIEW 2: LOADING ================= -->
+        <div
+          id="view-loading"
+          class="hidden absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full flex-col items-center justify-center text-center"
+        >
+          <!-- Astrolabe SVG Animation -->
+          <div
+            class="relative w-32 h-32 mb-10 flex items-center justify-center"
+          >
+            <svg
+              class="absolute inset-0 w-full h-full animate-spin-slow text-white/20"
+              viewBox="0 0 100 100"
+            >
+              <circle
+                cx="50"
+                cy="50"
+                r="48"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="0.5"
+                stroke-dasharray="2 4"
+              />
+              <circle cx="50" cy="12" r="2" fill="#f0efe9" />
+            </svg>
+            <svg
+              class="absolute inset-2 w-28 h-28 animate-spin-reverse-slow text-white/30"
+              viewBox="0 0 100 100"
+            >
+              <circle
+                cx="50"
+                cy="50"
+                r="38"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="0.5"
+                stroke-dasharray="20 10 5 10"
+              />
+              <circle cx="12" cy="50" r="1.5" fill="#f0efe9" />
+            </svg>
+            <svg
+              class="absolute inset-4 w-24 h-24 text-white/10"
+              viewBox="0 0 100 100"
+            >
+              <circle
+                cx="50"
+                cy="50"
+                r="28"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="0.5"
+              />
+            </svg>
+            <!-- Inner static core -->
+            <div
+              class="w-2 h-2 bg-stardust rounded-full shadow-[0_0_15px_rgba(255,255,255,0.8)]"
+            ></div>
+          </div>
+
+          <div class="h-8 overflow-hidden relative w-full">
+            <p
+              id="loading-text"
+              class="font-serif text-2xl md:text-3xl italic text-stardust/80 absolute w-full left-0 top-0 text-center"
+            >
+              Reading the ephemeris...
+            </p>
+          </div>
+        </div>
+
+        <!-- ================= VIEW 3: RESULT ================= -->
+        <div id="view-result" class="hidden w-full pt-8">
+          <div class="mb-10 text-center md:text-left">
+            <h2 class="font-serif text-4xl font-light mb-8 text-stardust">
+              The observation.
+            </h2>
+
+            <div class="relative">
+              <!-- Quotation mark aesthetic -->
+              <span
+                class="absolute -top-6 -left-4 text-6xl font-serif text-white/5 opacity-50 select-none"
+                >"</span
+              >
+              <p
+                class="font-sans text-ash text-lg font-light leading-[1.8] relative z-10"
+              >
+                You have a tendency to intellectualize your emotions instead of
+                feeling them. You think analyzing why you're sad is the same as
+                dealing with it. It isn't. The stars suggest you're exhausted
+                from playing architect to your own life. You demand perfection
+                from yourself but excuse everyone else.
+                <br /><br />
+                Let the walls down,
+                <span
+                  id="out-name"
+                  class="text-stardust italic font-serif text-xl"
+                ></span
+                >.
+              </p>
+            </div>
+          </div>
+
+          <div class="mt-14 opacity-0" id="upsell-container">
+            <button
+              id="btn-upsell"
+              class="w-full relative group overflow-hidden bg-white text-void font-sans font-medium text-sm tracking-wide py-4 px-8 rounded-full transition-all duration-500 ease-out hover:scale-[1.02] shadow-[0_0_40px_rgba(255,255,255,0.1)]"
+            >
+              <span class="relative z-10">Get the full reading — $5</span>
+              <div
+                class="absolute inset-0 h-full w-full bg-gradient-to-r from-stardust via-white to-stardust opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+              ></div>
+            </button>
+            <p
+              class="text-center font-sans text-xs text-ash/50 mt-4 tracking-wide uppercase"
+            >
+              No subscriptions. One time.
+            </p>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        // Initial Load Animations
+        const masterTl = gsap.timeline({ defaults: { ease: "power3.out" } });
+
+        masterTl
+          .from(".gsap-reveal", {
+            y: 40,
+            opacity: 0,
+            duration: 1.5,
+            stagger: 0.15,
+            delay: 0.2,
+          })
+          .from(
+            ".gsap-form",
+            {
+              y: 20,
+              opacity: 0,
+              duration: 1.2,
+              stagger: 0.1,
+            },
+            "-=1.0",
+          )
+          .from(
+            "#moon",
+            {
+              scale: 0.8,
+              opacity: 0,
+              duration: 3,
+              ease: "power2.out",
+            },
+            0,
+          );
+
+        // Subtle parallax on the moon background based on mouse movement
+        document.addEventListener("mousemove", (e) => {
+          const x = (e.clientX / window.innerWidth - 0.5) * 20;
+          const y = (e.clientY / window.innerHeight - 0.5) * 20;
+
+          gsap.to("#moon", {
+            x: x,
+            y: y,
+            duration: 2,
+            ease: "power2.out",
+          });
+        });
+
+        // Form Submission Flow
+        const form = document.getElementById("astro-form");
+        form.addEventListener("submit", (e) => {
+          e.preventDefault();
+
+          // Get name for the reading
+          let nameVal = document.getElementById("name").value.trim();
+          if (!nameVal) nameVal = "friend";
+          // Capitalize first letter
+          nameVal = nameVal.charAt(0).toUpperCase() + nameVal.slice(1);
+          document.getElementById("out-name").innerText = nameVal;
+
+          const flowTl = gsap.timeline();
+
+          // 1. Hide Intro
+          flowTl
+            .to("#view-intro", {
+              opacity: 0,
+              y: -30,
+              duration: 0.8,
+              ease: "power2.inOut",
+              onComplete: () => {
+                document.getElementById("view-intro").classList.add("hidden");
+                document
+                  .getElementById("view-loading")
+                  .classList.remove("hidden");
+                document.getElementById("view-loading").classList.add("flex");
+              },
+            })
+
+            // 2. Show Loading
+            .fromTo(
+              "#view-loading",
+              { opacity: 0, scale: 0.95 },
+              { opacity: 1, scale: 1, duration: 0.8, ease: "power3.out" },
+            )
+
+            // 3. Animate Loading Text
+            .to("#loading-text", {
+              opacity: 0,
+              y: -10,
+              duration: 0.5,
+              delay: 2,
+              ease: "power2.in",
+              onComplete: () => {
+                const txt = document.getElementById("loading-text");
+                txt.innerText = "Locating blind spots...";
+                gsap.set(txt, { y: 10 });
+              },
+            })
+            .to("#loading-text", {
+              opacity: 1,
+              y: 0,
+              duration: 0.5,
+              ease: "power2.out",
+            })
+            .to("#loading-text", {
+              opacity: 0,
+              y: -10,
+              duration: 0.5,
+              delay: 2,
+              ease: "power2.in",
+            })
+
+            // 4. Hide Loading, Show Result
+            .to("#view-loading", {
+              opacity: 0,
+              scale: 1.05,
+              duration: 0.8,
+              ease: "power2.inOut",
+              onComplete: () => {
+                document.getElementById("view-loading").classList.add("hidden");
+                document
+                  .getElementById("view-loading")
+                  .classList.remove("flex");
+                document
+                  .getElementById("view-result")
+                  .classList.remove("hidden");
+              },
+            })
+
+            // 5. Reveal Reading
+            .fromTo(
+              "#view-result h2",
+              { opacity: 0, y: 20 },
+              { opacity: 1, y: 0, duration: 1, ease: "power3.out" },
+            )
+            .fromTo(
+              "#view-result p",
+              { opacity: 0, y: 20 },
+              { opacity: 1, y: 0, duration: 1.2, ease: "power3.out" },
+              "-=0.7",
+            )
+
+            // 6. Dramatically reveal the upsell button
+            .fromTo(
+              "#upsell-container",
+              { opacity: 0, y: 30 },
+              { opacity: 1, y: 0, duration: 1, ease: "power3.out", delay: 1.5 },
+            );
+        });
+
+        // Add a subtle click effect to the upsell button for demonstration
+        document
+          .getElementById("btn-upsell")
+          .addEventListener("click", function () {
+            gsap.to(this, {
+              scale: 0.95,
+              duration: 0.1,
+              yoyo: true,
+              repeat: 1,
+            });
+          });
+      });
+    </script>
+  </body>
+</html>

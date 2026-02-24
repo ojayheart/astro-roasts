@@ -1,0 +1,528 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ASTRO ROASTS // File: Oliver</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=Syne:wght@400;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              void: "#030303",
+              ash: "#E5E5E5",
+              blood: "#FF2A00",
+              bruise: "#1A0500",
+            },
+            fontFamily: {
+              syne: ["Syne", "sans-serif"],
+              mono: ["DM Mono", "monospace"],
+            },
+            fontWeight: {
+              syneHero: "800",
+            },
+            letterSpacing: {
+              tightest: "-.075em",
+            },
+          },
+        },
+      };
+    </script>
+
+    <style>
+      :root {
+        cursor: none;
+      }
+
+      body {
+        background-color: #030303;
+        color: #e5e5e5;
+        overflow-x: hidden;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      ::selection {
+        background-color: #ff2a00;
+        color: #030303;
+      }
+
+      .noise {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        pointer-events: none;
+        z-index: 999;
+        opacity: 0.04;
+        mix-blend-mode: overlay;
+        background: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+      }
+
+      .custom-cursor {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 10px;
+        height: 10px;
+        background-color: #ff2a00;
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 9999;
+        mix-blend-mode: difference;
+        transform: translate(-50%, -50%);
+        transition:
+          width 0.3s cubic-bezier(0.25, 1, 0.5, 1),
+          height 0.3s cubic-bezier(0.25, 1, 0.5, 1),
+          background-color 0.3s;
+      }
+
+      .custom-cursor.hover {
+        width: 60px;
+        height: 60px;
+        background-color: #e5e5e5;
+      }
+
+      .text-outline {
+        -webkit-text-stroke: 1px rgba(229, 229, 229, 0.2);
+        color: transparent;
+      }
+
+      .text-outline-blood {
+        -webkit-text-stroke: 1px rgba(255, 42, 0, 0.4);
+        color: transparent;
+      }
+
+      .fade-mask {
+        -webkit-mask-image: linear-gradient(
+          to bottom,
+          black 0%,
+          black 20%,
+          transparent 100%
+        );
+        mask-image: linear-gradient(
+          to bottom,
+          black 0%,
+          black 20%,
+          transparent 100%
+        );
+      }
+
+      /* Hide default scrollbar for brutalist feel */
+      ::-webkit-scrollbar {
+        width: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #030303;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #1a0500;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #ff2a00;
+      }
+    </style>
+  </head>
+  <body class="font-mono font-light relative">
+    <div class="noise"></div>
+    <div class="custom-cursor hidden md:block"></div>
+
+    <!-- Background Accent -->
+    <div
+      class="fixed top-[-10vh] right-[-5vw] text-[15rem] md:text-[25rem] font-syne font-[800] tracking-tighter text-outline select-none pointer-events-none opacity-20 -z-10 leading-none"
+    >
+      FILE<br />001
+    </div>
+
+    <main class="max-w-4xl mx-auto px-6 py-12 md:py-24 relative z-10">
+      <!-- Top Nav / Meta -->
+      <nav
+        class="nav-reveal flex justify-between items-end border-b border-ash/20 pb-4 mb-12"
+      >
+        <div>
+          <a
+            href="#"
+            class="cursor-hover text-blood font-syne font-bold uppercase tracking-tight text-xl flex items-center gap-2 group"
+          >
+            <span
+              class="inline-block transition-transform group-hover:-translate-x-1"
+              >←</span
+            >
+            Astro Roasts
+          </a>
+        </div>
+        <div class="text-right">
+          <span
+            class="block text-[10px] uppercase tracking-[0.3em] text-ash/40 mb-1"
+            >Status</span
+          >
+          <span
+            class="block text-xs uppercase tracking-widest text-blood animate-pulse"
+            >● Diagnosis Complete</span
+          >
+        </div>
+      </nav>
+
+      <!-- Top Section: Dossier -->
+      <div
+        class="grid grid-cols-2 md:grid-cols-4 border border-ash/20 divide-x divide-y md:divide-y-0 divide-ash/20 mb-20 bg-void/80 backdrop-blur-sm"
+      >
+        <div
+          class="dossier-item p-4 md:p-6 flex flex-col justify-between aspect-[2/1] md:aspect-square"
+        >
+          <span
+            class="text-[10px] md:text-xs uppercase tracking-[0.2em] text-ash/40 mb-4 block"
+            >Subject</span
+          >
+          <span
+            class="font-syne font-bold text-xl md:text-2xl uppercase tracking-tight text-ash"
+            >Oliver</span
+          >
+        </div>
+        <div
+          class="dossier-item p-4 md:p-6 flex flex-col justify-between aspect-[2/1] md:aspect-square"
+        >
+          <span
+            class="text-[10px] md:text-xs uppercase tracking-[0.2em] text-ash/40 mb-4 block"
+            >Core (Sun)</span
+          >
+          <span
+            class="font-syne font-bold text-xl md:text-2xl uppercase tracking-tight text-ash flex justify-between items-end"
+          >
+            Aquarius <span class="text-blood text-sm md:text-lg">♒</span>
+          </span>
+        </div>
+        <div
+          class="dossier-item p-4 md:p-6 flex flex-col justify-between aspect-[2/1] md:aspect-square border-t md:border-t-0 border-ash/20"
+        >
+          <span
+            class="text-[10px] md:text-xs uppercase tracking-[0.2em] text-ash/40 mb-4 block"
+            >Internal (Moon)</span
+          >
+          <span
+            class="font-syne font-bold text-xl md:text-2xl uppercase tracking-tight text-ash flex justify-between items-end"
+          >
+            Scorpio <span class="text-blood text-sm md:text-lg">♏</span>
+          </span>
+        </div>
+        <div
+          class="dossier-item p-4 md:p-6 flex flex-col justify-between aspect-[2/1] md:aspect-square border-t md:border-t-0 border-ash/20"
+        >
+          <span
+            class="text-[10px] md:text-xs uppercase tracking-[0.2em] text-ash/40 mb-4 block"
+            >Mask (Rising)</span
+          >
+          <span
+            class="font-syne font-bold text-xl md:text-2xl uppercase tracking-tight text-ash flex justify-between items-end"
+          >
+            Leo <span class="text-blood text-sm md:text-lg">♌</span>
+          </span>
+        </div>
+      </div>
+
+      <!-- Middle Section: The Teaser Roast -->
+      <h1
+        class="title-reveal font-syne font-[800] text-5xl md:text-7xl uppercase tracking-tightest mb-12 text-ash leading-[0.9]"
+      >
+        Clinical<br />Findings.
+      </h1>
+
+      <div class="relative mb-8 max-w-3xl">
+        <!-- Left border accent -->
+        <div
+          class="absolute left-0 top-2 bottom-2 w-px bg-blood hidden md:block"
+        ></div>
+
+        <div
+          class="md:pl-8 space-y-8 text-base md:text-lg leading-[1.8] text-ash/80"
+        >
+          <p class="roast-paragraph">
+            An Aquarius Sun with a Scorpio Moon. So you oscillate between
+            wanting to save humanity and wanting to burn it all down — sometimes
+            in the same conversation. You have a God complex wrapped in a
+            persecution fetish. You intellectualize your emotions so
+            aggressively that your therapist has started charging double just to
+            deal with the migraine you give them.
+          </p>
+          <p class="roast-paragraph">
+            The Leo Rising means everyone thinks you have it together. You
+            don't. You just dress well. You use your charisma as a tactical
+            shield so nobody notices that internally, you are a paranoid control
+            freak who trusts absolutely no one. You pride yourself on your
+            detachment, thinking it makes you superior and mysterious.
+          </p>
+
+          <!-- The Blur Begins -->
+          <p
+            class="roast-paragraph fade-mask text-ash/50 blur-[3px] select-none pointer-events-none mt-4 transition-all duration-1000"
+          >
+            But the truth is, you're just terrified of being known. Your entire
+            personality is a carefully constructed defense mechanism designed to
+            prevent anyone from realizing that your deepest, darkest secret is
+            actually that you desperately crave the mainstream validation you
+            pretend to despise. Your Venus placement only exacerbates this by
+            forcing you to treat romantic partners as either profound
+            psychological experiments or hostile witnesses to your life.
+          </p>
+        </div>
+      </div>
+
+      <!-- Share Prompt (Above Paywall) -->
+      <div
+        class="share-reveal flex flex-col md:flex-row items-start md:items-center gap-4 mt-12 mb-24 md:pl-8 relative z-20"
+      >
+        <span class="text-[10px] uppercase tracking-[0.2em] text-ash/50"
+          >Can't handle the truth?</span
+        >
+        <button
+          class="cursor-hover border border-ash/20 bg-void px-4 py-2 text-xs uppercase tracking-widest text-ash hover:border-blood hover:text-blood transition-colors duration-300 flex items-center gap-2 group"
+        >
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            class="group-hover:rotate-12 transition-transform"
+          >
+            <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
+            <polyline points="16 6 12 2 8 6"></polyline>
+            <line x1="12" y1="2" x2="12" y2="15"></line>
+          </svg>
+          Share This Teaser
+        </button>
+      </div>
+
+      <!-- The Paywall Break -->
+      <div
+        class="paywall-reveal relative w-full pt-12 pb-24 mt-[-80px] md:mt-[-120px]"
+      >
+        <!-- Gradient Overlay to merge blur with paywall -->
+        <div
+          class="absolute top-0 left-0 w-full h-[150px] bg-gradient-to-b from-transparent via-void/90 to-void -z-10"
+        ></div>
+
+        <div
+          class="w-full max-w-2xl mx-auto border border-ash/10 bg-bruise/40 backdrop-blur-md p-8 md:p-12 relative overflow-hidden group"
+        >
+          <!-- Subtle noise inside box -->
+          <div
+            class="absolute inset-0 opacity-[0.02] bg-[url('data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22n%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.7%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23n)%22/%3E%3C/svg%3E')] pointer-events-none"
+          ></div>
+
+          <div class="relative z-10 text-center flex flex-col items-center">
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#FF2A00"
+              stroke-width="1.5"
+              class="mb-6 opacity-80"
+            >
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+
+            <p
+              class="font-mono text-ash/70 text-xs md:text-sm uppercase tracking-[0.2em] mb-8"
+            >
+              The full reading continues below.
+            </p>
+
+            <button
+              class="cursor-hover w-full bg-ash text-void font-syne font-[800] uppercase py-5 md:py-6 text-xl md:text-2xl tracking-tighter hover:bg-blood hover:text-ash transition-all duration-500 ease-out group-hover:shadow-[0_0_30px_rgba(255,42,0,0.2)]"
+            >
+              Unlock full reading — $5
+            </button>
+
+            <p
+              class="mt-8 font-mono text-ash/40 text-[10px] md:text-xs tracking-[0.1em] md:tracking-[0.2em] uppercase leading-relaxed"
+            >
+              Every planet. Every house.<br />Every pattern you've been
+              avoiding.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Blurred Preview Section -->
+      <div
+        class="max-w-3xl mx-auto opacity-30 select-none pointer-events-none mt-8 flex flex-col gap-12"
+      >
+        <div
+          class="preview-item border-l-2 border-blood/50 pl-6 md:pl-8 blur-[4px]"
+        >
+          <h3
+            class="font-syne font-bold text-2xl md:text-3xl uppercase tracking-tight mb-3 text-ash"
+          >
+            Your Venus Placement (Relationships)
+          </h3>
+          <p class="font-mono text-sm leading-relaxed text-ash/70">
+            [REDACTED] treating romantic relationships like a hostile corporate
+            merger. You don't actually want a partner, you want a [REDACTED] who
+            will validate your neuroses while asking for absolutely nothing in
+            return.
+          </p>
+        </div>
+
+        <div
+          class="preview-item border-l-2 border-blood/50 pl-6 md:pl-8 blur-[5px]"
+        >
+          <h3
+            class="font-syne font-bold text-2xl md:text-3xl uppercase tracking-tight mb-3 text-ash"
+          >
+            The Pattern You Keep Repeating
+          </h3>
+          <p class="font-mono text-sm leading-relaxed text-ash/70">
+            A pathological need to [REDACTED] right when things get comfortable.
+            When confronted, your default response is [REDACTED] which is why
+            your friends have a separate group chat without you.
+          </p>
+        </div>
+
+        <div
+          class="preview-item border-l-2 border-blood/50 pl-6 md:pl-8 blur-[6px]"
+        >
+          <h3
+            class="font-syne font-bold text-2xl md:text-3xl uppercase tracking-tight mb-3 text-ash"
+          >
+            Your Saturn Return
+          </h3>
+          <p class="font-mono text-sm leading-relaxed text-ash/70">
+            [REDACTED DATA DELETED] absolute structural collapse. [REDACTED]
+            prepare for the inevitable realization that [REDACTED].
+          </p>
+        </div>
+      </div>
+    </main>
+
+    <!-- Footer minimal -->
+    <footer class="border-t border-ash/10 mt-24 py-8 text-center relative z-10">
+      <p class="font-mono text-[10px] uppercase tracking-[0.3em] text-ash/30">
+        © ASTRO ROASTS // BRUTAL ASTROLOGY
+      </p>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+
+    <script>
+      // Custom Cursor Logic
+      const cursor = document.querySelector(".custom-cursor");
+      const hoverElements = document.querySelectorAll(".cursor-hover");
+
+      if (window.matchMedia("(pointer: fine)").matches) {
+        document.addEventListener("mousemove", (e) => {
+          gsap.to(cursor, {
+            x: e.clientX,
+            y: e.clientY,
+            duration: 0.15,
+            ease: "power2.out",
+          });
+        });
+
+        hoverElements.forEach((el) => {
+          el.addEventListener("mouseenter", () =>
+            cursor.classList.add("hover"),
+          );
+          el.addEventListener("mouseleave", () =>
+            cursor.classList.remove("hover"),
+          );
+        });
+      }
+
+      // GSAP Animations
+      gsap.registerPlugin(ScrollTrigger);
+
+      // Initial Load Timeline
+      const tl = gsap.timeline();
+
+      tl.from(".nav-reveal", {
+        y: -20,
+        opacity: 0,
+        duration: 1.2,
+        ease: "power4.out",
+      })
+        .from(
+          ".dossier-item",
+          {
+            y: 20,
+            opacity: 0,
+            duration: 1,
+            stagger: 0.1,
+            ease: "power3.out",
+          },
+          "-=0.8",
+        )
+        .from(
+          ".title-reveal",
+          {
+            y: 30,
+            opacity: 0,
+            duration: 1.2,
+            ease: "power4.out",
+          },
+          "-=0.6",
+        )
+        .from(
+          ".roast-paragraph",
+          {
+            y: 20,
+            opacity: 0,
+            duration: 1.2,
+            stagger: 0.2,
+            ease: "power3.out",
+          },
+          "-=0.8",
+        )
+        .from(
+          ".share-reveal",
+          {
+            opacity: 0,
+            duration: 1,
+            ease: "power2.out",
+          },
+          "-=0.4",
+        );
+
+      // Scroll Trigger for Paywall Box
+      gsap.from(".paywall-reveal", {
+        scrollTrigger: {
+          trigger: ".paywall-reveal",
+          start: "top 85%",
+        },
+        y: 50,
+        opacity: 0,
+        duration: 1.5,
+        ease: "power4.out",
+      });
+
+      // Scroll Trigger for Blurred Previews
+      gsap.utils.toArray(".preview-item").forEach((item, i) => {
+        gsap.from(item, {
+          scrollTrigger: {
+            trigger: item,
+            start: "top 95%",
+          },
+          y: 30,
+          opacity: 0,
+          duration: 1.2,
+          ease: "power3.out",
+        });
+      });
+    </script>
+  </body>
+</html>

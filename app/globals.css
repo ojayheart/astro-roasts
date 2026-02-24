@@ -1,0 +1,143 @@
+@import "tailwindcss";
+
+@theme {
+  --color-void: #030303;
+  --color-ash: #e5e5e5;
+  --color-blood: #ff2a00;
+  --color-bruise: #1a0500;
+
+  --font-syne: "Syne", sans-serif;
+  --font-mono: "DM Mono", monospace;
+
+  --animate-spin-slow: spin 20s linear infinite;
+  --animate-pulse-slow: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+:root {
+  cursor: none;
+}
+
+body {
+  background-color: var(--color-void);
+  color: var(--color-ash);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background-color: var(--color-blood);
+  color: var(--color-void);
+}
+
+/* Outline Text */
+.text-outline {
+  color: transparent;
+  -webkit-text-stroke: 1px var(--color-ash);
+}
+.text-outline-blood {
+  color: transparent;
+  -webkit-text-stroke: 1px var(--color-blood);
+}
+
+/* Hide Scrollbar */
+::-webkit-scrollbar {
+  width: 0px;
+  background: transparent;
+}
+
+/* Form Input Autocomplete Override */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 30px #030303 inset !important;
+  -webkit-text-fill-color: #e5e5e5 !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+/* Clip Text for hero animation */
+.clip-text {
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 0% 100%);
+}
+
+/* Callout block */
+.callout {
+  position: relative;
+  background: linear-gradient(
+    90deg,
+    rgba(26, 5, 0, 0.8) 0%,
+    rgba(3, 3, 3, 0) 100%
+  );
+}
+
+/* Teaser block */
+.teaser-block {
+  border-left: 2px solid var(--color-blood);
+  background: linear-gradient(90deg, var(--color-bruise) 0%, transparent 100%);
+}
+
+/* Paywall gradient */
+.paywall-gradient {
+  background: linear-gradient(
+    to top,
+    var(--color-void) 30%,
+    rgba(3, 3, 3, 0.8) 70%,
+    transparent 100%
+  );
+}
+
+.blur-protect {
+  user-select: none;
+  pointer-events: none;
+}
+
+/* Progress bar for full roast */
+.progress-container {
+  position: fixed;
+  left: 2rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1px;
+  height: 40vh;
+  background-color: rgba(229, 229, 229, 0.1);
+  z-index: 50;
+}
+
+@media (max-width: 768px) {
+  .progress-container {
+    display: none;
+  }
+}
+
+.progress-fill {
+  width: 100%;
+  height: 100%;
+  background-color: var(--color-blood);
+  transform-origin: top center;
+  transform: scaleY(0);
+}
+
+/* SVG Chart Glow */
+.chart-glow {
+  filter: drop-shadow(0 0 12px rgba(255, 42, 0, 0.2));
+}
+
+.blinking-dot {
+  animation: blink 2s infinite ease-in-out;
+}
+
+@keyframes blink {
+  0%,
+  100% {
+    opacity: 0.2;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Cursor styling */
+a,
+button {
+  cursor: none;
+}

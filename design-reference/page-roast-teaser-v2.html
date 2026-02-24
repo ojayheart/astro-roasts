@@ -1,0 +1,521 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>THE ROAST RESULTS | Astro Roasts</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=Syne:wght@400;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              void: "#030303",
+              ash: "#E5E5E5",
+              blood: "#FF2A00",
+              bruise: "#1A0500",
+            },
+            fontFamily: {
+              syne: ["Syne", "sans-serif"],
+              mono: ["DM Mono", "monospace"],
+            },
+            letterSpacing: {
+              tighter: "-0.04em",
+              tight: "-0.02em",
+              widest: "0.15em",
+              micro: "0.2em",
+            },
+          },
+        },
+      };
+    </script>
+
+    <style>
+      :root {
+        --void: #030303;
+        --ash: #e5e5e5;
+        --blood: #ff2a00;
+        --bruise: #1a0500;
+      }
+
+      body {
+        background-color: var(--void);
+        color: var(--ash);
+        font-family: "DM Mono", monospace;
+        overflow-x: hidden;
+        cursor: none;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      ::selection {
+        background-color: var(--blood);
+        color: var(--void);
+      }
+
+      /* Typography Utilities */
+      .font-syne {
+        font-family: "Syne", sans-serif;
+      }
+
+      .text-outline {
+        -webkit-text-stroke: 1px var(--ash);
+        color: transparent;
+      }
+
+      .text-outline-blood {
+        -webkit-text-stroke: 1px var(--blood);
+        color: transparent;
+      }
+
+      /* Custom Cursor */
+      #cursor {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 12px;
+        height: 12px;
+        background: var(--blood);
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 9999;
+        mix-blend-mode: difference;
+        transform: translate(-50%, -50%);
+        transition:
+          width 0.3s cubic-bezier(0.25, 1, 0.5, 1),
+          height 0.3s cubic-bezier(0.25, 1, 0.5, 1),
+          background 0.3s ease;
+        will-change: transform, width, height;
+      }
+
+      #cursor.cursor-hover {
+        width: 48px;
+        height: 48px;
+        background: var(--ash);
+      }
+
+      body:hover #cursor {
+        opacity: 1;
+      }
+
+      /* Noise Texture */
+      .noise {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        pointer-events: none;
+        z-index: 9998;
+        opacity: 0.04;
+        background: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+      }
+
+      /* Layout Gradients */
+      .paywall-gradient {
+        background: linear-gradient(
+          to top,
+          var(--void) 30%,
+          rgba(3, 3, 3, 0.8) 70%,
+          transparent 100%
+        );
+      }
+
+      .blur-protect {
+        user-select: none;
+        pointer-events: none;
+      }
+
+      .teaser-block {
+        border-left: 2px solid var(--blood);
+        background: linear-gradient(90deg, var(--bruise) 0%, transparent 100%);
+      }
+    </style>
+  </head>
+  <body class="antialiased">
+    <!-- Ambient Effects -->
+    <div id="cursor"></div>
+    <div class="noise"></div>
+
+    <main class="max-w-2xl mx-auto px-6 pt-16 pb-80 relative z-10">
+      <!-- Dossier Header -->
+      <header
+        class="dossier border border-bruise bg-void p-5 mb-16 relative overflow-hidden"
+      >
+        <!-- Decorative corner accent -->
+        <div class="absolute top-0 left-0 w-2 h-2 bg-blood"></div>
+
+        <div
+          class="grid grid-cols-2 md:grid-cols-4 gap-6 text-xs tracking-micro uppercase text-ash/60 font-light"
+        >
+          <div>
+            <span class="block text-blood mb-1.5 text-[10px] font-bold"
+              >Subject</span
+            >
+            <span class="text-ash font-medium">Oliver</span>
+          </div>
+          <div>
+            <span class="block text-blood mb-1.5 text-[10px] font-bold"
+              >Sun</span
+            >
+            <span class="text-ash font-medium">Aquarius ♒</span>
+          </div>
+          <div>
+            <span class="block text-blood mb-1.5 text-[10px] font-bold"
+              >Moon</span
+            >
+            <span class="text-ash font-medium">Scorpio ♏</span>
+          </div>
+          <div>
+            <span class="block text-blood mb-1.5 text-[10px] font-bold"
+              >Rising</span
+            >
+            <span class="text-ash font-medium">Leo ♌</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- Main Title -->
+      <h1
+        class="main-title font-syne text-4xl md:text-5xl font-extrabold uppercase tracking-tighter mb-12 text-outline"
+      >
+        Analysis Complete
+      </h1>
+
+      <!-- The Free Teaser -->
+      <div
+        class="teaser-block pl-6 md:pl-8 py-2 mb-8 space-y-8 text-lg md:text-xl text-ash/90 font-light leading-relaxed"
+      >
+        <p class="teaser-p">
+          You’re an Aquarius Sun, Scorpio Moon, and Leo Rising. On paper, that’s
+          a walking contradiction: someone who demands to be universally adored
+          while remaining fundamentally untouchable. You present this radiant,
+          magnanimous main-character energy to the world—thank the Leo ascendant
+          for that—drawing people into your orbit with an effortless, detached
+          charm. But beneath that sunny theatrical exterior beats the cold,
+          calculating heart of an Aquarius. You view human emotions less as
+          things to be felt, and more as fascinating sociological experiments to
+          be observed from a safe distance.
+        </p>
+
+        <p class="teaser-p">
+          Then we drop the Scorpio Moon into the mix, and your internal
+          landscape goes from merely eccentric to psychologically exhausting. A
+          Scorpio Moon requires absolute depth, total control, and unwavering
+          loyalty, yet your Aquarius Sun finds that exact kind of enmeshment
+          completely suffocating. So you compromise: you create intensely
+          obsessive, microscopic bonds with people, making them feel like they
+          are the only person in the universe. But the second they demand actual
+          emotional labor from you, you intellectualize your feelings, shut down
+          the experiment, and vanish. You are fiercely protective of a core you
+          refuse to let anyone actually see.
+        </p>
+
+        <p class="teaser-p">
+          And that is exactly why every single one of your relationships follows
+          the exact same tragic arc. You meet someone new, you perform
+          vulnerability while actually revealing absolutely nothing—deploying
+          just enough self-awareness to seem highly evolved—and the moment they
+          get close enough to see the thing you are genuinely terrified of
+          hiding—which, based on your Venus-Pluto aspect, is almost certainly
+          that you<span
+            class="text-blood font-bold text-2xl leading-none inline-block translate-y-1"
+            >—</span
+          >
+        </p>
+      </div>
+
+      <!-- Viral Loop / Share -->
+      <div class="share-wrapper mb-20 pl-6 md:pl-8">
+        <a
+          href="#"
+          class="hover-target inline-flex items-center text-blood text-sm tracking-widest uppercase font-medium hover:text-ash transition-colors duration-300"
+        >
+          [ Share your teaser ]
+        </a>
+      </div>
+
+      <!-- Progressive Blur Paywall Content -->
+      <div class="blur-container space-y-24 blur-protect">
+        <!-- Level 1 -->
+        <article class="blur-section" data-opacity="0.7">
+          <div style="filter: blur(1px)">
+            <h3
+              class="font-syne text-2xl md:text-3xl font-extrabold uppercase tracking-tighter mb-4 text-outline"
+            >
+              Your Venus Placement
+            </h3>
+            <p class="text-lg text-ash/90 leading-relaxed font-light">
+              ...are fundamentally terrified that if you stop performing, you
+              become entirely unlovable. Your Venus dictates a need for constant
+              aesthetic and intellectual stimulation, but your Pluto aspect
+              means you subconsciously sabotage peace because chaos feels like
+              the only thing you can control. When someone actually offers you
+              the stable, unconditional love you claim to want, you find a
+              microscopic flaw in their ideology just to have an excuse to burn
+              the bridge.
+            </p>
+          </div>
+        </article>
+
+        <!-- Level 2 -->
+        <article class="blur-section" data-opacity="0.5">
+          <div style="filter: blur(2px)">
+            <h3
+              class="font-syne text-2xl md:text-3xl font-extrabold uppercase tracking-tighter mb-4 text-outline"
+            >
+              Mercury & How You Argue
+            </h3>
+            <p class="text-lg text-ash/90 leading-relaxed font-light">
+              Your communication style is less about connection and more about
+              winning a psychological war of attrition. You rarely yell;
+              instead, you clinically dissect the other person's insecurities
+              with terrifying precision. You use your formidable intellect as a
+              weapon, convinced that if you can articulate exactly why someone
+              is wrong, you absolve yourself of the fact that you deeply hurt
+              them.
+            </p>
+          </div>
+        </article>
+
+        <!-- Level 3 -->
+        <article class="blur-section" data-opacity="0.35">
+          <div style="filter: blur(3px)">
+            <h3
+              class="font-syne text-2xl md:text-3xl font-extrabold uppercase tracking-tighter mb-4 text-outline"
+            >
+              The Mars Problem
+            </h3>
+            <p class="text-lg text-ash/90 leading-relaxed font-light">
+              The repressed anger is palpable. You pretend to be entirely above
+              petty squabbles, but your Mars placement tells a story of someone
+              keeping an eternal, invisible scoreboard. You never forget a
+              slight. Ever. You simply file it away in a mental folder until you
+              can use it three years later in a completely unrelated
+              conversation to absolutely devastating effect.
+            </p>
+          </div>
+        </article>
+
+        <!-- Level 4 -->
+        <article class="blur-section" data-opacity="0.25">
+          <div style="filter: blur(4px)">
+            <h3
+              class="font-syne text-2xl md:text-3xl font-extrabold uppercase tracking-tighter mb-4 text-outline"
+            >
+              Your Saturn Return
+            </h3>
+            <p class="text-lg text-ash/90 leading-relaxed font-light">
+              This represents the impending structural collapse of your
+              carefully curated life. Saturn is coming for the exact areas where
+              you've been faking competence. All that detached irony and sarcasm
+              won't save you when the universe demands actual, grounded
+              accountability. You're going to have to finally feel your feelings
+              instead of just taking immaculate notes on them.
+            </p>
+          </div>
+        </article>
+
+        <!-- Level 5 -->
+        <article class="blur-section" data-opacity="0.15">
+          <div style="filter: blur(5px)">
+            <h3
+              class="font-syne text-2xl md:text-3xl font-extrabold uppercase tracking-tighter mb-4 text-outline"
+            >
+              The Pattern You Repeat
+            </h3>
+            <p class="text-lg text-ash/90 leading-relaxed font-light">
+              Pushing people away and then fiercely resenting them for leaving.
+              You set impossible, contradictory tests for your friends and
+              partners, moving the goalposts so they inevitably fail. This just
+              confirms your core internal bias that people are inherently
+              disappointing. It's a brilliant self-fulfilling prophecy designed
+              to keep you totally safe, and completely alone.
+            </p>
+          </div>
+        </article>
+
+        <!-- Level 6 -->
+        <article class="blur-section" data-opacity="0.10">
+          <div style="filter: blur(6px)">
+            <h3
+              class="font-syne text-2xl md:text-3xl font-extrabold uppercase tracking-tighter mb-4 text-outline"
+            >
+              The Verdict
+            </h3>
+            <p class="text-lg text-ash/90 leading-relaxed font-light">
+              Stop treating your own life like a sociological study and the
+              people in it like expendable variables. Your brilliance is
+              undeniable, but your emotional cowardice is your defining trait.
+              Until you bridge the massive gap between your highly developed
+              head and your terrifyingly deep emotional well, you will just be a
+              very smart person sitting alone in a very beautiful room.
+            </p>
+          </div>
+        </article>
+      </div>
+    </main>
+
+    <!-- Sticky Paywall CTA -->
+    <div
+      class="paywall-ui fixed bottom-0 left-0 w-full pt-32 pb-8 px-6 paywall-gradient z-50 flex flex-col items-center justify-end pointer-events-none"
+    >
+      <div
+        class="pointer-events-auto w-full max-w-md flex flex-col items-center"
+      >
+        <span
+          class="text-[10px] md:text-xs font-mono tracking-widest text-ash/60 mb-4 uppercase text-center"
+        >
+          Every planet. Every house. Every pattern.
+        </span>
+        <button
+          class="hover-target w-full bg-ash text-void font-syne font-extrabold uppercase tracking-widest py-5 px-8 text-center text-lg md:text-xl hover:bg-blood hover:text-ash transition-colors duration-300 relative overflow-hidden group"
+        >
+          <span
+            class="relative z-10 block group-hover:scale-[1.02] transition-transform duration-300"
+            >Unlock full reading — $5</span
+          >
+        </button>
+      </div>
+    </div>
+
+    <!-- GSAP & ScrollTrigger -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+
+    <script>
+      // Custom Cursor Logic
+      const cursor = document.getElementById("cursor");
+      const hoverTargets = document.querySelectorAll(".hover-target");
+
+      // Mouse tracking with GSAP for smoothness
+      let mouseX = window.innerWidth / 2;
+      let mouseY = window.innerHeight / 2;
+
+      window.addEventListener("mousemove", (e) => {
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+        gsap.to(cursor, {
+          x: mouseX,
+          y: mouseY,
+          duration: 0.1,
+          ease: "power2.out",
+        });
+      });
+
+      // Hover states
+      hoverTargets.forEach((target) => {
+        target.addEventListener("mouseenter", () =>
+          cursor.classList.add("cursor-hover"),
+        );
+        target.addEventListener("mouseleave", () =>
+          cursor.classList.remove("cursor-hover"),
+        );
+      });
+
+      // Hide cursor when leaving window
+      document.addEventListener("mouseleave", () => {
+        gsap.to(cursor, { opacity: 0, duration: 0.2 });
+      });
+      document.addEventListener("mouseenter", () => {
+        gsap.to(cursor, { opacity: 1, duration: 0.2 });
+      });
+
+      // GSAP Animations
+      gsap.registerPlugin(ScrollTrigger);
+
+      // Initial Load Sequence
+      const tl = gsap.timeline();
+
+      tl.from(".dossier", {
+        y: -30,
+        opacity: 0,
+        duration: 1.2,
+        ease: "power4.out",
+        delay: 0.2,
+      })
+        .from(
+          ".main-title",
+          {
+            y: 20,
+            opacity: 0,
+            duration: 1,
+            ease: "power4.out",
+          },
+          "-=0.8",
+        )
+        .from(
+          ".teaser-block",
+          {
+            borderColor: "transparent",
+            duration: 0.8,
+            ease: "power2.out",
+          },
+          "-=0.6",
+        )
+        .from(
+          ".teaser-p",
+          {
+            y: 25,
+            opacity: 0,
+            duration: 1.2,
+            stagger: 0.3,
+            ease: "power3.out",
+          },
+          "-=0.8",
+        )
+        .from(
+          ".share-wrapper",
+          {
+            opacity: 0,
+            duration: 1,
+          },
+          "-=0.4",
+        )
+        .from(
+          ".paywall-ui",
+          {
+            y: 100,
+            opacity: 0,
+            duration: 1.5,
+            ease: "power4.out",
+          },
+          "-=1",
+        );
+
+      // Progressive Blur Scroll Reveals
+      gsap.utils.toArray(".blur-section").forEach((section) => {
+        const targetOpacity = section.getAttribute("data-opacity");
+
+        gsap.fromTo(
+          section,
+          {
+            y: 60,
+            opacity: 0,
+          },
+          {
+            y: 0,
+            opacity: targetOpacity,
+            duration: 1.5,
+            ease: "power3.out",
+            scrollTrigger: {
+              trigger: section,
+              start: "top 85%",
+              end: "top 60%",
+              toggleActions: "play none none reverse",
+            },
+          },
+        );
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,492 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Astro Roasts — You already know what it's going to say.</title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              void: "#070709",
+              surface: "#111114",
+              surfaceHover: "#1a1a1f",
+              ash: "#8f8f96",
+              bone: "#e5e5e5",
+              accent: "#a89fbe",
+            },
+            fontFamily: {
+              sans: ["Inter", "sans-serif"],
+              serif: ["Instrument Serif", "serif"],
+            },
+            animation: {
+              "slow-spin": "spin 12s linear infinite",
+              breathe: "breathe 8s ease-in-out infinite",
+            },
+            keyframes: {
+              breathe: {
+                "0%, 100%": { opacity: 0.4, transform: "scale(1)" },
+                "50%": { opacity: 0.7, transform: "scale(1.05)" },
+              },
+            },
+          },
+        },
+      };
+    </script>
+
+    <!-- GSAP -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+
+    <style>
+      :root {
+        color-scheme: dark;
+      }
+
+      body {
+        background-color: theme("colors.void");
+        color: theme("colors.bone");
+        overflow-x: hidden;
+      }
+
+      /* Subtle Noise Texture overlay */
+      .noise {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        pointer-events: none;
+        z-index: 50;
+        opacity: 0.03;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+      }
+
+      /* Animated Ambient Glows */
+      .ambient-glow-1 {
+        position: absolute;
+        top: -10vw;
+        left: -10vw;
+        width: 50vw;
+        height: 50vw;
+        background: radial-gradient(
+          circle,
+          rgba(168, 159, 190, 0.08) 0%,
+          rgba(7, 7, 9, 0) 70%
+        );
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 0;
+      }
+
+      .ambient-glow-2 {
+        position: absolute;
+        bottom: 10vw;
+        right: -10vw;
+        width: 60vw;
+        height: 60vw;
+        background: radial-gradient(
+          circle,
+          rgba(255, 255, 255, 0.03) 0%,
+          rgba(7, 7, 9, 0) 70%
+        );
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 0;
+      }
+
+      /* Custom Input Styling */
+      input[type="text"],
+      input[type="date"],
+      input[type="time"] {
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        transition: all 0.3s ease;
+      }
+      input:focus {
+        outline: none;
+        background: rgba(255, 255, 255, 0.05);
+        border-color: rgba(255, 255, 255, 0.2);
+        box-shadow: 0 0 15px rgba(255, 255, 255, 0.03);
+      }
+
+      /* Remove webkit date picker icons for cleaner look */
+      ::-webkit-calendar-picker-indicator {
+        filter: invert(1) opacity(0.5);
+        cursor: pointer;
+        transition: opacity 0.2s;
+      }
+      ::-webkit-calendar-picker-indicator:hover {
+        opacity: 0.8;
+      }
+
+      /* Premium button hover effect */
+      .btn-primary {
+        position: relative;
+        overflow: hidden;
+      }
+      .btn-primary::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(255, 255, 255, 0.1),
+          transparent
+        );
+        transition: all 0.5s ease;
+      }
+      .btn-primary:hover::after {
+        left: 100%;
+      }
+
+      /* Smooth reveal utility */
+      .clip-text {
+        clip-path: polygon(0 0, 100% 0, 100% 100%, 0% 100%);
+      }
+
+      /* Custom Selection */
+      ::selection {
+        background: rgba(168, 159, 190, 0.3);
+        color: #fff;
+      }
+    </style>
+  </head>
+  <body class="antialiased selection:bg-accent selection:text-void font-sans">
+    <!-- Noise Texture -->
+    <div class="noise"></div>
+
+    <!-- Navigation -->
+    <nav
+      class="fixed top-0 w-full z-40 mix-blend-difference px-6 py-6 flex justify-between items-center"
+    >
+      <div class="text-bone font-serif text-xl tracking-wide italic">
+        Astro Roasts
+      </div>
+      <div class="animate-slow-spin text-bone opacity-60">
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="currentColor"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M12 0L13.8 10.2L24 12L13.8 13.8L12 24L10.2 13.8L0 12L10.2 10.2L12 0Z"
+          />
+        </svg>
+      </div>
+    </nav>
+
+    <!-- Main Content wrapper -->
+    <main
+      class="relative z-10 w-full min-h-screen flex flex-col items-center justify-center pt-32 pb-20 px-4"
+    >
+      <div class="ambient-glow-1 animate-breathe"></div>
+      <div class="ambient-glow-2"></div>
+
+      <!-- Grid Layout for Desktop, Stacked for Mobile -->
+      <div
+        class="max-w-7xl w-full grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-8 items-start relative mt-10"
+      >
+        <!-- Left Column: Copy & Value Props -->
+        <div
+          class="lg:col-span-7 flex flex-col justify-center space-y-16 lg:sticky lg:top-32"
+        >
+          <header class="space-y-6 max-w-2xl">
+            <h1
+              class="font-serif text-5xl md:text-7xl lg:text-8xl leading-[0.9] tracking-tight text-bone reveal-text clip-text"
+            >
+              You already know <br /><span class="text-ash italic"
+                >what it's going to say.</span
+              >
+            </h1>
+            <p
+              class="font-sans text-lg md:text-xl text-ash font-light leading-relaxed max-w-md reveal-fade"
+            >
+              The reading your therapist wishes they could give you. Real natal
+              chart math, absolute honesty. We don't sugarcoat the math.
+            </p>
+          </header>
+
+          <div
+            class="space-y-12 max-w-md reveal-fade pt-8 border-t border-white/5"
+          >
+            <div class="space-y-3">
+              <h3 class="font-serif text-2xl text-bone flex items-center gap-3">
+                <span class="text-accent text-sm">✦</span> Real Ephemeris Data
+              </h3>
+              <p class="text-ash text-sm leading-relaxed">
+                This isn't generalized sun-sign fluff. We calculate exact
+                planetary positions at your birth minute to map your patterns.
+              </p>
+            </div>
+
+            <div class="space-y-3">
+              <h3 class="font-serif text-2xl text-bone flex items-center gap-3">
+                <span class="text-accent text-sm">✦</span> The Honesty is the
+                Kindness
+              </h3>
+              <p class="text-ash text-sm leading-relaxed">
+                Sometimes the most caring thing someone can do is point out your
+                textbook avoidance patterns and tell you to get out of your own
+                way.
+              </p>
+            </div>
+
+            <div class="pt-4">
+              <blockquote class="pl-4 border-l border-white/10">
+                <p class="text-ash italic font-serif text-lg">
+                  "Accurate to the point of being mildly impolite. I feel seen,
+                  and I'm slightly mad about it."
+                </p>
+                <footer
+                  class="text-xs text-ash/60 mt-2 tracking-widest uppercase"
+                >
+                  — M., Gemini
+                </footer>
+              </blockquote>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column: The Form & Pricing -->
+        <div
+          class="lg:col-span-5 w-full max-w-md mx-auto lg:ml-auto space-y-8 reveal-form"
+        >
+          <!-- The Form Card -->
+          <div
+            class="bg-surface/80 backdrop-blur-xl border border-white/5 rounded-2xl p-8 shadow-2xl relative overflow-hidden group"
+          >
+            <div
+              class="absolute inset-0 bg-gradient-to-b from-white/[0.03] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none"
+            ></div>
+
+            <div class="mb-8">
+              <h2 class="font-serif text-3xl text-bone mb-2">
+                Drop the coordinates.
+              </h2>
+              <p class="text-sm text-ash">
+                We need the exact details. The math doesn't lie.
+              </p>
+            </div>
+
+            <form class="space-y-5" onsubmit="event.preventDefault()">
+              <div class="space-y-1.5">
+                <label class="text-xs text-ash tracking-wide uppercase"
+                  >First Name</label
+                >
+                <input
+                  type="text"
+                  placeholder="e.g. Sarah"
+                  required
+                  class="w-full px-4 py-3 rounded-lg text-sm text-bone placeholder-white/20"
+                />
+              </div>
+
+              <div class="grid grid-cols-2 gap-4">
+                <div class="space-y-1.5">
+                  <label class="text-xs text-ash tracking-wide uppercase"
+                    >Date of Birth</label
+                  >
+                  <input
+                    type="date"
+                    required
+                    class="w-full px-4 py-3 rounded-lg text-sm text-bone"
+                  />
+                </div>
+                <div class="space-y-1.5">
+                  <label class="text-xs text-ash tracking-wide uppercase"
+                    >Exact Time</label
+                  >
+                  <input
+                    type="time"
+                    required
+                    class="w-full px-4 py-3 rounded-lg text-sm text-bone"
+                  />
+                </div>
+              </div>
+
+              <div class="space-y-1.5">
+                <label class="text-xs text-ash tracking-wide uppercase"
+                  >City of Birth</label
+                >
+                <input
+                  type="text"
+                  placeholder="e.g. Chicago, IL"
+                  required
+                  class="w-full px-4 py-3 rounded-lg text-sm text-bone placeholder-white/20"
+                />
+              </div>
+
+              <div class="pt-4">
+                <button
+                  type="submit"
+                  class="btn-primary w-full bg-bone text-void font-medium py-3.5 rounded-lg text-sm transition-transform active:scale-[0.98] hover:bg-white flex justify-center items-center gap-2"
+                >
+                  Calculate Chart
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                    <polyline points="12 5 19 12 12 19"></polyline>
+                  </svg>
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Pricing Options -->
+          <div class="grid grid-cols-1 gap-4">
+            <!-- Free Tier -->
+            <div
+              class="border border-white/5 rounded-xl p-5 hover:bg-surface/50 transition-colors cursor-default group flex justify-between items-center"
+            >
+              <div>
+                <h4 class="font-serif text-xl text-bone">The Teaser</h4>
+                <p class="text-xs text-ash mt-1 max-w-[200px]">
+                  A quick glance. One pattern. Just enough to confirm your
+                  suspicions.
+                </p>
+              </div>
+              <div
+                class="text-sm font-medium text-ash group-hover:text-bone transition-colors"
+              >
+                Free
+              </div>
+            </div>
+
+            <!-- Paid Tier -->
+            <div
+              class="border border-white/10 bg-surface/30 rounded-xl p-5 hover:bg-surface transition-colors cursor-default relative overflow-hidden group flex justify-between items-center"
+            >
+              <div
+                class="absolute inset-0 bg-gradient-to-r from-accent/0 via-accent/5 to-accent/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"
+              ></div>
+              <div class="relative z-10">
+                <h4
+                  class="font-serif text-xl text-bone flex items-center gap-2"
+                >
+                  The Full Read
+                  <svg
+                    class="text-accent"
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                  >
+                    <path
+                      d="M12 0L13.8 10.2L24 12L13.8 13.8L12 24L10.2 13.8L0 12L10.2 10.2L12 0Z"
+                    />
+                  </svg>
+                </h4>
+                <p class="text-xs text-ash mt-1 max-w-[220px]">
+                  Every placement, every blind spot. Brutally honest,
+                  beautifully mapped.
+                </p>
+              </div>
+              <div class="text-sm font-medium text-bone relative z-10">$5</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <footer
+      class="w-full py-8 text-center border-t border-white/5 relative z-10"
+    >
+      <p class="text-xs text-ash/40 tracking-wider">
+        ASTRO ROASTS &copy; 2024 <span class="mx-2">✦</span> WRITTEN IN THE
+        STARS, UNFORTUNATELY.
+      </p>
+    </footer>
+
+    <script>
+      // Register ScrollTrigger
+      gsap.registerPlugin(ScrollTrigger);
+
+      // Initial Load Animations
+      const tl = gsap.timeline();
+
+      // Animate H1 line by line
+      tl.from(".reveal-text", {
+        y: 100,
+        opacity: 0,
+        duration: 1.2,
+        ease: "power4.out",
+        delay: 0.2,
+      })
+
+        // Fade in left side content
+        .from(
+          ".reveal-fade",
+          {
+            y: 20,
+            opacity: 0,
+            duration: 1,
+            stagger: 0.2,
+            ease: "power3.out",
+          },
+          "-=0.8",
+        )
+
+        // Slide up form card
+        .from(
+          ".reveal-form",
+          {
+            y: 40,
+            opacity: 0,
+            duration: 1.2,
+            ease: "power3.out",
+          },
+          "-=1",
+        );
+
+      // Subtle parallax on ambient glows
+      gsap.to(".ambient-glow-1", {
+        yPercent: 20,
+        ease: "none",
+        scrollTrigger: {
+          trigger: "body",
+          start: "top top",
+          end: "bottom top",
+          scrub: true,
+        },
+      });
+
+      gsap.to(".ambient-glow-2", {
+        yPercent: -20,
+        ease: "none",
+        scrollTrigger: {
+          trigger: "body",
+          start: "top top",
+          end: "bottom top",
+          scrub: true,
+        },
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,487 @@
+<!doctype html>
+<html
+  lang="en"
+  class="bg-[#030303] text-white antialiased selection:bg-white/20 selection:text-white"
+>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Astro Roasts | Unfiltered Readings</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Inter:wght@300;400&display=swap"
+      rel="stylesheet"
+    />
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              serif: ['"Cormorant Garamond"', "serif"],
+              sans: ["Inter", "sans-serif"],
+            },
+            colors: {
+              "off-white": "#e5e5e5",
+              void: "#030303",
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      ::-webkit-scrollbar {
+        width: 0px;
+        background: transparent;
+      }
+      body {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+        background-color: #030303;
+      }
+
+      input:-webkit-autofill,
+      input:-webkit-autofill:hover,
+      input:-webkit-autofill:focus,
+      input:-webkit-autofill:active {
+        -webkit-box-shadow: 0 0 0 30px #030303 inset !important;
+        -webkit-text-fill-color: #e5e5e5 !important;
+        transition: background-color 5000s ease-in-out 0s;
+      }
+
+      input::placeholder {
+        color: rgba(255, 255, 255, 0.15);
+        transition: color 0.3s;
+      }
+      input:focus::placeholder {
+        color: transparent;
+      }
+
+      .noise {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        pointer-events: none;
+        z-index: 9999;
+        opacity: 0.035;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+      }
+
+      @keyframes breathe {
+        0%,
+        100% {
+          transform: translate(-50%, -50%) scale(1);
+          opacity: 0.5;
+        }
+        50% {
+          transform: translate(-50%, -50%) scale(1.15);
+          opacity: 0.8;
+        }
+      }
+      .animate-breathe {
+        animation: breathe 10s ease-in-out infinite;
+      }
+
+      .cursor-glow {
+        width: 600px;
+        height: 600px;
+        border-radius: 50%;
+        background: radial-gradient(
+          circle,
+          rgba(90, 10, 20, 0.08) 0%,
+          transparent 60%
+        );
+        pointer-events: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: 0;
+        mix-blend-mode: screen;
+        transform: translate(-50%, -50%);
+        display: none;
+      }
+      @media (min-width: 768px) {
+        .cursor-glow {
+          display: block;
+        }
+      }
+    </style>
+  </head>
+  <body class="overflow-hidden">
+    <div class="noise"></div>
+    <div id="cursor-glow" class="cursor-glow"></div>
+    <div
+      class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[100vw] h-[100vw] md:w-[50vw] md:h-[50vw] bg-[radial-gradient(circle,rgba(60,10,30,0.06)_0%,transparent_70%)] rounded-full pointer-events-none blur-3xl animate-breathe z-0"
+    ></div>
+
+    <header
+      class="fixed top-0 left-0 w-full p-6 md:p-8 flex justify-between items-center z-40 pointer-events-none"
+    >
+      <div
+        class="font-sans text-[9px] md:text-[10px] tracking-[0.4em] uppercase text-white/30"
+      >
+        Astro Roasts
+      </div>
+      <div
+        class="font-sans text-[9px] md:text-[10px] tracking-[0.4em] uppercase text-white/30"
+      >
+        Unfiltered
+      </div>
+    </header>
+
+    <main
+      id="hero-section"
+      class="h-screen w-full flex flex-col items-center justify-center fixed top-0 left-0 z-10 px-6"
+    >
+      <div class="w-full max-w-4xl mx-auto relative z-10">
+        <h1
+          id="hero-title"
+          class="text-center font-serif text-3xl md:text-5xl lg:text-6xl text-off-white mb-12 md:mb-20 font-light opacity-0 translate-y-4 tracking-wide"
+        >
+          We won't tell you <br /><span class="italic text-white/50"
+            >what you want to hear.</span
+          >
+        </h1>
+
+        <form id="astro-form" class="w-full space-y-16 opacity-0 translate-y-4">
+          <div
+            class="text-xl md:text-3xl lg:text-4xl font-serif leading-[2.2] md:leading-[1.8] text-white/70 text-center font-light"
+          >
+            My name is
+            <input
+              type="text"
+              id="name"
+              class="bg-transparent border-b border-white/10 text-white outline-none w-28 md:w-40 lg:w-48 text-center focus:border-white/60 transition-colors mx-1 md:mx-2 pb-1"
+              placeholder="first name"
+              required
+              autocomplete="off"
+              spellcheck="false"
+            />, <br class="md:hidden" />
+            I was born on
+            <input
+              type="text"
+              id="date"
+              class="bg-transparent border-b border-white/10 text-white outline-none w-32 md:w-48 lg:w-56 text-center focus:border-white/60 transition-colors mx-1 md:mx-2 pb-1"
+              placeholder="DD/MM/YYYY"
+              required
+              autocomplete="off"
+              spellcheck="false"
+            />, <br class="hidden lg:block" />
+            at
+            <input
+              type="text"
+              id="time"
+              class="bg-transparent border-b border-white/10 text-white outline-none w-24 md:w-32 lg:w-40 text-center focus:border-white/60 transition-colors mx-1 md:mx-2 pb-1"
+              placeholder="11:45 PM"
+              required
+              autocomplete="off"
+              spellcheck="false"
+            />. <br class="md:hidden" />
+            The sky was above
+            <input
+              type="text"
+              id="location"
+              class="bg-transparent border-b border-white/10 text-white outline-none w-40 md:w-56 lg:w-64 text-center focus:border-white/60 transition-colors mx-1 md:mx-2 pb-1"
+              placeholder="city, country"
+              required
+              autocomplete="off"
+              spellcheck="false"
+            />.
+          </div>
+
+          <div class="flex justify-center">
+            <button
+              type="submit"
+              class="group relative inline-flex items-center justify-center overflow-hidden rounded-full py-4 px-10 text-[10px] md:text-xs uppercase tracking-[0.3em] text-white/80 border border-white/10 hover:border-white/40 hover:text-white transition-all duration-700 bg-transparent hover:bg-white/5"
+            >
+              <span class="relative z-10">See yours</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </main>
+
+    <section
+      id="loading-section"
+      class="h-screen w-full flex flex-col items-center justify-center fixed top-0 left-0 z-20 pointer-events-none opacity-0 hidden"
+    >
+      <div
+        id="loading-text"
+        class="font-serif text-xl md:text-3xl text-white/50 italic tracking-wide"
+      >
+        Aligning stars...
+      </div>
+    </section>
+
+    <section
+      id="preview-section"
+      class="w-full relative z-30 pt-[80vh] hidden opacity-0"
+    >
+      <div
+        id="scroll-indicator"
+        class="fixed bottom-12 left-1/2 transform -translate-x-1/2 flex flex-col items-center gap-4 opacity-0 z-50 transition-opacity duration-1000 pointer-events-none"
+      >
+        <span
+          class="font-sans text-[8px] uppercase tracking-[0.4em] text-white/30"
+          >Descend</span
+        >
+        <div
+          class="w-[1px] h-16 bg-gradient-to-b from-white/20 to-transparent"
+        ></div>
+      </div>
+
+      <div
+        class="min-h-[250vh] flex flex-col items-center justify-start px-6 max-w-3xl mx-auto pb-48"
+      >
+        <p
+          class="preview-line normal-line text-2xl md:text-4xl lg:text-5xl font-serif text-off-white leading-relaxed mb-[40vh] text-center opacity-0 transform translate-y-12"
+        >
+          Here is the truth,
+          <span id="out-name" class="italic text-white"></span>.
+        </p>
+
+        <p
+          class="preview-line normal-line text-2xl md:text-4xl lg:text-5xl font-serif text-white/80 leading-relaxed mb-[40vh] text-center opacity-0 transform translate-y-12"
+        >
+          You spend a staggering amount of energy cultivating an aesthetic of
+          mystery.
+        </p>
+
+        <p
+          class="preview-line normal-line text-2xl md:text-4xl lg:text-5xl font-serif text-white/70 leading-relaxed mb-[40vh] text-center opacity-0 transform translate-y-12"
+        >
+          But your chart reveals it's just a shield. You over-analyze people so
+          you never actually have to be vulnerable with them.
+        </p>
+
+        <p
+          class="preview-line blur-reveal text-2xl md:text-4xl lg:text-5xl font-serif text-white/50 leading-relaxed mb-[15vh] text-center opacity-0 transform translate-y-12"
+        >
+          Your Moon placement suggests a desperate craving to be deeply
+          understood, yet you actively sabotage anyone who gets close enough to
+          try because...
+        </p>
+
+        <div
+          class="cta-container flex flex-col items-center justify-center mt-20 opacity-0 transform translate-y-12 mb-[20vh] w-full relative z-50"
+        >
+          <div
+            class="w-[1px] h-32 bg-gradient-to-b from-transparent to-white/10 mb-16"
+          ></div>
+          <button
+            class="group relative inline-flex items-center justify-center py-5 px-12 md:px-16 text-[10px] md:text-xs uppercase tracking-[0.3em] text-black bg-white/90 hover:bg-white transition-all duration-500 hover:scale-[1.02] cursor-pointer"
+          >
+            <span>Full reading — $5</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <script>
+      gsap.registerPlugin(ScrollTrigger);
+
+      document.addEventListener("DOMContentLoaded", () => {
+        const cursorGlow = document.getElementById("cursor-glow");
+        if (window.innerWidth > 768) {
+          window.addEventListener("mousemove", (e) => {
+            gsap.to(cursorGlow, {
+              x: e.clientX,
+              y: e.clientY,
+              duration: 0.8,
+              ease: "power2.out",
+            });
+          });
+        }
+
+        const heroTl = gsap.timeline({ delay: 0.3 });
+        heroTl
+          .to("#hero-title", {
+            opacity: 1,
+            y: 0,
+            duration: 2,
+            ease: "power3.out",
+          })
+          .to(
+            "#astro-form",
+            { opacity: 1, y: 0, duration: 2, ease: "power3.out" },
+            "-=1.4",
+          );
+
+        const form = document.getElementById("astro-form");
+
+        form.addEventListener("submit", (e) => {
+          e.preventDefault();
+
+          const rawName = document.getElementById("name").value.trim();
+          const name = rawName.charAt(0).toUpperCase() + rawName.slice(1);
+          document.getElementById("out-name").innerText = name || "stranger";
+
+          const mainTl = gsap.timeline();
+
+          mainTl.to("#hero-section", {
+            opacity: 0,
+            scale: 0.97,
+            filter: "blur(8px)",
+            duration: 1.5,
+            ease: "power2.inOut",
+            onComplete: () => {
+              document.getElementById("hero-section").classList.add("hidden");
+            },
+          });
+
+          mainTl.call(() => {
+            document
+              .getElementById("loading-section")
+              .classList.remove("hidden");
+          });
+          mainTl.to("#loading-section", { opacity: 1, duration: 1 }, "-=0.5");
+
+          const loaderText = document.getElementById("loading-text");
+          const phrases = [
+            "Locating coordinates...",
+            "Analyzing placements...",
+            "Drafting the damage...",
+          ];
+
+          phrases.forEach((phrase, index) => {
+            mainTl
+              .to(loaderText, {
+                opacity: 0,
+                y: -10,
+                duration: 0.5,
+                delay: index === 0 ? 0.5 : 0.6,
+                ease: "power2.inOut",
+              })
+              .call(() => {
+                loaderText.innerText = phrase;
+              })
+              .to(loaderText, {
+                opacity: 1,
+                y: 0,
+                duration: 0.5,
+                ease: "power2.out",
+              });
+          });
+
+          mainTl
+            .to(loaderText, { opacity: 0, duration: 1, delay: 0.8 })
+            .to("#loading-section", { opacity: 0, duration: 0.5 }, "-=0.5")
+            .call(() => {
+              document
+                .getElementById("loading-section")
+                .classList.add("hidden");
+              startPreviewScroll();
+            });
+        });
+
+        function startPreviewScroll() {
+          const previewSection = document.getElementById("preview-section");
+          previewSection.classList.remove("hidden");
+
+          document.body.classList.remove("overflow-hidden");
+          document.body.classList.add("overflow-auto");
+
+          gsap.to(previewSection, { opacity: 1, duration: 1 });
+          gsap.to("#scroll-indicator", {
+            opacity: 1,
+            duration: 1.5,
+            delay: 0.5,
+          });
+
+          window.addEventListener(
+            "scroll",
+            () => {
+              if (window.scrollY > 30) {
+                gsap.to("#scroll-indicator", { opacity: 0, duration: 0.5 });
+              }
+            },
+            { once: true },
+          );
+
+          gsap.utils.toArray(".normal-line").forEach((line) => {
+            const lineTl = gsap.timeline({
+              scrollTrigger: {
+                trigger: line,
+                start: "top 85%",
+                end: "top 15%",
+                scrub: 1,
+              },
+            });
+
+            lineTl
+              .fromTo(
+                line,
+                { opacity: 0, y: 60 },
+                { opacity: 1, y: 0, duration: 0.4, ease: "power1.out" },
+              )
+              .to(
+                line,
+                { opacity: 0, y: -40, duration: 0.4, ease: "power1.in" },
+                "+=0.2",
+              );
+          });
+
+          const blurLine = document.querySelector(".blur-reveal");
+          const blurTl = gsap.timeline({
+            scrollTrigger: {
+              trigger: blurLine,
+              start: "top 85%",
+              end: "top 20%",
+              scrub: 1,
+            },
+          });
+
+          blurTl
+            .fromTo(
+              blurLine,
+              { opacity: 0, y: 60, filter: "blur(0px)" },
+              {
+                opacity: 1,
+                y: 0,
+                filter: "blur(0px)",
+                duration: 0.4,
+                ease: "power1.out",
+              },
+            )
+            .to(
+              blurLine,
+              {
+                opacity: 0.2,
+                filter: "blur(12px)",
+                duration: 0.6,
+                ease: "power1.inOut",
+              },
+              "+=0.1",
+            );
+
+          gsap.fromTo(
+            ".cta-container",
+            { opacity: 0, scale: 0.95, y: 40 },
+            {
+              opacity: 1,
+              scale: 1,
+              y: 0,
+              scrollTrigger: {
+                trigger: ".cta-container",
+                start: "top 90%",
+                end: "top 70%",
+                scrub: 1,
+              },
+            },
+          );
+
+          ScrollTrigger.refresh();
+        }
+      });
+    </script>
+  </body>
+</html>

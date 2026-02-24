@@ -1,0 +1,561 @@
+<!doctype html>
+<html
+  lang="en"
+  class="scroll-smooth bg-[#030303] text-[#E5E5E5] selection:bg-[#FF2A00] selection:text-white antialiased"
+>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Astro Roasts // THE FULL ROAST</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300;1,400&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- GSAP -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+
+    <!-- Tailwind Config -->
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              void: "#030303",
+              ash: "#E5E5E5",
+              blood: "#FF2A00",
+              bruise: "#1A0500",
+            },
+            fontFamily: {
+              syne: ["Syne", "sans-serif"],
+              mono: ["DM Mono", "monospace"],
+            },
+            letterSpacing: {
+              tighter: "-0.04em",
+              widest: "0.2em",
+            },
+          },
+        },
+      };
+    </script>
+
+    <style>
+      body {
+        cursor: none;
+        overflow-x: hidden;
+      }
+
+      /* Noise Overlay */
+      .noise {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        pointer-events: none;
+        z-index: 9999;
+        opacity: 0.04;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+      }
+
+      /* Custom Cursor */
+      .cursor-dot,
+      .cursor-outline {
+        position: fixed;
+        top: 0;
+        left: 0;
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 10000;
+        transform: translate(-50%, -50%);
+        mix-blend-mode: difference;
+      }
+
+      .cursor-dot {
+        width: 8px;
+        height: 8px;
+        background-color: #ff2a00;
+        transition:
+          width 0.2s cubic-bezier(0.19, 1, 0.22, 1),
+          height 0.2s cubic-bezier(0.19, 1, 0.22, 1);
+      }
+
+      .cursor-outline {
+        width: 40px;
+        height: 40px;
+        border: 1px solid #ff2a00;
+        transition:
+          width 0.3s cubic-bezier(0.19, 1, 0.22, 1),
+          height 0.3s cubic-bezier(0.19, 1, 0.22, 1),
+          background-color 0.3s cubic-bezier(0.19, 1, 0.22, 1),
+          border-color 0.3s cubic-bezier(0.19, 1, 0.22, 1);
+      }
+
+      /* Hover States for interactive elements */
+      body.hovering .cursor-dot {
+        width: 0px;
+        height: 0px;
+      }
+
+      body.hovering .cursor-outline {
+        width: 60px;
+        height: 60px;
+        background-color: white;
+        border-color: white;
+      }
+
+      /* Progress Bar */
+      .progress-container {
+        position: fixed;
+        left: 2rem;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 1px;
+        height: 40vh;
+        background-color: rgba(229, 229, 229, 0.1);
+        z-index: 50;
+      }
+
+      @media (max-width: 768px) {
+        .progress-container {
+          display: none;
+        }
+      }
+
+      .progress-fill {
+        width: 100%;
+        height: 100%;
+        background-color: #ff2a00;
+        transform-origin: top center;
+        transform: scaleY(0);
+      }
+
+      /* Custom Callout Selection */
+      .callout {
+        position: relative;
+        background: linear-gradient(
+          90deg,
+          rgba(26, 5, 0, 0.8) 0%,
+          rgba(3, 3, 3, 0) 100%
+        );
+      }
+
+      a,
+      button {
+        cursor: none;
+      }
+    </style>
+  </head>
+  <body
+    class="bg-void text-ash font-mono font-light text-lg leading-[1.9] tracking-tight"
+  >
+    <!-- Noise Texture -->
+    <div class="noise"></div>
+
+    <!-- Custom Cursor -->
+    <div class="cursor-dot" id="cursor-dot"></div>
+    <div class="cursor-outline" id="cursor-outline"></div>
+
+    <!-- Scroll Progress Indicator -->
+    <div class="progress-container">
+      <div class="progress-fill" id="progress-fill"></div>
+    </div>
+
+    <main class="max-w-3xl mx-auto px-6 py-24 md:py-32 relative z-10">
+      <!-- HEADER: THE DOSSIER -->
+      <header class="mb-32 gs-reveal">
+        <p
+          class="font-mono text-[10px] md:text-xs uppercase tracking-widest text-blood mb-6 flex items-center gap-4"
+        >
+          <span class="w-12 h-px bg-blood"></span>
+          RESTRICTED CLEARANCE // DO NOT DISTRIBUTE
+        </p>
+        <h1
+          class="font-syne font-extrabold text-6xl md:text-8xl tracking-tighter uppercase mb-12 text-ash leading-none"
+        >
+          Subject:<br />Oliver
+        </h1>
+
+        <div class="border-y border-ash/10 py-8 relative bg-void">
+          <div
+            class="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-bruise/30 to-transparent pointer-events-none"
+          ></div>
+          <div
+            class="grid grid-cols-2 md:grid-cols-4 gap-y-8 gap-x-4 font-mono text-sm uppercase tracking-widest text-ash/80 relative z-10"
+          >
+            <div>
+              <span class="block text-ash/40 text-[10px] mb-2 font-medium"
+                >SUN</span
+              >
+              Aquarius
+            </div>
+            <div>
+              <span class="block text-ash/40 text-[10px] mb-2 font-medium"
+                >MOON</span
+              >
+              Scorpio
+            </div>
+            <div>
+              <span class="block text-ash/40 text-[10px] mb-2 font-medium"
+                >RISING</span
+              >
+              Leo
+            </div>
+            <div>
+              <span class="block text-ash/40 text-[10px] mb-2 font-medium"
+                >MERCURY</span
+              >
+              Capricorn
+            </div>
+            <div>
+              <span class="block text-ash/40 text-[10px] mb-2 font-medium"
+                >VENUS</span
+              >
+              Pisces
+            </div>
+            <div>
+              <span class="block text-ash/40 text-[10px] mb-2 font-medium"
+                >MARS</span
+              >
+              Aries
+            </div>
+            <div>
+              <span class="block text-ash/40 text-[10px] mb-2 font-medium"
+                >JUPITER</span
+              >
+              Scorpio
+            </div>
+            <div>
+              <span class="block text-ash/40 text-[10px] mb-2 font-medium"
+                >SATURN</span
+              >
+              Pisces
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- SECTION 1: THE OVERVIEW -->
+      <section
+        class="border-t border-ash/10 pt-20 mt-20 gs-reveal relative"
+        id="section-1"
+      >
+        <h2
+          class="font-syne font-extrabold text-4xl md:text-5xl tracking-tighter uppercase mb-10 text-ash"
+        >
+          01 // The Overview
+        </h2>
+
+        <div class="space-y-8 text-ash/70">
+          <p>
+            You want to save humanity, but you don't actually like people. As an
+            Aquarius Sun, you operate with a quiet, undeniable god complex. You
+            view the rest of us like an anthropologist observing a particularly
+            messy species. You pride yourself on your cool detachment, but let's
+            be honest—it's mostly just a defense mechanism disguised as
+            intellectual superiority.
+          </p>
+
+          <p>
+            Then we have the Scorpio Moon. Beneath that icy, alien exterior is a
+            swirling vortex of obsessive, secretive emotions that you absolutely
+            refuse to talk about. You feel everything at volume 11, but you'd
+            rather walk into oncoming traffic than admit you're hurt. You hold
+            grudges from 2014 against people who don't even remember your name.
+          </p>
+
+          <div
+            class="callout border-l-2 border-blood pl-6 py-6 my-12 text-ash font-medium text-xl md:text-2xl leading-relaxed italic"
+          >
+            "Your Leo Rising demands a standing ovation, but your Scorpio Moon
+            resents anyone who actually looks at you."
+          </div>
+
+          <p>
+            And bridging this nightmare gap is your Leo Rising. You act aloof so
+            people will try harder to impress you. You need to be perceived as
+            special, unique, and effortlessly cool. You are a walking
+            contradiction: an alien wearing a crown, crying in a dark room,
+            furiously hoping someone notices how mysterious you look while doing
+            it.
+          </p>
+        </div>
+      </section>
+
+      <!-- SECTION 2: YOUR MIND -->
+      <section
+        class="border-t border-ash/10 pt-20 mt-20 gs-reveal relative"
+        id="section-2"
+      >
+        <h2
+          class="font-syne font-extrabold text-4xl md:text-5xl tracking-tighter uppercase mb-10 text-ash"
+        >
+          02 // Your Mind
+        </h2>
+
+        <div class="space-y-8 text-ash/70">
+          <p>
+            Mercury in Capricorn. You don't have conversations; you conduct
+            performance reviews. You think in spreadsheets, timelines, and risk
+            assessments, and you genuinely wonder why no one finds you fun at
+            parties.
+          </p>
+
+          <p>
+            You have mentally optimized your commute, your friendships, and your
+            grief. Relaxing is something you schedule for 4:15 PM on Thursdays,
+            and if it goes over by five minutes, you feel a deep, existential
+            guilt. When people come to you with their problems, you offer them a
+            5-step action plan instead of a hug. You are practically allergic to
+            inefficiency.
+          </p>
+        </div>
+      </section>
+
+      <!-- SECTION 3: YOUR HEART -->
+      <section
+        class="border-t border-ash/10 pt-20 mt-20 gs-reveal relative"
+        id="section-3"
+      >
+        <h2
+          class="font-syne font-extrabold text-4xl md:text-5xl tracking-tighter uppercase mb-10 text-ash"
+        >
+          03 // Your Heart
+        </h2>
+
+        <div class="space-y-8 text-ash/70">
+          <p>
+            Venus in Pisces. For someone so aggressively analytical everywhere
+            else, your love life is a spectacular, chaotic delusion. You want a
+            soulmate, but you keep choosing projects. You fall in love with
+            potential instead of reality, turning screaming red flags into a
+            beautifully tragic tapestry of "but I can fix them."
+          </p>
+
+          <div
+            class="callout border-l-2 border-blood pl-6 py-6 my-12 text-ash font-medium text-xl md:text-2xl leading-relaxed italic"
+          >
+            "Stop trying to heal people who just need a therapist. You aren't a
+            rehabilitation center."
+          </div>
+
+          <p>
+            You forgive way too much, absorb their trauma like a sponge, and
+            then slowly resent them for the boundaries you completely failed to
+            set. You crave a boundary-less merging of souls, but the minute
+            someone actually tries to get that close, your Aquarius Sun panics
+            and changes the locks.
+          </p>
+        </div>
+      </section>
+
+      <!-- SECTION 4: YOUR DRIVE -->
+      <section
+        class="border-t border-ash/10 pt-20 mt-20 gs-reveal relative"
+        id="section-4"
+      >
+        <h2
+          class="font-syne font-extrabold text-4xl md:text-5xl tracking-tighter uppercase mb-10 text-ash"
+        >
+          04 // Your Drive
+        </h2>
+
+        <div class="space-y-8 text-ash/70">
+          <p>
+            Mars in Aries. You go from zero to nuclear in three seconds flat.
+            Your ambition is a blunt instrument. You don't want to win
+            eventually; you want to win right now, and if you can't, you'll flip
+            the board and claim the game was stupid anyway.
+          </p>
+
+          <p>
+            Your anger burns hot and fast. You will absolutely scorch the earth
+            in an argument, deliver a devastating, hyper-specific insult, and
+            then completely forget why you were mad ten minutes later. The
+            problem is, everyone else remembers.
+          </p>
+        </div>
+      </section>
+
+      <!-- SECTION 5: THE PATTERNS -->
+      <section
+        class="border-t border-ash/10 pt-20 mt-20 gs-reveal relative"
+        id="section-5"
+      >
+        <h2
+          class="font-syne font-extrabold text-4xl md:text-5xl tracking-tighter uppercase mb-10 text-ash"
+        >
+          05 // The Patterns
+        </h2>
+
+        <div class="space-y-8 text-ash/70">
+          <p>
+            Let's look at the terrifying architecture of this chart. You have
+            three planets in water signs and absolutely zero coping mechanisms
+            for it. You intellectualize your feelings to an absurd degree,
+            trapping all that Scorpio and Pisces emotion in a Capricorn/Aquarius
+            pressure cooker.
+          </p>
+
+          <div
+            class="callout border-l-2 border-blood pl-6 py-6 my-12 text-ash font-medium text-xl md:text-2xl leading-relaxed italic"
+          >
+            "Your chart is a constant war between needing total control and
+            wanting to be utterly swept away."
+          </div>
+
+          <p>
+            You overthink until the pressure breaks, then you erupt (thanks to
+            Mars in Aries) or isolate entirely, sinking to the bottom of the
+            ocean where no one can perceive you. You construct massive,
+            impenetrable walls, and then sit quietly behind them, hoping someone
+            cares enough to scale them.
+          </p>
+        </div>
+      </section>
+
+      <!-- SECTION 6: THE VERDICT -->
+      <section
+        class="border-t border-ash/10 pt-20 mt-20 gs-reveal relative"
+        id="section-6"
+      >
+        <h2
+          class="font-syne font-extrabold text-4xl md:text-5xl tracking-tighter uppercase mb-10 text-ash"
+        >
+          06 // The Verdict
+        </h2>
+
+        <div class="space-y-8 text-ash/70">
+          <p>
+            Look, Oliver. For all your walls, your intellectual superiority
+            complexes, and your terrifying mood swings, you are deeply, fiercely
+            loyal. You see the world for exactly what it is, and yet, you still
+            hold out hope that it can be better. You push people away just to
+            see who is willing to fight to stay.
+          </p>
+
+          <p class="text-ash font-medium">
+            Let them stay. You don't have to be perfectly invulnerable to be
+            loved. You just have to be present.
+          </p>
+        </div>
+      </section>
+
+      <!-- FOOTER: SHARE & ACTIONS -->
+      <footer class="border-t border-ash/10 pt-16 mt-32 pb-16 gs-reveal">
+        <div
+          class="flex flex-col md:flex-row items-start md:items-center justify-between gap-8"
+        >
+          <div>
+            <h3
+              class="font-syne font-extrabold text-2xl uppercase tracking-tight text-ash mb-2"
+            >
+              Survive the roast?
+            </h3>
+            <p class="text-ash/50 text-sm">
+              Make someone else suffer. Share your dossier.
+            </p>
+          </div>
+
+          <div class="flex flex-wrap gap-4">
+            <button
+              class="interactive-btn px-6 py-3 border border-ash/20 bg-void text-ash font-mono text-xs uppercase tracking-widest hover:border-blood hover:text-blood transition-colors duration-300"
+            >
+              Copy Link
+            </button>
+            <button
+              class="interactive-btn px-6 py-3 bg-blood text-white font-mono text-xs uppercase tracking-widest hover:bg-white hover:text-void transition-colors duration-300"
+            >
+              Get Another Roast
+            </button>
+          </div>
+        </div>
+      </footer>
+    </main>
+
+    <!-- Interactions Script -->
+    <script>
+      // Register ScrollTrigger
+      gsap.registerPlugin(ScrollTrigger);
+
+      // Custom Cursor Logic
+      const cursorDot = document.getElementById("cursor-dot");
+      const cursorOutline = document.getElementById("cursor-outline");
+
+      window.addEventListener("mousemove", (e) => {
+        const posX = e.clientX;
+        const posY = e.clientY;
+
+        // Use GSAP for smooth cursor trailing
+        gsap.to(cursorDot, {
+          x: posX,
+          y: posY,
+          duration: 0.1,
+          ease: "power2.out",
+        });
+
+        gsap.to(cursorOutline, {
+          x: posX,
+          y: posY,
+          duration: 0.3,
+          ease: "power2.out",
+        });
+      });
+
+      // Hover effect for interactive elements
+      const interactiveElements = document.querySelectorAll(
+        "a, button, .interactive-btn",
+      );
+
+      interactiveElements.forEach((el) => {
+        el.addEventListener("mouseenter", () => {
+          document.body.classList.add("hovering");
+        });
+        el.addEventListener("mouseleave", () => {
+          document.body.classList.remove("hovering");
+        });
+      });
+
+      // Section Reveal Animations
+      const revealElements = gsap.utils.toArray(".gs-reveal");
+
+      revealElements.forEach((elem) => {
+        gsap.fromTo(
+          elem,
+          { y: 60, autoAlpha: 0 },
+          {
+            duration: 1.2,
+            y: 0,
+            autoAlpha: 1,
+            ease: "power3.out",
+            scrollTrigger: {
+              trigger: elem,
+              start: "top 85%",
+              toggleActions: "play none none reverse",
+            },
+          },
+        );
+      });
+
+      // Progress Bar Animation
+      gsap.to("#progress-fill", {
+        scaleY: 1,
+        ease: "none",
+        scrollTrigger: {
+          trigger: document.body,
+          start: "top top",
+          end: "bottom bottom",
+          scrub: 0.2,
+        },
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,583 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Astro Roasts</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,400;1,500&family=Space+Grotesk:wght@300;400;500;600&family=JetBrains+Mono:wght@100;300;400&display=swap"
+      rel="stylesheet"
+    />
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <script src="https://unpkg.com/@studio-freight/lenis@1.0.32/dist/lenis.min.js"></script>
+
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              bone: "#F4F3EF",
+              ink: "#0C0C0C",
+              blood: "#E53935",
+              void: "#000000",
+            },
+            fontFamily: {
+              serif: ['"Cormorant Garamond"', "serif"],
+              sans: ['"Space Grotesk"', "sans-serif"],
+              mono: ['"JetBrains Mono"', "monospace"],
+            },
+            spacing: {
+              vw: "1vw",
+              vh: "1vh",
+            },
+          },
+        },
+      };
+    </script>
+
+    <style>
+      ::selection {
+        background: #0c0c0c;
+        color: #f4f3ef;
+      }
+
+      body {
+        background-color: #f4f3ef;
+        color: #0c0c0c;
+        overflow-x: hidden;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      /* Physical Grain Overlay */
+      .noise {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        pointer-events: none;
+        z-index: 9999;
+        opacity: 0.4;
+        background: url('data:image/svg+xml;utf8,%3Csvg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"%3E%3Cfilter id="noiseFilter"%3E%3CfeTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" stitchTiles="stitch"/%3E%3C/filter%3E%3Crect width="100%25" height="100%25" filter="url(%23noiseFilter)"/%3E%3C/svg%3E');
+      }
+
+      /* Thermal Soul Scanner */
+      .aura-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        z-index: -1;
+        filter: blur(100px);
+        opacity: 0.6;
+        overflow: hidden;
+      }
+
+      .aura {
+        position: absolute;
+        border-radius: 50%;
+        mix-blend-mode: multiply;
+        animation: pulse 15s infinite alternate cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .aura-1 {
+        width: 70vw;
+        height: 70vw;
+        background: radial-gradient(
+          circle,
+          rgba(229, 57, 53, 0.8) 0%,
+          rgba(229, 57, 53, 0) 70%
+        );
+        top: -20%;
+        left: -10%;
+        animation-delay: 0s;
+      }
+
+      .aura-2 {
+        width: 60vw;
+        height: 60vw;
+        background: radial-gradient(
+          circle,
+          rgba(74, 0, 224, 0.7) 0%,
+          rgba(74, 0, 224, 0) 70%
+        );
+        bottom: -10%;
+        right: -20%;
+        animation-delay: -5s;
+      }
+
+      .aura-3 {
+        width: 50vw;
+        height: 50vw;
+        background: radial-gradient(
+          circle,
+          rgba(0, 255, 204, 0.6) 0%,
+          rgba(0, 255, 204, 0) 70%
+        );
+        top: 30%;
+        left: 40%;
+        animation-delay: -10s;
+      }
+
+      @keyframes pulse {
+        0% {
+          transform: translate(0, 0) scale(1) rotate(0deg);
+        }
+        50% {
+          transform: translate(5vw, 5vh) scale(1.1) rotate(180deg);
+        }
+        100% {
+          transform: translate(-5vw, 10vh) scale(0.9) rotate(360deg);
+        }
+      }
+
+      /* Layout & Typography */
+      .clip-text {
+        overflow: hidden;
+        display: inline-block;
+      }
+
+      .clip-text > span {
+        display: inline-block;
+        transform: translateY(100%);
+      }
+
+      /* Forms */
+      .form-group {
+        position: relative;
+        margin-bottom: 2.5rem;
+      }
+
+      .input-raw {
+        width: 100%;
+        background: transparent;
+        border: none;
+        border-bottom: 1px solid rgba(12, 12, 12, 0.2);
+        padding: 1rem 0;
+        font-family: "Cormorant Garamond", serif;
+        font-size: 2.5rem;
+        color: #0c0c0c;
+        transition: border-color 0.4s ease;
+        outline: none;
+        line-height: 1;
+      }
+
+      .input-raw:focus {
+        border-bottom-color: #0c0c0c;
+      }
+
+      .input-raw::placeholder {
+        color: transparent;
+      }
+
+      .label-raw {
+        position: absolute;
+        top: 1rem;
+        left: 0;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: rgba(12, 12, 12, 0.5);
+        pointer-events: none;
+        transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+
+      .input-raw:focus ~ .label-raw,
+      .input-raw:not(:placeholder-shown) ~ .label-raw {
+        top: -1rem;
+        font-size: 0.65rem;
+        color: #0c0c0c;
+      }
+
+      /* Button */
+      .btn-magnetic {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1.5rem 3rem;
+        background: #0c0c0c;
+        color: #f4f3ef;
+        font-family: "Space Grotesk", sans-serif;
+        font-size: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        border-radius: 100px;
+        overflow: hidden;
+        transition: transform 0.3s ease;
+        cursor: pointer;
+        border: none;
+        width: 100%;
+      }
+
+      .btn-magnetic::before {
+        content: "";
+        position: absolute;
+        top: 100%;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: #e53935;
+        transition: top 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        z-index: 1;
+      }
+
+      .btn-magnetic:hover::before {
+        top: 0;
+      }
+
+      .btn-text {
+        position: relative;
+        z-index: 2;
+      }
+
+      /* Hide elements for animation */
+      .hidden-flow {
+        display: none;
+        opacity: 0;
+      }
+
+      .nav-blend {
+        mix-blend-mode: difference;
+        color: #fff;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="noise"></div>
+
+    <div class="aura-container">
+      <div class="aura aura-1"></div>
+      <div class="aura aura-2"></div>
+      <div class="aura aura-3"></div>
+    </div>
+
+    <nav
+      class="fixed top-0 left-0 w-full p-6 flex justify-between items-center z-50 nav-blend pointer-events-none"
+    >
+      <div class="font-sans font-medium tracking-tighter text-xl">
+        Astro Roasts.
+      </div>
+      <div class="font-mono text-xs uppercase tracking-widest opacity-50">
+        Swiss Ephemeris v2.1
+      </div>
+    </nav>
+
+    <main id="smooth-wrapper">
+      <div id="smooth-content">
+        <!-- Hero -->
+        <section
+          class="min-h-screen flex flex-col justify-center px-6 md:px-12 pt-20 relative"
+        >
+          <h1
+            class="font-serif text-[15vw] md:text-[9vw] leading-[0.85] tracking-tighter max-w-[90vw]"
+          >
+            <span class="clip-text"><span class="hero-word">The</span></span>
+            <span class="clip-text"><span class="hero-word">reading</span></span
+            ><br />
+            <span class="clip-text"><span class="hero-word">that</span></span>
+            <span class="clip-text"
+              ><span class="hero-word italic text-blood pr-4"
+                >sees through</span
+              ></span
+            ><br />
+            <span class="clip-text"><span class="hero-word">you.</span></span>
+          </h1>
+
+          <div
+            class="absolute bottom-12 left-6 md:left-12 flex items-center gap-4"
+          >
+            <div
+              class="w-1 h-12 bg-ink opacity-20 origin-top animate-pulse"
+            ></div>
+            <p class="font-sans text-sm md:text-base opacity-60 max-w-xs">
+              Real astrology.<br />No comfort. No fluff.
+            </p>
+          </div>
+        </section>
+
+        <!-- Funnel / Form Section -->
+        <section
+          class="min-h-screen flex items-center justify-center px-6 md:px-12 py-24"
+          id="form-trigger"
+        >
+          <div
+            class="w-full max-w-5xl grid grid-cols-1 md:grid-cols-12 gap-12 md:gap-24 items-start"
+          >
+            <div class="md:col-span-5 md:sticky top-32">
+              <h2 class="font-serif text-4xl md:text-6xl tracking-tight mb-6">
+                Enter your details.
+              </h2>
+              <p class="font-sans text-lg opacity-60 mb-8">
+                We'll do the rest.
+              </p>
+              <div
+                class="font-mono text-xs uppercase tracking-widest opacity-40 space-y-2"
+              >
+                <p>Data is processed instantaneously.</p>
+                <p>Calculations based on precise natal transit lines.</p>
+                <p>Warning: Cannot be unread.</p>
+              </div>
+            </div>
+
+            <div class="md:col-span-7 relative w-full" id="funnel-container">
+              <!-- 1. The Form -->
+              <div id="form-wrapper" class="w-full">
+                <form id="roast-form" autocomplete="off">
+                  <div class="form-group">
+                    <input
+                      type="text"
+                      id="name"
+                      class="input-raw"
+                      placeholder="Name"
+                      required
+                    />
+                    <label for="name" class="label-raw">First Name</label>
+                  </div>
+                  <div class="form-group">
+                    <input
+                      type="date"
+                      id="date"
+                      class="input-raw"
+                      placeholder="Date"
+                      required
+                    />
+                    <label for="date" class="label-raw">Date of Birth</label>
+                  </div>
+                  <div class="form-group">
+                    <input
+                      type="time"
+                      id="time"
+                      class="input-raw"
+                      placeholder="Time"
+                      required
+                    />
+                    <label for="time" class="label-raw"
+                      >Exact Time (if known)</label
+                    >
+                  </div>
+                  <div class="form-group">
+                    <input
+                      type="text"
+                      id="place"
+                      class="input-raw"
+                      placeholder="City"
+                      required
+                    />
+                    <label for="place" class="label-raw">City, Country</label>
+                  </div>
+
+                  <div class="mt-12">
+                    <button type="submit" class="btn-magnetic">
+                      <span class="btn-text">Show me</span>
+                    </button>
+                  </div>
+                </form>
+              </div>
+
+              <!-- 2. The Loader (Hidden) -->
+              <div
+                id="loading-wrapper"
+                class="hidden-flow flex-col items-start justify-center py-20 min-h-[400px]"
+              >
+                <div
+                  class="w-full h-[1px] bg-ink opacity-20 relative overflow-hidden mb-8"
+                >
+                  <div
+                    class="absolute top-0 left-0 h-full bg-ink w-1/3 animate-[slide_1.5s_ease-in-out_infinite]"
+                  ></div>
+                </div>
+                <p
+                  id="load-text"
+                  class="font-mono text-sm uppercase tracking-widest opacity-80 blink"
+                >
+                  Initializing sequence...
+                </p>
+              </div>
+
+              <!-- 3. The Result (Hidden) -->
+              <div
+                id="result-wrapper"
+                class="hidden-flow bg-white/50 backdrop-blur-md border border-black/10 p-8 md:p-12 shadow-2xl relative overflow-hidden group"
+              >
+                <div
+                  class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blood via-ink to-blood"
+                ></div>
+
+                <div class="flex items-center gap-3 mb-8 opacity-50">
+                  <div
+                    class="w-2 h-2 rounded-full bg-blood animate-pulse"
+                  ></div>
+                  <span class="font-mono text-xs uppercase tracking-widest"
+                    >Free Preview • Preliminary Scan</span
+                  >
+                </div>
+
+                <p
+                  class="font-serif text-2xl md:text-3xl leading-relaxed text-ink mb-12"
+                >
+                  Your chart reveals an exhausting tension. You posture as
+                  someone effortlessly unbothered, yet your planetary alignments
+                  scream a desperate need for validation. The way you curate
+                  your life is a defense mechanism against being truly known. We
+                  see the cracks.
+                </p>
+
+                <div class="w-full h-[1px] bg-black/10 mb-8"></div>
+
+                <button
+                  onclick="window.location.href = '#'"
+                  class="w-full bg-ink hover:bg-blood transition-colors duration-500 text-bone font-sans py-5 px-8 flex justify-between items-center group/btn"
+                >
+                  <span class="uppercase tracking-widest text-sm font-medium"
+                    >Get the full reading</span
+                  >
+                  <span
+                    class="font-mono text-sm group-hover/btn:translate-x-2 transition-transform"
+                    >— $5</span
+                  >
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <footer
+          class="py-12 px-6 md:px-12 border-t border-black/10 flex justify-between items-center opacity-40 mt-24"
+        >
+          <span class="font-mono text-xs uppercase">© Astro Roasts</span>
+          <span class="font-mono text-xs uppercase">No Fluff</span>
+        </footer>
+      </div>
+    </main>
+
+    <style>
+      @keyframes slide {
+        0% {
+          transform: translateX(-100%);
+        }
+        100% {
+          transform: translateX(300%);
+        }
+      }
+      .blink {
+        animation: blinker 1s linear infinite;
+      }
+      @keyframes blinker {
+        50% {
+          opacity: 0.3;
+        }
+      }
+    </style>
+
+    <script>
+      // Initialize Smooth Scroll
+      const lenis = new Lenis({
+        duration: 1.2,
+        easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+        direction: "vertical",
+        gestureDirection: "vertical",
+        smooth: true,
+        mouseMultiplier: 1,
+        smoothTouch: false,
+        touchMultiplier: 2,
+      });
+
+      function raf(time) {
+        lenis.raf(time);
+        requestAnimationFrame(raf);
+      }
+      requestAnimationFrame(raf);
+
+      // Connect GSAP to Lenis
+      gsap.registerPlugin(ScrollTrigger);
+
+      // Initial Page Load Animations
+      window.addEventListener("load", () => {
+        gsap.to(".hero-word", {
+          y: "0%",
+          duration: 1.2,
+          ease: "power4.out",
+          stagger: 0.08,
+          delay: 0.2,
+        });
+      });
+
+      // Parallax Aura on scroll
+      gsap.to(".aura-container", {
+        yPercent: 30,
+        ease: "none",
+        scrollTrigger: {
+          trigger: "body",
+          start: "top top",
+          end: "bottom bottom",
+          scrub: true,
+        },
+      });
+
+      // Form Flow Logic
+      const form = document.getElementById("roast-form");
+      const formWrapper = document.getElementById("form-wrapper");
+      const loadingWrapper = document.getElementById("loading-wrapper");
+      const resultWrapper = document.getElementById("result-wrapper");
+      const loadText = document.getElementById("load-text");
+
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
+
+        // Scroll to center of form section
+        lenis.scrollTo("#form-trigger", { offset: -100, duration: 1 });
+
+        const tl = gsap.timeline();
+
+        // 1. Hide Form
+        tl.to(formWrapper, {
+          opacity: 0,
+          y: -30,
+          duration: 0.6,
+          ease: "power3.inOut",
+          onComplete: () => {
+            formWrapper.style.display = "none";
+            loadingWrapper.style.display = "flex";
+          },
+        })
+          // 2. Show Loader
+          .fromTo(
+            loadingWrapper,
+            { opacity: 0, y: 20 },
+            { opacity: 1, y: 0, duration: 0.4 },
+          )
+          .call(() => {
+            loadText.innerText = "Aligning Swiss Ephemeris...";
+          })
+          .to({}, { duration: 1.5 })
+          .call(() => {
+            loadText.innerText = "Extracting natal vulnerabilities...";
+          })
+          .to({}, { duration: 1.5 })
+          // 3. Hide Loader
+          .to(loadingWrapper, {
+            opacity: 0,
+            duration: 0.4,
+            onComplete: () => {
+              loadingWrapper.style.display = "none";
+              resultWrapper.style.display = "block";
+            },
+          })
+          // 4. Show Result
+          .fromTo(
+            resultWrapper,
+            { opacity: 0, y: 40, scale: 0.98 },
+            { opacity: 1, y: 0, scale: 1, duration: 1, ease: "expo.out" },
+          );
+      });
+    </script>
+  </body>
+</html>

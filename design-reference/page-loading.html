@@ -1,0 +1,503 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Astro Roasts - Calculating...</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=Syne:wght@400;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              void: "#030303",
+              ash: "#E5E5E5",
+              blood: "#FF2A00",
+              bruise: "#1A0500",
+            },
+            fontFamily: {
+              syne: ["Syne", "sans-serif"],
+              mono: ["DM Mono", "monospace"],
+            },
+          },
+        },
+      };
+    </script>
+
+    <!-- Custom CSS -->
+    <style>
+      body {
+        cursor: none;
+        background-color: #030303;
+      }
+
+      ::selection {
+        background: #ff2a00;
+        color: #030303;
+      }
+
+      /* Noise Overlay */
+      .noise-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        pointer-events: none;
+        z-index: 40;
+        opacity: 0.04;
+      }
+
+      /* Custom Cursor */
+      #cursor {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 8px;
+        height: 8px;
+        background-color: #ff2a00;
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        pointer-events: none;
+        z-index: 9999;
+        mix-blend-mode: difference;
+        transition:
+          width 0.3s ease,
+          height 0.3s ease,
+          background-color 0.3s ease;
+        will-change: transform;
+      }
+
+      .cursor-hover {
+        width: 48px !important;
+        height: 48px !important;
+        background-color: #e5e5e5 !important;
+      }
+
+      /* SVG Chart Styles */
+      svg {
+        overflow: visible;
+      }
+
+      .chart-glow {
+        filter: drop-shadow(0 0 12px rgba(255, 42, 0, 0.2));
+      }
+
+      .blinking-dot {
+        animation: blink 2s infinite ease-in-out;
+      }
+
+      @keyframes blink {
+        0%,
+        100% {
+          opacity: 0.2;
+        }
+        50% {
+          opacity: 1;
+        }
+      }
+    </style>
+  </head>
+  <body
+    class="text-ash font-mono overflow-hidden h-screen w-screen flex flex-col items-center justify-center relative"
+  >
+    <!-- Noise Texture -->
+    <svg class="noise-overlay" xmlns="http://www.w3.org/2000/svg">
+      <filter id="noiseFilter">
+        <feTurbulence
+          type="fractalNoise"
+          baseFrequency="0.8"
+          numOctaves="3"
+          stitchTiles="stitch"
+        />
+      </filter>
+      <rect width="100%" height="100%" filter="url(#noiseFilter)" />
+    </svg>
+
+    <!-- Custom Cursor -->
+    <div id="cursor"></div>
+
+    <!-- Main Container -->
+    <main
+      class="relative flex flex-col items-center justify-center w-full h-full z-10"
+    >
+      <!-- Background Progress Percentage -->
+      <div
+        class="absolute inset-0 flex items-center justify-center pointer-events-none z-0"
+      >
+        <span
+          id="progress-text"
+          class="font-syne font-extrabold text-[25vw] leading-none text-ash opacity-5 tracking-tighter"
+          >00</span
+        >
+      </div>
+
+      <!-- SVG Natal Chart -->
+      <div
+        class="relative w-[300px] h-[300px] md:w-[450px] md:h-[450px] z-10 chart-glow"
+      >
+        <svg id="natal-chart" viewBox="0 0 500 500" class="w-full h-full">
+          <!-- Outer Wheel Group -->
+          <g id="outer-wheel" transform="origin-center">
+            <!-- Dynamic Elements Injected via JS -->
+          </g>
+
+          <!-- Inner Aspect Group -->
+          <g id="inner-wheel" transform="origin-center">
+            <!-- Dynamic Elements Injected via JS -->
+          </g>
+
+          <!-- Central Focus -->
+          <circle cx="250" cy="250" r="4" fill="#FF2A00" class="blinking-dot" />
+          <circle
+            cx="250"
+            cy="250"
+            r="12"
+            stroke="#FF2A00"
+            stroke-width="1"
+            fill="none"
+            opacity="0.5"
+          />
+        </svg>
+      </div>
+
+      <!-- Cycling Status Text -->
+      <div
+        class="absolute bottom-32 md:bottom-40 flex flex-col items-center z-20"
+      >
+        <div
+          class="h-6 overflow-hidden relative w-full text-center flex items-center justify-center"
+        >
+          <span
+            id="status-text"
+            class="text-xs md:text-sm tracking-[0.15em] text-blood uppercase opacity-0"
+            >Initializing core sequence...</span
+          >
+        </div>
+        <!-- Progress Bar Line -->
+        <div class="w-64 h-[1px] bg-bruise mt-4 relative overflow-hidden">
+          <div
+            id="progress-bar"
+            class="absolute top-0 left-0 h-full bg-blood w-0"
+          ></div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Bottom Copy -->
+    <footer
+      class="absolute bottom-8 w-full text-center z-20 pointer-events-none"
+    >
+      <p class="text-[10px] md:text-xs tracking-[0.3em] text-ash/40 uppercase">
+        The stars don't sugarcoat. Neither do we.
+      </p>
+    </footer>
+
+    <!-- Red Flash Transition Overlay -->
+    <div
+      id="flash-overlay"
+      class="fixed inset-0 bg-blood opacity-0 pointer-events-none z-[100] mix-blend-normal"
+    ></div>
+
+    <!-- GSAP CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+    <!-- Animation Logic -->
+    <script>
+      // Custom Cursor Logic
+      const cursor = document.getElementById("cursor");
+      document.addEventListener("mousemove", (e) => {
+        gsap.to(cursor, {
+          x: e.clientX,
+          y: e.clientY,
+          duration: 0.1,
+          ease: "power2.out",
+        });
+      });
+
+      // Add hover effect logic for future links/buttons if needed
+      document.querySelectorAll("a, button").forEach((el) => {
+        el.addEventListener("mouseenter", () =>
+          cursor.classList.add("cursor-hover"),
+        );
+        el.addEventListener("mouseleave", () =>
+          cursor.classList.remove("cursor-hover"),
+        );
+      });
+
+      // Generate SVG Chart Elements
+      const outerWheel = document.getElementById("outer-wheel");
+      const innerWheel = document.getElementById("inner-wheel");
+      const cx = 250,
+        cy = 250;
+
+      // Helper to create SVG nodes
+      function createSVGElement(tag, attributes) {
+        const el = document.createElementNS("http://www.w3.org/2000/svg", tag);
+        for (let key in attributes) {
+          el.setAttribute(key, attributes[key]);
+        }
+        return el;
+      }
+
+      // 1. Draw Rings (Outer Group)
+      const rings = [
+        { r: 240, stroke: "#E5E5E5", width: 1, opacity: 0.1 },
+        { r: 220, stroke: "#E5E5E5", width: 1, opacity: 0.3 },
+        { r: 180, stroke: "#FF2A00", width: 1, opacity: 0.6 },
+        { r: 70, stroke: "#E5E5E5", width: 1, opacity: 0.2 },
+      ];
+
+      rings.forEach((ring) => {
+        const circle = createSVGElement("circle", {
+          cx: cx,
+          cy: cy,
+          r: ring.r,
+          stroke: ring.stroke,
+          "stroke-width": ring.width,
+          fill: "none",
+          opacity: ring.opacity,
+          class: "draw-path",
+        });
+        outerWheel.appendChild(circle);
+      });
+
+      // 2. Draw House Spokes (Outer Group)
+      for (let i = 0; i < 12; i++) {
+        const angle = (i * 30 * Math.PI) / 180;
+        const x1 = cx + 70 * Math.cos(angle);
+        const y1 = cy + 70 * Math.sin(angle);
+        const x2 = cx + 240 * Math.cos(angle);
+        const y2 = cy + 240 * Math.sin(angle);
+
+        const line = createSVGElement("line", {
+          x1: x1,
+          y1: y1,
+          x2: x2,
+          y2: y2,
+          stroke: "#E5E5E5",
+          "stroke-width": 1,
+          opacity: 0.15,
+          class: "draw-path",
+        });
+        outerWheel.appendChild(line);
+      }
+
+      // 3. Draw Aspects/Geometry (Inner Group)
+      // Generating random triangular and square patterns to simulate astrological aspects
+      const aspectNodes = [];
+      for (let i = 0; i < 12; i++) {
+        const angle = (i * 30 * Math.PI) / 180;
+        aspectNodes.push({
+          x: cx + 180 * Math.cos(angle),
+          y: cy + 180 * Math.sin(angle),
+        });
+      }
+
+      const aspectConnections = [
+        [0, 4],
+        [4, 8],
+        [8, 0], // Trine 1
+        [2, 6],
+        [6, 10],
+        [10, 2], // Trine 2
+        [1, 4],
+        [4, 7],
+        [7, 10],
+        [10, 1], // Square
+        [0, 6],
+        [3, 9], // Oppositions
+      ];
+
+      aspectConnections.forEach((pair, index) => {
+        const isRed = index % 3 === 0;
+        const line = createSVGElement("line", {
+          x1: aspectNodes[pair[0]].x,
+          y1: aspectNodes[pair[0]].y,
+          x2: aspectNodes[pair[1]].x,
+          y2: aspectNodes[pair[1]].y,
+          stroke: isRed ? "#FF2A00" : "#E5E5E5",
+          "stroke-width": 1,
+          opacity: isRed ? 0.7 : 0.3,
+          class: "draw-path",
+        });
+        innerWheel.appendChild(line);
+
+        // Add planet/node markers
+        if (index % 2 === 0) {
+          const marker = createSVGElement("circle", {
+            cx: aspectNodes[pair[0]].x,
+            cy: aspectNodes[pair[0]].y,
+            r: 3,
+            fill: isRed ? "#FF2A00" : "#E5E5E5",
+            opacity: 0,
+            class: "planet-marker",
+          });
+          innerWheel.appendChild(marker);
+        }
+      });
+
+      // Initialize Stroke Dasharrays for drawing effect
+      document.querySelectorAll(".draw-path").forEach((path) => {
+        let length;
+        if (path.tagName === "circle") {
+          length = 2 * Math.PI * parseFloat(path.getAttribute("r"));
+        } else if (path.tagName === "line") {
+          const x1 = parseFloat(path.getAttribute("x1")),
+            y1 = parseFloat(path.getAttribute("y1"));
+          const x2 = parseFloat(path.getAttribute("x2")),
+            y2 = parseFloat(path.getAttribute("y2"));
+          length = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+        }
+        path.style.strokeDasharray = length;
+        path.style.strokeDashoffset = length;
+      });
+
+      // Master Timeline Setup
+      const TOTAL_DURATION = 8.5; // seconds before flash
+      const tl = gsap.timeline();
+
+      // 1. Animate SVG Lines Drawing
+      tl.to(
+        ".draw-path",
+        {
+          strokeDashoffset: 0,
+          duration: 4,
+          ease: "power2.inOut",
+          stagger: 0.05,
+        },
+        0,
+      );
+
+      // 2. Fade in planet markers
+      tl.to(
+        ".planet-marker",
+        {
+          opacity: 1,
+          duration: 1.5,
+          ease: "power1.inOut",
+          stagger: 0.2,
+        },
+        2,
+      );
+
+      // 3. Continuous Chart Rotation & Pulse
+      gsap.to("#outer-wheel", {
+        rotation: 360,
+        transformOrigin: "center center",
+        duration: 40,
+        ease: "none",
+        repeat: -1,
+      });
+
+      gsap.to("#inner-wheel", {
+        rotation: -360,
+        transformOrigin: "center center",
+        duration: 60,
+        ease: "none",
+        repeat: -1,
+      });
+
+      gsap.to("#natal-chart", {
+        scale: 1.03,
+        duration: 3,
+        ease: "sine.inOut",
+        yoyo: true,
+        repeat: -1,
+      });
+
+      // 4. Progress Percentage & Bar Animation
+      const progressObj = { value: 0 };
+      const progressText = document.getElementById("progress-text");
+
+      tl.to(
+        progressObj,
+        {
+          value: 100,
+          duration: TOTAL_DURATION - 0.5,
+          ease: "power1.inOut",
+          onUpdate: function () {
+            progressText.innerText = Math.round(progressObj.value)
+              .toString()
+              .padStart(2, "0");
+          },
+        },
+        0,
+      );
+
+      tl.to(
+        "#progress-bar",
+        {
+          width: "100%",
+          duration: TOTAL_DURATION - 0.5,
+          ease: "power1.inOut",
+        },
+        0,
+      );
+
+      // 5. Cycling Status Text
+      const statuses = [
+        "Calculating planetary positions...",
+        "Mapping house placements...",
+        "Analyzing aspects...",
+        "Identifying patterns...",
+        "Compiling weaknesses...",
+        "Preparing your reading...",
+      ];
+      const statusEl = document.getElementById("status-text");
+
+      // Initial fade in
+      gsap.to(statusEl, { opacity: 1, duration: 0.5, delay: 0.5 });
+
+      let statusIndex = 0;
+      const statusInterval = (TOTAL_DURATION * 1000 - 1500) / statuses.length;
+
+      const cycleStatus = setInterval(() => {
+        statusIndex++;
+        if (statusIndex >= statuses.length) {
+          clearInterval(cycleStatus);
+          return;
+        }
+
+        gsap.to(statusEl, {
+          opacity: 0,
+          duration: 0.2,
+          y: -5,
+          onComplete: () => {
+            statusEl.innerText = statuses[statusIndex];
+            gsap.set(statusEl, { y: 5 });
+            gsap.to(statusEl, { opacity: 1, y: 0, duration: 0.3 });
+          },
+        });
+      }, statusInterval);
+
+      // 6. Final Transition (Flash to Blood Red)
+      tl.to(
+        "#flash-overlay",
+        {
+          opacity: 1,
+          duration: 0.15,
+          ease: "power4.in",
+        },
+        TOTAL_DURATION,
+      );
+
+      // Optional: Stop animations or redirect after flash
+      tl.add(() => {
+        // Simulated redirect to results page
+        // window.location.href = '/roast-results';
+        document.body.style.cursor = "auto";
+      }, TOTAL_DURATION + 0.2);
+    </script>
+  </body>
+</html>

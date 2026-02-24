@@ -1,0 +1,832 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Astro Roasts | Brutally Honest Astrology</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,600;1,9..144,300;1,9..144,400&family=JetBrains+Mono:wght@400;700&family=Space+Grotesk:wght@300;400;600&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              base: "#08080A",
+              surface: "#121216",
+              primary: "#FF3B00",
+              primaryHover: "#E03400",
+              text: "#F2EFE9",
+              muted: "#7A7A85",
+              border: "#2A2A35",
+            },
+            fontFamily: {
+              serif: ['"Fraunces"', "serif"],
+              sans: ['"Space Grotesk"', "sans-serif"],
+              mono: ['"JetBrains Mono"', "monospace"],
+            },
+            animation: {
+              "spin-slow": "spin 20s linear infinite",
+              marquee: "marquee 40s linear infinite",
+            },
+            keyframes: {
+              marquee: {
+                "0%": { transform: "translateX(0%)" },
+                "100%": { transform: "translateX(-100%)" },
+              },
+            },
+          },
+        },
+      };
+    </script>
+
+    <style>
+      /* Custom Styles & Overrides */
+      body {
+        background-color: #08080a;
+        color: #f2efe9;
+        overflow-x: hidden;
+      }
+
+      /* SVG Noise Overlay */
+      .noise-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        pointer-events: none;
+        z-index: 9999;
+        opacity: 0.05;
+        background: url('data:image/svg+xml;utf8,%3Csvg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"%3E%3Cfilter id="noiseFilter"%3E%3CfeTurbulence type="fractalNoise" baseFrequency="0.75" numOctaves="3" stitchTiles="stitch"/%3E%3C/filter%3E%3Crect width="100%25" height="100%25" filter="url(%23noiseFilter)"/%3E%3C/svg%3E');
+      }
+
+      /* Hide Scrollbar but keep functionality */
+      ::-webkit-scrollbar {
+        width: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #08080a;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #2a2a35;
+        border-radius: 4px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #ff3b00;
+      }
+
+      /* Selection */
+      ::selection {
+        background-color: #ff3b00;
+        color: #f2efe9;
+      }
+
+      /* Glow effects */
+      .glow-blob {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(80px);
+        opacity: 0.4;
+        pointer-events: none;
+        z-index: 0;
+      }
+
+      /* Custom Input Autocomplete styling */
+      input:-webkit-autofill,
+      input:-webkit-autofill:hover,
+      input:-webkit-autofill:focus,
+      input:-webkit-autofill:active {
+        -webkit-box-shadow: 0 0 0 30px #121216 inset !important;
+        -webkit-text-fill-color: #f2efe9 !important;
+        transition: background-color 5000s ease-in-out 0s;
+      }
+
+      .clip-text {
+        background: linear-gradient(180deg, #f2efe9 0%, #7a7a85 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+    </style>
+  </head>
+  <body class="antialiased font-sans selection:bg-primary selection:text-white">
+    <!-- Ambient Noise -->
+    <div class="noise-overlay"></div>
+
+    <!-- Ambient Glows -->
+    <div
+      class="glow-blob bg-primary w-[400px] h-[400px] top-[-100px] left-[-100px] mix-blend-screen opacity-20"
+    ></div>
+    <div
+      class="glow-blob bg-[#8b5cf6] w-[500px] h-[500px] top-[40%] right-[-200px] mix-blend-screen opacity-10"
+    ></div>
+
+    <!-- Navigation -->
+    <nav
+      class="fixed top-0 left-0 w-full z-50 mix-blend-difference px-6 py-6 flex justify-between items-center"
+    >
+      <div class="font-serif font-semibold text-xl tracking-tight">
+        Astro Roasts.
+      </div>
+      <a
+        href="#roast-form"
+        class="font-mono text-sm uppercase tracking-widest hover:text-primary transition-colors duration-300"
+        >Get Roasted</a
+      >
+    </nav>
+
+    <!-- Scroll Progress Indicator -->
+    <div
+      class="fixed top-0 left-0 h-1 bg-primary z-50 origin-left scale-x-0"
+      id="scroll-progress"
+    ></div>
+
+    <!-- Hero Section -->
+    <section
+      class="relative min-h-screen flex flex-col items-center justify-center pt-20 px-6 z-10 overflow-hidden"
+    >
+      <!-- Abstract Rotating Chart -->
+      <div
+        class="absolute inset-0 flex items-center justify-center opacity-10 pointer-events-none z-0"
+      >
+        <svg
+          class="w-[800px] h-[800px] animate-spin-slow"
+          viewBox="0 0 100 100"
+          fill="none"
+          stroke="#F2EFE9"
+          stroke-width="0.2"
+        >
+          <circle cx="50" cy="50" r="45" />
+          <circle cx="50" cy="50" r="35" />
+          <circle cx="50" cy="50" r="25" />
+          <line x1="5" y1="50" x2="95" y2="50" />
+          <line x1="50" y1="5" x2="50" y2="95" />
+          <line x1="18" y1="18" x2="82" y2="82" />
+          <line x1="18" y1="82" x2="82" y2="18" />
+          <!-- Zodiac abstract markers -->
+          <circle cx="50" cy="10" r="1" fill="#FF3B00" />
+          <circle cx="90" cy="50" r="1" fill="#FF3B00" />
+          <circle cx="50" cy="90" r="1" fill="#FF3B00" />
+          <circle cx="10" cy="50" r="1" fill="#FF3B00" />
+        </svg>
+      </div>
+
+      <div
+        class="max-w-5xl mx-auto text-center relative z-10 flex flex-col items-center"
+      >
+        <p
+          class="font-mono text-primary text-sm uppercase tracking-[0.3em] mb-6 hero-elem opacity-0"
+        >
+          Swiss Ephemeris Data inside
+        </p>
+        <h1
+          class="font-serif text-6xl md:text-8xl lg:text-[8rem] leading-[0.9] tracking-tighter mb-8 hero-elem opacity-0"
+        >
+          The stars say <br />
+          <span class="italic text-primary">you're a mess.</span>
+        </h1>
+        <p
+          class="font-sans text-xl md:text-2xl text-muted max-w-2xl mb-12 hero-elem opacity-0 font-light"
+        >
+          Astrology without the toxic positivity. Enter your birth details and
+          let us tell you exactly why you're single, tired, and self-sabotaging.
+        </p>
+
+        <div
+          class="hero-elem opacity-0 flex flex-col sm:flex-row gap-4 items-center"
+        >
+          <a
+            href="#roast-form"
+            class="magnetic-btn group relative inline-flex items-center justify-center px-8 py-4 bg-primary text-white font-mono uppercase tracking-widest text-sm overflow-hidden rounded-full transition-transform hover:scale-105 duration-300"
+          >
+            <span class="relative z-10">Face the music</span>
+            <div
+              class="absolute inset-0 bg-white opacity-0 group-hover:opacity-20 transition-opacity duration-300"
+            ></div>
+          </a>
+          <span class="font-mono text-muted text-sm"
+            >Free teaser. <span class="text-text">$5 for the truth.</span></span
+          >
+        </div>
+      </div>
+
+      <!-- Scroll Indicator -->
+      <div
+        class="absolute bottom-12 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 hero-elem opacity-0"
+      >
+        <span class="font-mono text-xs text-muted tracking-widest uppercase"
+          >Scroll</span
+        >
+        <div class="w-[1px] h-12 bg-border overflow-hidden">
+          <div class="w-full h-1/2 bg-primary scroll-line"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Narrative Scroll Section -->
+    <section class="relative bg-surface z-20" id="narrative-section">
+      <div class="h-[300vh] relative" id="scroll-container">
+        <div
+          class="sticky top-0 h-screen flex items-center justify-center overflow-hidden px-6"
+        >
+          <div class="max-w-4xl w-full relative">
+            <!-- Text 1 -->
+            <h2
+              class="narrative-text absolute top-1/2 left-0 -translate-y-1/2 w-full text-center font-serif text-4xl md:text-6xl lg:text-7xl leading-tight opacity-0"
+            >
+              Other apps tell you <br />
+              <span class="italic text-muted"
+                >to "embrace your inner child."</span
+              >
+            </h2>
+
+            <!-- Text 2 -->
+            <h2
+              class="narrative-text absolute top-1/2 left-0 -translate-y-1/2 w-full text-center font-serif text-4xl md:text-6xl lg:text-7xl leading-tight opacity-0"
+            >
+              We tell you to <br />
+              <span class="italic text-primary">stop texting your ex.</span>
+            </h2>
+
+            <!-- Text 3 -->
+            <h2
+              class="narrative-text absolute top-1/2 left-0 -translate-y-1/2 w-full text-center font-serif text-4xl md:text-6xl lg:text-7xl leading-tight opacity-0"
+            >
+              Your Venus in Scorpio <br />
+              <span class="italic text-muted">is showing.</span>
+            </h2>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- The Split (Free vs Paid) -->
+    <section
+      class="py-32 px-6 border-y border-border relative z-20 bg-base overflow-hidden"
+    >
+      <div class="max-w-7xl mx-auto">
+        <div
+          class="grid grid-cols-1 md:grid-cols-2 gap-16 md:gap-8 items-center"
+        >
+          <!-- Free Tier -->
+          <div
+            class="p-8 md:p-12 border border-border rounded-2xl bg-surface/50 backdrop-blur-sm relative group transition-colors hover:border-muted/50"
+          >
+            <div
+              class="font-mono text-xs uppercase tracking-widest text-muted mb-4"
+            >
+              Level 01
+            </div>
+            <h3 class="font-serif text-4xl mb-2">The Teaser</h3>
+            <div class="font-mono text-primary text-xl mb-6">Free</div>
+            <p class="text-muted font-light mb-8">
+              One brutally honest truth about your Sun sign. Just enough to hurt
+              your feelings and make you realize we're right.
+            </p>
+            <ul class="space-y-4 font-mono text-sm text-text/80">
+              <li class="flex items-center gap-3">
+                <span class="text-primary">→</span> Core personality flaw
+              </li>
+              <li class="flex items-center gap-3">
+                <span class="text-primary">→</span> Why people roll their eyes
+                at you
+              </li>
+              <li class="flex items-center gap-3 text-muted line-through">
+                Deep psychological read
+              </li>
+            </ul>
+          </div>
+
+          <!-- Paid Tier -->
+          <div
+            class="p-8 md:p-12 border border-primary/30 rounded-2xl bg-primary/5 backdrop-blur-sm relative group transition-colors hover:border-primary"
+          >
+            <div
+              class="absolute -top-3 -right-3 bg-primary text-white font-mono text-xs uppercase tracking-widest py-1 px-3 rounded-full transform rotate-12"
+            >
+              The Truth
+            </div>
+            <div
+              class="font-mono text-xs uppercase tracking-widest text-primary mb-4"
+            >
+              Level 02
+            </div>
+            <h3 class="font-serif text-4xl mb-2">The Intervention</h3>
+            <div class="font-mono text-primary text-xl mb-6">$5.00</div>
+            <p class="text-muted font-light mb-8">
+              The full unhinged reading. We calculate your exact natal chart to
+              expose your deepest patterns of self-sabotage.
+            </p>
+            <ul class="space-y-4 font-mono text-sm text-text/80">
+              <li class="flex items-center gap-3">
+                <span class="text-primary">→</span>
+                <strong class="text-white">Venus:</strong> Why you're
+                romantically doomed
+              </li>
+              <li class="flex items-center gap-3">
+                <span class="text-primary">→</span>
+                <strong class="text-white">Mars:</strong> Your toxic anger style
+              </li>
+              <li class="flex items-center gap-3">
+                <span class="text-primary">→</span>
+                <strong class="text-white">Moon:</strong> The feelings you
+                repress
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- The Form Section -->
+    <section id="roast-form" class="py-32 px-6 relative z-20 bg-base">
+      <div class="max-w-4xl mx-auto">
+        <div class="text-center mb-16">
+          <h2 class="font-serif text-5xl md:text-7xl mb-4 clip-text">
+            Enter your coordinates.
+          </h2>
+          <p class="font-mono text-muted">
+            We use the Swiss Ephemeris. We know exactly where the planets were.
+          </p>
+        </div>
+
+        <form
+          class="bg-surface p-8 md:p-12 rounded-3xl border border-border shadow-2xl relative overflow-hidden"
+          onsubmit="event.preventDefault()"
+        >
+          <!-- Abstract form decoration -->
+          <div
+            class="absolute top-0 right-0 w-64 h-64 bg-primary rounded-full filter blur-[100px] opacity-10 pointer-events-none"
+          ></div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-10">
+            <!-- First Name -->
+            <div class="relative z-0 w-full group col-span-1 md:col-span-2">
+              <input
+                type="text"
+                name="name"
+                id="name"
+                class="block py-3 px-0 w-full text-xl text-text bg-transparent border-0 border-b border-border appearance-none focus:outline-none focus:ring-0 focus:border-primary peer font-sans transition-colors"
+                placeholder=" "
+                required
+              />
+              <label
+                for="name"
+                class="peer-focus:font-medium absolute text-lg text-muted duration-300 transform -translate-y-8 scale-75 top-3 -z-10 origin-[0] peer-focus:left-0 peer-focus:text-primary peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-8 font-serif italic"
+                >First Name</label
+              >
+            </div>
+
+            <!-- Date of Birth -->
+            <div class="relative z-0 w-full group">
+              <input
+                type="date"
+                name="dob"
+                id="dob"
+                class="block py-3 px-0 w-full text-xl text-text bg-transparent border-0 border-b border-border appearance-none focus:outline-none focus:ring-0 focus:border-primary peer font-mono transition-colors [color-scheme:dark]"
+                placeholder=" "
+                required
+              />
+              <label
+                for="dob"
+                class="peer-focus:font-medium absolute text-lg text-muted duration-300 transform -translate-y-8 scale-75 top-3 -z-10 origin-[0] peer-focus:left-0 peer-focus:text-primary peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-8 font-serif italic"
+                >Date of Birth</label
+              >
+            </div>
+
+            <!-- Time of Birth -->
+            <div class="relative z-0 w-full group">
+              <input
+                type="time"
+                name="tob"
+                id="tob"
+                class="block py-3 px-0 w-full text-xl text-text bg-transparent border-0 border-b border-border appearance-none focus:outline-none focus:ring-0 focus:border-primary peer font-mono transition-colors [color-scheme:dark]"
+                placeholder=" "
+              />
+              <label
+                for="tob"
+                class="peer-focus:font-medium absolute text-lg text-muted duration-300 transform -translate-y-8 scale-75 top-3 -z-10 origin-[0] peer-focus:left-0 peer-focus:text-primary peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-8 font-serif italic"
+                >Time of Birth</label
+              >
+              <p
+                class="absolute -bottom-6 left-0 text-[10px] font-mono text-muted"
+              >
+                Leave blank for a slightly less devastating roast.
+              </p>
+            </div>
+
+            <!-- Place of Birth -->
+            <div
+              class="relative z-0 w-full group col-span-1 md:col-span-2 mt-4 md:mt-0"
+            >
+              <input
+                type="text"
+                name="city"
+                id="city"
+                class="block py-3 px-0 w-full text-xl text-text bg-transparent border-0 border-b border-border appearance-none focus:outline-none focus:ring-0 focus:border-primary peer font-sans transition-colors"
+                placeholder=" "
+                required
+              />
+              <label
+                for="city"
+                class="peer-focus:font-medium absolute text-lg text-muted duration-300 transform -translate-y-8 scale-75 top-3 -z-10 origin-[0] peer-focus:left-0 peer-focus:text-primary peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-8 font-serif italic"
+                >City of Birth</label
+              >
+            </div>
+          </div>
+
+          <div class="mt-16 flex flex-col items-center gap-6">
+            <button
+              type="submit"
+              class="magnetic-btn group w-full md:w-auto relative inline-flex items-center justify-center px-12 py-5 bg-text text-base font-mono uppercase tracking-widest text-sm font-bold overflow-hidden rounded-full transition-transform hover:scale-105 hover:bg-white duration-300"
+            >
+              <span class="relative z-10 flex items-center gap-2">
+                Generate My Roast
+                <svg
+                  class="w-4 h-4 transition-transform group-hover:translate-x-1"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M14 5l7 7m0 0l-7 7m7-7H3"
+                  ></path>
+                </svg>
+              </span>
+            </button>
+
+            <div class="flex items-center gap-4 text-sm font-mono text-muted">
+              <span class="flex items-center gap-2"
+                ><div class="w-2 h-2 rounded-full bg-border"></div>
+                Free Teaser</span
+              >
+              <span class="text-border">|</span>
+              <span class="flex items-center gap-2"
+                ><div
+                  class="w-2 h-2 rounded-full bg-primary animate-pulse"
+                ></div>
+                $5 Full Chart</span
+              >
+            </div>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- Marquee Testimonials -->
+    <section
+      class="py-20 border-t border-border bg-base overflow-hidden z-20 relative"
+    >
+      <div
+        class="font-mono text-xs uppercase tracking-widest text-center text-muted mb-12"
+      >
+        Casualties of the stars
+      </div>
+
+      <div class="relative flex overflow-x-hidden group">
+        <div
+          class="animate-marquee whitespace-nowrap flex items-center gap-8 px-4 group-hover:[animation-play-state:paused]"
+        >
+          <!-- Review 1 -->
+          <div
+            class="inline-flex items-center gap-4 bg-surface px-8 py-6 rounded-2xl border border-border min-w-[400px]"
+          >
+            <div class="text-4xl">💀</div>
+            <div>
+              <p class="font-serif italic text-lg text-text mb-2">
+                "I want a refund on my personality."
+              </p>
+              <p class="font-mono text-xs text-muted">— David, Pisces Sun</p>
+            </div>
+          </div>
+
+          <!-- Review 2 -->
+          <div
+            class="inline-flex items-center gap-4 bg-surface px-8 py-6 rounded-2xl border border-border min-w-[400px]"
+          >
+            <div class="text-4xl">😭</div>
+            <div>
+              <p class="font-serif italic text-lg text-text mb-2">
+                "Literally screamed and sent to my group chat."
+              </p>
+              <p class="font-mono text-xs text-muted">— Sarah, Gemini Venus</p>
+            </div>
+          </div>
+
+          <!-- Review 3 -->
+          <div
+            class="inline-flex items-center gap-4 bg-surface px-8 py-6 rounded-2xl border border-border min-w-[400px]"
+          >
+            <div class="text-4xl">🚩</div>
+            <div>
+              <p class="font-serif italic text-lg text-text mb-2">
+                "My therapist agrees with everything this said."
+              </p>
+              <p class="font-mono text-xs text-muted">— Alex, Scorpio Rising</p>
+            </div>
+          </div>
+
+          <!-- Review 4 -->
+          <div
+            class="inline-flex items-center gap-4 bg-surface px-8 py-6 rounded-2xl border border-border min-w-[400px]"
+          >
+            <div class="text-4xl">🍷</div>
+            <div>
+              <p class="font-serif italic text-lg text-text mb-2">
+                "Felt like my best friend dragging me after 3 drinks."
+              </p>
+              <p class="font-mono text-xs text-muted">— Mia, Leo Mars</p>
+            </div>
+          </div>
+
+          <!-- Duplicate for seamless loop -->
+          <div
+            class="inline-flex items-center gap-4 bg-surface px-8 py-6 rounded-2xl border border-border min-w-[400px]"
+          >
+            <div class="text-4xl">💀</div>
+            <div>
+              <p class="font-serif italic text-lg text-text mb-2">
+                "I want a refund on my personality."
+              </p>
+              <p class="font-mono text-xs text-muted">— David, Pisces Sun</p>
+            </div>
+          </div>
+
+          <div
+            class="inline-flex items-center gap-4 bg-surface px-8 py-6 rounded-2xl border border-border min-w-[400px]"
+          >
+            <div class="text-4xl">😭</div>
+            <div>
+              <p class="font-serif italic text-lg text-text mb-2">
+                "Literally screamed and sent to my group chat."
+              </p>
+              <p class="font-mono text-xs text-muted">— Sarah, Gemini Venus</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Absolute duplicate for true seamless marquee -->
+        <div
+          class="animate-marquee whitespace-nowrap flex items-center gap-8 px-4 absolute top-0 group-hover:[animation-play-state:paused]"
+        >
+          <div
+            class="inline-flex items-center gap-4 bg-surface px-8 py-6 rounded-2xl border border-border min-w-[400px]"
+          >
+            <div class="text-4xl">💀</div>
+            <div>
+              <p class="font-serif italic text-lg text-text mb-2">
+                "I want a refund on my personality."
+              </p>
+              <p class="font-mono text-xs text-muted">— David, Pisces Sun</p>
+            </div>
+          </div>
+          <div
+            class="inline-flex items-center gap-4 bg-surface px-8 py-6 rounded-2xl border border-border min-w-[400px]"
+          >
+            <div class="text-4xl">😭</div>
+            <div>
+              <p class="font-serif italic text-lg text-text mb-2">
+                "Literally screamed and sent to my group chat."
+              </p>
+              <p class="font-mono text-xs text-muted">— Sarah, Gemini Venus</p>
+            </div>
+          </div>
+          <div
+            class="inline-flex items-center gap-4 bg-surface px-8 py-6 rounded-2xl border border-border min-w-[400px]"
+          >
+            <div class="text-4xl">🚩</div>
+            <div>
+              <p class="font-serif italic text-lg text-text mb-2">
+                "My therapist agrees with everything this said."
+              </p>
+              <p class="font-mono text-xs text-muted">— Alex, Scorpio Rising</p>
+            </div>
+          </div>
+          <div
+            class="inline-flex items-center gap-4 bg-surface px-8 py-6 rounded-2xl border border-border min-w-[400px]"
+          >
+            <div class="text-4xl">🍷</div>
+            <div>
+              <p class="font-serif italic text-lg text-text mb-2">
+                "Felt like my best friend dragging me after 3 drinks."
+              </p>
+              <p class="font-mono text-xs text-muted">— Mia, Leo Mars</p>
+            </div>
+          </div>
+          <div
+            class="inline-flex items-center gap-4 bg-surface px-8 py-6 rounded-2xl border border-border min-w-[400px]"
+          >
+            <div class="text-4xl">💀</div>
+            <div>
+              <p class="font-serif italic text-lg text-text mb-2">
+                "I want a refund on my personality."
+              </p>
+              <p class="font-mono text-xs text-muted">— David, Pisces Sun</p>
+            </div>
+          </div>
+          <div
+            class="inline-flex items-center gap-4 bg-surface px-8 py-6 rounded-2xl border border-border min-w-[400px]"
+          >
+            <div class="text-4xl">😭</div>
+            <div>
+              <p class="font-serif italic text-lg text-text mb-2">
+                "Literally screamed and sent to my group chat."
+              </p>
+              <p class="font-mono text-xs text-muted">— Sarah, Gemini Venus</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Gradient masks for marquee edges -->
+      <div
+        class="absolute top-0 left-0 w-32 h-full bg-gradient-to-r from-base to-transparent z-10 pointer-events-none"
+      ></div>
+      <div
+        class="absolute top-0 right-0 w-32 h-full bg-gradient-to-l from-base to-transparent z-10 pointer-events-none"
+      ></div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-12 px-6 bg-base border-t border-border z-20 relative">
+      <div
+        class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6"
+      >
+        <div class="font-serif text-2xl">Astro Roasts.</div>
+        <div class="font-mono text-xs text-muted text-center md:text-left">
+          Built with tough love. <br class="md:hidden" />
+          Don't sue us if you cry.
+        </div>
+        <div class="font-mono text-xs text-muted">© 2024 Astro Roasts</div>
+      </div>
+    </footer>
+
+    <!-- Scripts: GSAP & Custom Logic -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        // Register ScrollTrigger
+        gsap.registerPlugin(ScrollTrigger);
+
+        // 1. Initial Hero Animation
+        const tlHero = gsap.timeline();
+
+        tlHero.to(".hero-elem", {
+          y: 0,
+          opacity: 1,
+          duration: 1,
+          stagger: 0.2,
+          ease: "power3.out",
+          delay: 0.2,
+          onStart: function () {
+            gsap.set(".hero-elem", { y: 30 });
+          },
+        });
+
+        // Loop bouncing scroll line
+        gsap.to(".scroll-line", {
+          yPercent: 100,
+          duration: 1.5,
+          repeat: -1,
+          ease: "power2.inOut",
+        });
+
+        // 2. Scroll Progress Bar
+        gsap.to("#scroll-progress", {
+          scaleX: 1,
+          ease: "none",
+          scrollTrigger: {
+            trigger: "body",
+            start: "top top",
+            end: "bottom bottom",
+            scrub: 0.3,
+          },
+        });
+
+        // 3. Narrative Scroll Section (Pinning & Fading)
+        const texts = gsap.utils.toArray(".narrative-text");
+        const scrollContainer = document.getElementById("scroll-container");
+
+        // Setup a timeline linked to the scroll of the container
+        const tlNarrative = gsap.timeline({
+          scrollTrigger: {
+            trigger: scrollContainer,
+            start: "top top",
+            end: "bottom bottom",
+            scrub: 1,
+          },
+        });
+
+        texts.forEach((text, i) => {
+          // Fade in
+          tlNarrative.to(
+            text,
+            {
+              opacity: 1,
+              y: 0,
+              duration: 1,
+              ease: "none",
+            },
+            i * 2,
+          );
+
+          // Fade out (except the last one which stays until the section unpins naturally)
+          if (i !== texts.length - 1) {
+            tlNarrative.to(
+              text,
+              {
+                opacity: 0,
+                y: -50,
+                duration: 1,
+                ease: "none",
+              },
+              i * 2 + 1,
+            );
+          } else {
+            // Just hold the last one a bit
+            tlNarrative.to(
+              text,
+              {
+                opacity: 1,
+                duration: 1,
+              },
+              i * 2 + 1,
+            );
+          }
+
+          // Initial setup for the texts
+          gsap.set(text, { y: 50 });
+        });
+
+        // 4. Parallax Mouse Move on Blobs
+        const blobs = document.querySelectorAll(".glow-blob");
+        window.addEventListener("mousemove", (e) => {
+          const x = (e.clientX / window.innerWidth - 0.5) * 40;
+          const y = (e.clientY / window.innerHeight - 0.5) * 40;
+
+          gsap.to(blobs, {
+            x: x,
+            y: y,
+            duration: 2,
+            ease: "power2.out",
+            stagger: 0.1,
+          });
+        });
+
+        // 5. Magnetic Buttons
+        const magneticBtns = document.querySelectorAll(".magnetic-btn");
+
+        magneticBtns.forEach((btn) => {
+          btn.addEventListener("mousemove", (e) => {
+            const rect = btn.getBoundingClientRect();
+            const h = rect.width / 2;
+
+            const x = e.clientX - rect.left - h;
+            const y = e.clientY - rect.top - rect.height / 2;
+
+            gsap.to(btn, {
+              x: x * 0.3,
+              y: y * 0.3,
+              duration: 0.4,
+              ease: "power2.out",
+            });
+          });
+
+          btn.addEventListener("mouseleave", () => {
+            gsap.to(btn, {
+              x: 0,
+              y: 0,
+              duration: 0.7,
+              ease: "elastic.out(1, 0.3)",
+            });
+          });
+        });
+
+        // 6. Form fade up on scroll
+        gsap.from("#roast-form form", {
+          y: 100,
+          opacity: 0,
+          duration: 1,
+          ease: "power3.out",
+          scrollTrigger: {
+            trigger: "#roast-form",
+            start: "top 75%",
+          },
+        });
+      });
+    </script>
+  </body>
+</html>

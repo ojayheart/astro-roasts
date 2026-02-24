@@ -1,0 +1,411 @@
+<!doctype html>
+<html
+  lang="en"
+  class="bg-void text-white antialiased selection:bg-white/20 selection:text-white"
+>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Astro Roasts</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Inter:wght@300;400;500&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              cormorant: ['"Cormorant Garamond"', "serif"],
+              inter: ["Inter", "sans-serif"],
+            },
+            colors: {
+              void: "#030303",
+            },
+          },
+        },
+      };
+    </script>
+
+    <!-- GSAP -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+    <style>
+      :root {
+        color-scheme: dark;
+      }
+
+      body {
+        background-color: #030303;
+        overflow-x: hidden;
+        margin: 0;
+        padding: 0;
+      }
+
+      /* Hide scrollbar for seamless look */
+      ::-webkit-scrollbar {
+        display: none;
+      }
+      * {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+
+      /* SVG Noise Overlay */
+      .noise-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        pointer-events: none;
+        z-index: 50;
+        opacity: 0.05;
+        mix-blend-mode: screen;
+      }
+
+      /* Ambient Glowing Orb */
+      .orb-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        pointer-events: none;
+        z-index: 0;
+        overflow: hidden;
+      }
+
+      .orb {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 70vmax;
+        height: 70vmax;
+        margin-top: -35vmax;
+        margin-left: -35vmax;
+        background: radial-gradient(
+          circle,
+          rgba(100, 20, 30, 0.15) 0%,
+          rgba(0, 0, 0, 0) 65%
+        );
+        border-radius: 50%;
+        filter: blur(80px);
+        transition:
+          background 1.5s ease,
+          transform 2s ease;
+      }
+
+      .orb.intense {
+        background: radial-gradient(
+          circle,
+          rgba(140, 25, 45, 0.25) 0%,
+          rgba(0, 0, 0, 0) 70%
+        );
+        transform: scale(1.1);
+      }
+
+      /* Input autofill override */
+      input:-webkit-autofill,
+      input:-webkit-autofill:hover,
+      input:-webkit-autofill:focus,
+      input:-webkit-autofill:active {
+        -webkit-box-shadow: 0 0 0 30px #030303 inset !important;
+        -webkit-text-fill-color: rgba(255, 255, 255, 0.9) !important;
+        transition: background-color 5000s ease-in-out 0s;
+      }
+
+      /* Smooth reveal utility */
+      .invisible-on-load {
+        visibility: hidden;
+      }
+    </style>
+  </head>
+  <body
+    class="min-h-screen w-full flex flex-col justify-center items-center relative font-inter"
+  >
+    <!-- Noise Overlay -->
+    <svg class="noise-overlay">
+      <filter id="noiseFilter">
+        <feTurbulence
+          type="fractalNoise"
+          baseFrequency="0.75"
+          numOctaves="3"
+          stitchTiles="stitch"
+        />
+      </filter>
+      <rect width="100%" height="100%" filter="url(#noiseFilter)" />
+    </svg>
+
+    <!-- Ambient Orb -->
+    <div class="orb-container">
+      <div class="orb" id="ambient-orb"></div>
+    </div>
+
+    <!-- Main Content Wrapper -->
+    <main
+      class="relative z-10 w-full max-w-lg px-6 mx-auto invisible-on-load"
+      id="main-content"
+    >
+      <!-- STEP 1: The Form -->
+      <div id="step-1" class="w-full">
+        <header class="mb-16 text-center reveal-text">
+          <h1
+            class="font-cormorant text-5xl md:text-6xl font-light tracking-tight text-white/95 mb-3"
+          >
+            Astro Roasts.
+          </h1>
+          <p class="text-white/40 text-sm font-light tracking-wide">
+            The stars have no filter.
+          </p>
+        </header>
+
+        <form id="astro-form" class="w-full space-y-8">
+          <!-- Name -->
+          <div class="relative z-10 w-full reveal-input">
+            <input
+              type="text"
+              id="name"
+              required
+              class="peer w-full bg-transparent border-b border-white/20 py-2 text-white/90 text-lg focus:outline-none focus:border-white/70 transition-colors placeholder-transparent"
+              placeholder="Name"
+            />
+            <label
+              for="name"
+              class="absolute left-0 -top-3.5 text-white/30 text-[10px] uppercase tracking-widest transition-all peer-placeholder-shown:text-base peer-placeholder-shown:top-2 peer-placeholder-shown:normal-case peer-placeholder-shown:tracking-normal peer-focus:-top-3.5 peer-focus:text-[10px] peer-focus:uppercase peer-focus:tracking-widest peer-focus:text-white/60 cursor-text"
+            >
+              Name
+            </label>
+          </div>
+
+          <!-- Date & Time Row -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-8 reveal-input">
+            <div class="relative z-10 w-full">
+              <input
+                type="text"
+                id="dob"
+                required
+                class="peer w-full bg-transparent border-b border-white/20 py-2 text-white/90 text-lg focus:outline-none focus:border-white/70 transition-colors placeholder-transparent"
+                placeholder="MM / DD / YYYY"
+              />
+              <label
+                for="dob"
+                class="absolute left-0 -top-3.5 text-white/30 text-[10px] uppercase tracking-widest transition-all peer-placeholder-shown:text-base peer-placeholder-shown:top-2 peer-placeholder-shown:normal-case peer-placeholder-shown:tracking-normal peer-focus:-top-3.5 peer-focus:text-[10px] peer-focus:uppercase peer-focus:tracking-widest peer-focus:text-white/60 cursor-text"
+              >
+                Date of Birth
+              </label>
+            </div>
+            <div class="relative z-10 w-full">
+              <input
+                type="text"
+                id="time"
+                required
+                class="peer w-full bg-transparent border-b border-white/20 py-2 text-white/90 text-lg focus:outline-none focus:border-white/70 transition-colors placeholder-transparent"
+                placeholder="HH:MM AM/PM"
+              />
+              <label
+                for="time"
+                class="absolute left-0 -top-3.5 text-white/30 text-[10px] uppercase tracking-widest transition-all peer-placeholder-shown:text-base peer-placeholder-shown:top-2 peer-placeholder-shown:normal-case peer-placeholder-shown:tracking-normal peer-focus:-top-3.5 peer-focus:text-[10px] peer-focus:uppercase peer-focus:tracking-widest peer-focus:text-white/60 cursor-text"
+              >
+                Time of Birth
+              </label>
+            </div>
+          </div>
+
+          <!-- Location -->
+          <div class="relative z-10 w-full reveal-input">
+            <input
+              type="text"
+              id="location"
+              required
+              class="peer w-full bg-transparent border-b border-white/20 py-2 text-white/90 text-lg focus:outline-none focus:border-white/70 transition-colors placeholder-transparent"
+              placeholder="City, Country"
+            />
+            <label
+              for="location"
+              class="absolute left-0 -top-3.5 text-white/30 text-[10px] uppercase tracking-widest transition-all peer-placeholder-shown:text-base peer-placeholder-shown:top-2 peer-placeholder-shown:normal-case peer-placeholder-shown:tracking-normal peer-focus:-top-3.5 peer-focus:text-[10px] peer-focus:uppercase peer-focus:tracking-widest peer-focus:text-white/60 cursor-text"
+            >
+              City of Birth
+            </label>
+          </div>
+
+          <!-- Submit Button -->
+          <div class="pt-6 reveal-input">
+            <button
+              type="submit"
+              class="w-full bg-white text-void py-4 text-xs font-medium uppercase tracking-[0.2em] hover:bg-white/90 hover:scale-[0.99] transition-all duration-300"
+            >
+              Read My Chart
+            </button>
+          </div>
+        </form>
+
+        <div class="mt-12 text-center reveal-fade">
+          <p class="text-white/20 text-[11px] uppercase tracking-widest">
+            The reading people can't stop sharing.
+          </p>
+        </div>
+      </div>
+
+      <!-- STEP 2: Loading Sequence -->
+      <div
+        id="step-2"
+        class="hidden absolute inset-0 flex items-center justify-center h-full w-full pointer-events-none"
+      >
+        <p
+          id="loading-text"
+          class="font-cormorant text-2xl italic text-white/60 tracking-wide opacity-0"
+        >
+          Drawing chart...
+        </p>
+      </div>
+
+      <!-- STEP 3: The Result -->
+      <div id="step-3" class="hidden w-full text-center mt-[-10vh]">
+        <div class="mb-12">
+          <p
+            class="font-cormorant text-2xl md:text-3xl lg:text-4xl text-white/90 leading-relaxed font-light italic result-node"
+          >
+            "You project an aura of effortless independence, but your Moon
+            placement reveals someone who rehearses arguments in the shower and
+            still loses. You crave deep intimacy, yet you treat vulnerability
+            like a threat."
+          </p>
+          <div class="w-12 h-px bg-white/20 mx-auto mt-10 result-node"></div>
+          <p class="mt-8 text-white/50 text-sm font-light result-node">
+            We need to talk about your Venus.
+          </p>
+        </div>
+
+        <button
+          class="result-node w-full md:w-auto md:px-16 bg-white text-void py-4 text-xs font-medium uppercase tracking-[0.2em] hover:bg-white/90 hover:scale-[0.99] transition-all duration-300 shadow-[0_0_40px_rgba(255,255,255,0.1)] hover:shadow-[0_0_60px_rgba(255,255,255,0.2)]"
+        >
+          Get the full reading — $5
+        </button>
+      </div>
+    </main>
+
+    <script>
+      // Ensure DOM is ready and remove invisible class
+      document.addEventListener("DOMContentLoaded", () => {
+        document
+          .getElementById("main-content")
+          .classList.remove("invisible-on-load");
+
+        // Initial Load Animation
+        const tl = gsap.timeline();
+
+        tl.from(".reveal-text", {
+          y: 30,
+          opacity: 0,
+          duration: 1.5,
+          ease: "power3.out",
+          delay: 0.2,
+        })
+          .from(
+            ".reveal-input",
+            {
+              y: 20,
+              opacity: 0,
+              duration: 1.2,
+              stagger: 0.1,
+              ease: "power2.out",
+            },
+            "-=1",
+          )
+          .from(
+            ".reveal-fade",
+            {
+              opacity: 0,
+              duration: 2,
+              ease: "power1.inOut",
+            },
+            "-=0.5",
+          );
+
+        // Ambient Orb Mouse Follow (Lagged & Smooth)
+        const orb = document.getElementById("ambient-orb");
+        let xTo = gsap.quickTo(orb, "x", { duration: 2, ease: "power3.out" }),
+          yTo = gsap.quickTo(orb, "y", { duration: 2, ease: "power3.out" });
+
+        window.addEventListener("mousemove", (e) => {
+          // Move orb slightly towards mouse (not 1:1, keeps it subtle)
+          const xOffset = (e.clientX - window.innerWidth / 2) * 0.4;
+          const yOffset = (e.clientY - window.innerHeight / 2) * 0.4;
+          xTo(xOffset);
+          yTo(yOffset);
+        });
+
+        // Form Submission Flow
+        const form = document.getElementById("astro-form");
+        form.addEventListener("submit", (e) => {
+          e.preventDefault();
+
+          const transitionTl = gsap.timeline();
+
+          // 1. Fade out Step 1
+          transitionTl.to("#step-1", {
+            opacity: 0,
+            y: -20,
+            duration: 0.8,
+            ease: "power2.inOut",
+            onComplete: () => {
+              document.getElementById("step-1").classList.add("hidden");
+              document.getElementById("step-2").classList.remove("hidden");
+            },
+          });
+
+          // 2. Loading Sequence
+          const phrases = [
+            "Drawing chart...",
+            "Analyzing aspects...",
+            "Judging your choices...",
+          ];
+          const loadText = document.getElementById("loading-text");
+
+          phrases.forEach((phrase, index) => {
+            transitionTl
+              .call(() => {
+                loadText.innerText = phrase;
+              })
+              .to(loadText, { opacity: 1, duration: 0.6, ease: "power2.out" })
+              .to(loadText, {
+                opacity: 0,
+                duration: 0.5,
+                ease: "power2.in",
+                delay: 0.8,
+              });
+          });
+
+          // 3. Reveal Step 3
+          transitionTl
+            .call(() => {
+              document.getElementById("step-2").classList.add("hidden");
+              document.getElementById("step-3").classList.remove("hidden");
+
+              // Intensify the orb
+              orb.classList.add("intense");
+            })
+            .fromTo(
+              ".result-node",
+              { opacity: 0, y: 30 },
+              {
+                opacity: 1,
+                y: 0,
+                duration: 1.5,
+                stagger: 0.2,
+                ease: "power3.out",
+              },
+            );
+        });
+      });
+    </script>
+  </body>
+</html>

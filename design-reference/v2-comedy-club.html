@@ -1,0 +1,1267 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Astro Roasts | The Universe Has Notes</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;700;900&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              display: ['"Bebas Neue"', "sans-serif"],
+              body: ["Inter", "sans-serif"],
+            },
+            colors: {
+              club: {
+                black: "#0a0a0a",
+                dark: "#111111",
+                gray: "#1a1a1a",
+                red: "#7f1d1d",
+                redDark: "#450a0a",
+              },
+              neon: {
+                pink: "#ff2d87",
+                blue: "#3b82f6",
+                gold: "#f5a623",
+                goldLight: "#fbbf24",
+              },
+            },
+            backgroundImage: {
+              "velvet-gradient":
+                "linear-gradient(to bottom, #111111, #450a0a, #111111)",
+            },
+          },
+        },
+      };
+    </script>
+
+    <!-- Custom CSS -->
+    <style>
+      :root {
+        --spotlight-color: rgba(245, 166, 35, 0.15);
+      }
+
+      body {
+        background-color: #0a0a0a;
+        color: #ffffff;
+        overflow-x: hidden;
+      }
+
+      /* Starfield Background */
+      #star-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        z-index: 0;
+        pointer-events: none;
+        background: radial-gradient(circle at 50% 0%, #1a1a1a 0%, #0a0a0a 70%);
+      }
+
+      .star {
+        position: absolute;
+        background: white;
+        border-radius: 50%;
+        opacity: 0;
+        animation: twinkle var(--duration) ease-in-out infinite alternate;
+        animation-delay: var(--delay);
+      }
+
+      @keyframes twinkle {
+        0% {
+          opacity: 0.1;
+          transform: scale(0.8);
+        }
+        100% {
+          opacity: 0.8;
+          transform: scale(1.2);
+        }
+      }
+
+      /* Theatrical Spotlight */
+      .spotlight-wrapper {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        pointer-events: none;
+        z-index: 1;
+      }
+
+      .spotlight {
+        position: absolute;
+        top: -20vh;
+        left: 50%;
+        width: 150vw;
+        height: 150vh;
+        background: radial-gradient(
+          ellipse at 50% 0%,
+          var(--spotlight-color) 0%,
+          rgba(245, 166, 35, 0) 60%
+        );
+        clip-path: polygon(40% 0, 60% 0, 100% 100%, 0 100%);
+        transform-origin: top center;
+        animation: sway 12s ease-in-out infinite alternate;
+        opacity: 0.8;
+        mix-blend-mode: screen;
+      }
+
+      @keyframes sway {
+        0% {
+          transform: translateX(-50%) rotate(-4deg);
+        }
+        100% {
+          transform: translateX(-50%) rotate(4deg);
+        }
+      }
+
+      /* Neon Glows */
+      .neon-text-pink {
+        text-shadow:
+          0 0 10px rgba(255, 45, 135, 0.7),
+          0 0 20px rgba(255, 45, 135, 0.5),
+          0 0 40px rgba(255, 45, 135, 0.3);
+      }
+
+      .neon-text-gold {
+        text-shadow:
+          0 0 10px rgba(245, 166, 35, 0.8),
+          0 0 20px rgba(245, 166, 35, 0.5);
+      }
+
+      .neon-border-pink {
+        box-shadow:
+          0 0 10px rgba(255, 45, 135, 0.4),
+          inset 0 0 10px rgba(255, 45, 135, 0.2);
+      }
+
+      /* Marquee */
+      .marquee-container {
+        overflow: hidden;
+        white-space: nowrap;
+        position: relative;
+        background: #111;
+        border-top: 1px solid #333;
+        border-bottom: 1px solid #333;
+        display: flex;
+      }
+
+      .marquee-content {
+        display: flex;
+        animation: marquee 20s linear infinite;
+      }
+
+      @keyframes marquee {
+        0% {
+          transform: translateX(0);
+        }
+        100% {
+          transform: translateX(-50%);
+        }
+      }
+
+      /* Ticket Stub Aesthetic */
+      .comedy-ticket {
+        position: relative;
+        background: #1a1a1a;
+        border: 1px solid #333;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+      }
+
+      .ticket-cutout {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        pointer-events: none;
+        background:
+          radial-gradient(circle at top right, #0a0a0a 10px, transparent 11px),
+          radial-gradient(
+            circle at bottom right,
+            #0a0a0a 10px,
+            transparent 11px
+          );
+        background-size: 100% 100%;
+        background-repeat: no-repeat;
+      }
+
+      /* Glassmorphism Inputs */
+      .glass-input {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        transition: all 0.3s ease;
+      }
+
+      .glass-input:focus {
+        border-color: #f5a623;
+        box-shadow: 0 0 15px rgba(245, 166, 35, 0.2);
+        outline: none;
+        background: rgba(255, 255, 255, 0.08);
+      }
+
+      /* Hover lift */
+      .hover-lift {
+        transition:
+          transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+          box-shadow 0.3s ease;
+      }
+      .hover-lift:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.6);
+      }
+
+      /* Scroll Bar */
+      ::-webkit-scrollbar {
+        width: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #0a0a0a;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #333;
+        border-radius: 4px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #ff2d87;
+      }
+
+      /* Blurry reveal overlay */
+      .blur-reveal {
+        backdrop-filter: blur(8px);
+        background: linear-gradient(to bottom, transparent, #111 80%);
+      }
+
+      /* Utility */
+      .z-content {
+        z-index: 10;
+        position: relative;
+      }
+    </style>
+  </head>
+  <body
+    class="font-body antialiased selection:bg-neon-pink selection:text-white"
+  >
+    <!-- Starfield Background -->
+    <div id="star-container"></div>
+
+    <!-- Navigation -->
+    <nav
+      id="navbar"
+      class="fixed w-full top-0 z-50 transition-all duration-300 py-4 px-6 md:px-12 border-b border-transparent"
+    >
+      <div class="max-w-7xl mx-auto flex justify-between items-center">
+        <a href="#" class="flex items-center gap-2 group">
+          <!-- Mic SVG -->
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="w-8 h-8 text-neon-gold group-hover:text-neon-pink transition-colors duration-300"
+            viewBox="0 0 256 256"
+            fill="currentColor"
+          >
+            <path
+              d="M128,176a48.05,48.05,0,0,0,48-48V64a48,48,0,0,0-96,0v64A48.05,48.05,0,0,0,128,176ZM96,64a32,32,0,0,1,64,0v64a32,32,0,0,1-64,0ZM200,128a8,8,0,0,1-16,0,56,56,0,0,1-112,0,8,8,0,0,1-16,0,72.08,72.08,0,0,0,64,71.49V232a8,8,0,0,0,16,0V199.49A72.08,72.08,0,0,0,200,128Z"
+            ></path>
+          </svg>
+          <span class="font-display text-2xl tracking-wider text-white"
+            >ASTRO<span class="text-neon-gold">ROASTS</span></span
+          >
+        </a>
+        <a
+          href="#roast-form"
+          class="hidden md:inline-flex items-center justify-center px-6 py-2.5 bg-neon-gold text-club-black font-bold font-display tracking-widest text-lg rounded-sm hover:bg-neon-goldLight hover:shadow-[0_0_20px_rgba(245,166,35,0.6)] transition-all duration-300"
+        >
+          GET ROASTED
+        </a>
+      </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header
+      class="relative min-h-screen flex items-center justify-center pt-24 pb-12 overflow-hidden"
+    >
+      <!-- Theatrical Spotlight -->
+      <div class="spotlight-wrapper">
+        <div class="spotlight"></div>
+      </div>
+
+      <div
+        class="max-w-7xl mx-auto px-6 w-full grid lg:grid-cols-2 gap-12 items-center z-content"
+      >
+        <!-- Hero Copy -->
+        <div class="text-center lg:text-left gsap-hero-element">
+          <div
+            class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-neon-pink/30 bg-neon-pink/10 mb-6"
+          >
+            <span
+              class="w-2 h-2 rounded-full bg-neon-pink animate-pulse"
+            ></span>
+            <span
+              class="text-neon-pink text-xs font-bold tracking-widest uppercase"
+              >Live at the edge of the universe</span
+            >
+          </div>
+
+          <h1
+            class="font-display text-6xl md:text-8xl lg:text-9xl leading-[0.85] text-white mb-6 uppercase drop-shadow-2xl"
+          >
+            The Universe <br />
+            <span
+              class="text-transparent bg-clip-text bg-gradient-to-r from-neon-gold to-yellow-200 neon-text-gold"
+              >Has Notes.</span
+            >
+          </h1>
+
+          <p
+            class="text-gray-400 text-lg md:text-xl font-light max-w-lg mx-auto lg:mx-0 mb-8"
+          >
+            Your birth chart called. It has complaints. Enter your details below
+            for a brutally honest, AI-powered roast based on real Swiss
+            Ephemeris data.
+          </p>
+
+          <div
+            class="flex flex-wrap items-center justify-center lg:justify-start gap-4 text-sm font-medium text-gray-500 uppercase tracking-wider"
+          >
+            <span class="flex items-center gap-1"
+              ><svg
+                class="w-4 h-4 text-neon-blue"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M5 13l4 4L19 7"
+                ></path>
+              </svg>
+              Real Astrology</span
+            >
+            <span class="flex items-center gap-1"
+              ><svg
+                class="w-4 h-4 text-neon-blue"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M5 13l4 4L19 7"
+                ></path>
+              </svg>
+              Zero Mercy</span
+            >
+            <span class="flex items-center gap-1"
+              ><svg
+                class="w-4 h-4 text-neon-blue"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M5 13l4 4L19 7"
+                ></path>
+              </svg>
+              100% Savage</span
+            >
+          </div>
+        </div>
+
+        <!-- The Stage Form -->
+        <div id="roast-form" class="relative gsap-hero-element mt-10 lg:mt-0">
+          <div
+            class="absolute -inset-1 bg-gradient-to-r from-neon-pink to-neon-gold rounded-xl blur opacity-20 animate-pulse"
+          ></div>
+          <div
+            class="relative bg-club-dark border border-white/10 rounded-xl p-8 shadow-2xl backdrop-blur-sm"
+          >
+            <div
+              class="flex items-center gap-3 mb-8 border-b border-white/10 pb-4"
+            >
+              <svg
+                class="w-6 h-6 text-neon-pink"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
+                ></path>
+              </svg>
+              <h2 class="font-display text-3xl tracking-wide text-white">
+                Spill Your Details
+              </h2>
+            </div>
+
+            <form class="space-y-5" onsubmit="event.preventDefault()">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div class="space-y-1">
+                  <label
+                    class="text-xs text-gray-400 uppercase tracking-wider font-bold ml-1"
+                    >Name / Stage Name</label
+                  >
+                  <input
+                    type="text"
+                    placeholder="e.g. Tragic Gemini"
+                    class="w-full px-4 py-3 rounded-md glass-input text-white placeholder-gray-600"
+                    required
+                  />
+                </div>
+                <div class="space-y-1">
+                  <label
+                    class="text-xs text-gray-400 uppercase tracking-wider font-bold ml-1"
+                    >Birth Date</label
+                  >
+                  <input
+                    type="date"
+                    class="w-full px-4 py-3 rounded-md glass-input text-white placeholder-gray-600 appearance-none"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div class="space-y-1">
+                  <label
+                    class="text-xs text-gray-400 uppercase tracking-wider font-bold ml-1"
+                    >Exact Time (Don't lie)</label
+                  >
+                  <input
+                    type="time"
+                    class="w-full px-4 py-3 rounded-md glass-input text-white placeholder-gray-600 appearance-none"
+                    required
+                  />
+                </div>
+                <div class="space-y-1">
+                  <label
+                    class="text-xs text-gray-400 uppercase tracking-wider font-bold ml-1"
+                    >City of Birth</label
+                  >
+                  <input
+                    type="text"
+                    placeholder="e.g. Los Angeles, CA"
+                    class="w-full px-4 py-3 rounded-md glass-input text-white placeholder-gray-600"
+                    required
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                class="w-full mt-6 bg-white text-black font-display text-2xl py-4 rounded-md uppercase tracking-widest hover:bg-neon-pink hover:text-white transition-all duration-300 neon-border-pink relative group overflow-hidden"
+              >
+                <span class="relative z-10 group-hover:drop-shadow-md"
+                  >Step Up To The Mic</span
+                >
+                <div
+                  class="absolute inset-0 bg-gradient-to-r from-neon-pink to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                ></div>
+              </button>
+            </form>
+            <p class="text-center text-xs text-gray-600 mt-4">
+              We don't save your data. We just use it to destroy your ego.
+            </p>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Stats Ticker -->
+    <section class="marquee-container py-4 z-content">
+      <div
+        class="marquee-content font-display text-2xl md:text-3xl tracking-widest text-club-gray uppercase flex items-center"
+      >
+        <!-- Repeated Content -->
+        <span class="mx-8 text-white"
+          ><span class="text-neon-gold counter" data-target="1042069">0</span>
+          Egos Destroyed</span
+        >
+        <span class="mx-8 text-club-red">★</span>
+        <span class="mx-8 text-white">Zero Signs Spared</span>
+        <span class="mx-8 text-club-red">★</span>
+        <span class="mx-8 text-white"
+          ><span class="text-neon-pink counter" data-target="50000">0</span>+
+          Tears Shed</span
+        >
+        <span class="mx-8 text-club-red">★</span>
+        <span class="mx-8 text-white">100% Cosmically Accurate</span>
+        <span class="mx-8 text-club-red">★</span>
+
+        <span class="mx-8 text-white"
+          ><span class="text-neon-gold">1,042,069</span> Egos Destroyed</span
+        >
+        <span class="mx-8 text-club-red">★</span>
+        <span class="mx-8 text-white">Zero Signs Spared</span>
+        <span class="mx-8 text-club-red">★</span>
+        <span class="mx-8 text-white"
+          ><span class="text-neon-pink">50,000</span>+ Tears Shed</span
+        >
+        <span class="mx-8 text-club-red">★</span>
+        <span class="mx-8 text-white">100% Cosmically Accurate</span>
+        <span class="mx-8 text-club-red">★</span>
+      </div>
+    </section>
+
+    <!-- Sample Roast Section (The Setup) -->
+    <section
+      class="py-24 relative z-content bg-gradient-to-b from-club-black to-[#0f0f0f]"
+    >
+      <div class="max-w-6xl mx-auto px-6">
+        <div class="text-center mb-16 gsap-fade-up">
+          <h2
+            class="font-display text-5xl md:text-7xl text-white mb-4 uppercase"
+          >
+            The Warm-Up Act
+          </h2>
+          <p class="text-gray-400 text-lg max-w-2xl mx-auto">
+            This is just a taste. The opener before the headliner goes fully
+            unhinged.
+          </p>
+        </div>
+
+        <!-- Comedy Ticket Roast -->
+        <div
+          class="comedy-ticket flex flex-col md:flex-row max-w-4xl mx-auto gsap-fade-up hover-lift"
+        >
+          <div class="ticket-cutout"></div>
+
+          <!-- Main Ticket Area -->
+          <div class="flex-1 p-8 md:p-12 relative bg-[#111]">
+            <div
+              class="absolute top-4 right-4 text-xs font-display text-gray-600 tracking-widest border border-gray-600 px-2 py-1 rounded"
+            >
+              SAMPLE
+            </div>
+
+            <h3 class="font-display text-3xl text-neon-gold mb-2">
+              Sun in Leo, Moon in Pisces
+            </h3>
+            <p class="text-gray-500 text-sm mb-6 uppercase tracking-wider">
+              Generated at 2:14 AM
+            </p>
+
+            <div
+              class="space-y-4 text-gray-300 font-body leading-relaxed text-lg"
+            >
+              <p>
+                Oh, a Leo Sun with a Pisces Moon? So you demand to be the center
+                of attention, but the second someone actually looks at you, you
+                start crying?
+              </p>
+              <p>
+                You’re essentially a Broadway star who throws up backstage. Your
+                entire personality is a tug-of-war between wanting a parade
+                thrown in your honor and wanting to isolate in a dark room
+                listening to Mitski.
+              </p>
+
+              <!-- Blurred section -->
+              <div class="relative mt-8">
+                <p class="blur-[6px] select-none opacity-50">
+                  Your Venus in Virgo means you treat relationships like a home
+                  inspection. Nobody is perfect enough for you, which is
+                  hilarious considering your Mars in Cancer makes you entirely
+                  incapable of direct confrontation...
+                </p>
+
+                <div
+                  class="absolute inset-0 flex flex-col items-center justify-center blur-reveal"
+                >
+                  <svg
+                    class="w-10 h-10 text-white mb-3 drop-shadow-lg"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                    ></path>
+                  </svg>
+                  <span
+                    class="font-display text-2xl text-white tracking-widest mb-2"
+                    >The Headliner Goes Deeper</span
+                  >
+                  <a
+                    href="#pricing"
+                    class="px-6 py-2 bg-white/10 border border-white/20 text-white hover:bg-white hover:text-black transition-colors rounded-full text-sm font-bold uppercase tracking-wider backdrop-blur-md"
+                    >Unlock Full Set for $5</a
+                  >
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Ticket Stub -->
+          <div
+            class="md:w-48 border-t md:border-t-0 md:border-l-2 border-dashed border-gray-600 bg-club-dark p-6 flex flex-col justify-between items-center text-center relative"
+          >
+            <!-- Circles to complete stub look -->
+            <div
+              class="hidden md:block absolute -top-4 -left-4 w-8 h-8 bg-[#0f0f0f] rounded-full"
+            ></div>
+            <div
+              class="hidden md:block absolute -bottom-4 -left-4 w-8 h-8 bg-[#0f0f0f] rounded-full"
+            ></div>
+
+            <div>
+              <div class="text-gray-500 text-xs uppercase tracking-widest mb-2">
+                Admit One
+              </div>
+              <div
+                class="font-display text-4xl text-white transform md:rotate-90 md:my-16 tracking-widest whitespace-nowrap"
+              >
+                GENERAL ADM.
+              </div>
+            </div>
+
+            <!-- Barcode fake -->
+            <div
+              class="w-full h-12 flex justify-between gap-[2px] opacity-30 mt-4 md:mt-0"
+            >
+              <div class="w-1 bg-white h-full"></div>
+              <div class="w-3 bg-white h-full"></div>
+              <div class="w-1 bg-white h-full"></div>
+              <div class="w-2 bg-white h-full"></div>
+              <div class="w-1 bg-white h-full"></div>
+              <div class="w-4 bg-white h-full"></div>
+              <div class="w-1 bg-white h-full"></div>
+              <div class="w-2 bg-white h-full"></div>
+              <div class="w-1 bg-white h-full"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- How It Works (The Run of Show) -->
+    <section
+      class="py-24 relative z-content bg-club-black border-t border-b border-white/5"
+    >
+      <div class="max-w-7xl mx-auto px-6">
+        <div class="text-center mb-20 gsap-fade-up">
+          <span
+            class="text-neon-blue font-bold tracking-widest uppercase text-sm mb-2 block"
+            >Run of Show</span
+          >
+          <h2 class="font-display text-5xl md:text-7xl text-white uppercase">
+            How the Magic Happens
+          </h2>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-8 md:gap-12 relative">
+          <!-- Connecting line -->
+          <div
+            class="hidden md:block absolute top-12 left-20 right-20 h-[1px] bg-gradient-to-r from-transparent via-gray-700 to-transparent"
+          ></div>
+
+          <!-- Step 1 -->
+          <div
+            class="text-center relative gsap-stagger-card bg-club-dark/50 p-8 rounded-2xl border border-white/5 hover:border-neon-blue/30 transition-colors"
+          >
+            <div
+              class="w-24 h-24 mx-auto bg-club-black border border-gray-800 rounded-full flex items-center justify-center mb-6 relative z-10 shadow-[0_0_30px_rgba(59,130,246,0.1)]"
+            >
+              <span
+                class="absolute -top-2 -right-2 w-8 h-8 bg-neon-blue text-white font-display text-xl rounded-full flex items-center justify-center"
+                >1</span
+              >
+              <svg
+                class="w-10 h-10 text-white"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.5"
+                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                ></path>
+              </svg>
+            </div>
+            <h3 class="font-display text-3xl text-white mb-3">
+              Spill Your Details
+            </h3>
+            <p class="text-gray-400">
+              Give us your exact birth date, time, and city. Don't round up. The
+              cosmos knows when you lie.
+            </p>
+          </div>
+
+          <!-- Step 2 -->
+          <div
+            class="text-center relative gsap-stagger-card bg-club-dark/50 p-8 rounded-2xl border border-white/5 hover:border-neon-pink/30 transition-colors"
+          >
+            <div
+              class="w-24 h-24 mx-auto bg-club-black border border-gray-800 rounded-full flex items-center justify-center mb-6 relative z-10 shadow-[0_0_30px_rgba(255,45,135,0.1)]"
+            >
+              <span
+                class="absolute -top-2 -right-2 w-8 h-8 bg-neon-pink text-white font-display text-xl rounded-full flex items-center justify-center"
+                >2</span
+              >
+              <svg
+                class="w-10 h-10 text-white"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.5"
+                  d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"
+                ></path>
+              </svg>
+            </div>
+            <h3 class="font-display text-3xl text-white mb-3">
+              We Read The Stars
+            </h3>
+            <p class="text-gray-400">
+              Our AI uses strict Swiss Ephemeris data to calculate your exact
+              planetary positions and aspects.
+            </p>
+          </div>
+
+          <!-- Step 3 -->
+          <div
+            class="text-center relative gsap-stagger-card bg-club-dark/50 p-8 rounded-2xl border border-white/5 hover:border-neon-gold/30 transition-colors"
+          >
+            <div
+              class="w-24 h-24 mx-auto bg-club-black border border-gray-800 rounded-full flex items-center justify-center mb-6 relative z-10 shadow-[0_0_30px_rgba(245,166,35,0.1)]"
+            >
+              <span
+                class="absolute -top-2 -right-2 w-8 h-8 bg-neon-gold text-club-black font-display text-xl rounded-full flex items-center justify-center"
+                >3</span
+              >
+              <span class="text-4xl text-white">💀</span>
+            </div>
+            <h3 class="font-display text-3xl text-white mb-3">Get Wrecked</h3>
+            <p class="text-gray-400">
+              Receive a brutally honest roast that exposes your deepest flaws.
+              Screenshot, cry, share with friends.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Pricing (The Box Office) -->
+    <section
+      id="pricing"
+      class="py-24 relative z-content bg-velvet-gradient border-t-2 border-club-redDark"
+    >
+      <div class="max-w-5xl mx-auto px-6">
+        <div class="text-center mb-16 gsap-fade-up">
+          <h2
+            class="font-display text-5xl md:text-7xl text-white mb-4 uppercase drop-shadow-lg"
+          >
+            The Box Office
+          </h2>
+          <p class="text-gray-300 text-lg max-w-2xl mx-auto">
+            Pick your poison. A light roasting or full cosmic devastation.
+          </p>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-8 items-stretch">
+          <!-- Free Tier -->
+          <div
+            class="bg-[#111] border border-gray-800 rounded-2xl p-8 flex flex-col hover-lift gsap-fade-up"
+          >
+            <div class="mb-8">
+              <h3 class="font-display text-4xl text-white mb-2 uppercase">
+                The Opener
+              </h3>
+              <div class="text-3xl font-light text-gray-400 mb-4">Free</div>
+              <p class="text-gray-500 text-sm">
+                A quick 5-minute set. Just enough to hurt your feelings based on
+                your big three.
+              </p>
+            </div>
+
+            <ul class="space-y-4 mb-8 flex-1 text-gray-300">
+              <li class="flex items-start gap-3">
+                <svg
+                  class="w-5 h-5 text-gray-600 mt-0.5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M5 13l4 4L19 7"
+                  ></path>
+                </svg>
+                <span>Sun, Moon, Rising sign roast</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <svg
+                  class="w-5 h-5 text-gray-600 mt-0.5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M5 13l4 4L19 7"
+                  ></path>
+                </svg>
+                <span>One savage personality summary</span>
+              </li>
+              <li class="flex items-start gap-3 text-gray-600 line-through">
+                <svg
+                  class="w-5 h-5 mt-0.5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M6 18L18 6M6 6l12 12"
+                  ></path>
+                </svg>
+                <span>House placements & aspects</span>
+              </li>
+            </ul>
+
+            <a
+              href="#roast-form"
+              class="block text-center w-full py-4 border border-gray-600 text-white font-display text-xl uppercase tracking-widest rounded hover:bg-white hover:text-black transition-colors"
+            >
+              Get Started
+            </a>
+          </div>
+
+          <!-- VIP Tier -->
+          <div
+            class="bg-[#1a1a1a] border-2 border-neon-gold rounded-2xl p-8 flex flex-col hover-lift relative shadow-[0_0_40px_rgba(245,166,35,0.15)] gsap-fade-up"
+            style="transform: scale(1.05)"
+          >
+            <div class="absolute top-0 right-10 transform -translate-y-1/2">
+              <span
+                class="bg-neon-gold text-club-black font-bold uppercase tracking-widest text-xs px-4 py-1.5 rounded-full shadow-lg"
+                >Most Popular</span
+              >
+            </div>
+
+            <div class="mb-8">
+              <h3
+                class="font-display text-4xl text-neon-gold mb-2 uppercase neon-text-gold"
+              >
+                The Headliner
+              </h3>
+              <div class="text-4xl font-bold text-white mb-4">
+                $5
+                <span class="text-lg text-gray-500 font-light">one-time</span>
+              </div>
+              <p class="text-gray-300 text-sm">
+                The full 30-minute special. We analyze every planet, house, and
+                aspect, and drag you for all of it.
+              </p>
+            </div>
+
+            <ul class="space-y-4 mb-8 flex-1 text-white">
+              <li class="flex items-start gap-3">
+                <svg
+                  class="w-5 h-5 text-neon-gold mt-0.5 drop-shadow-md"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="3"
+                    d="M5 13l4 4L19 7"
+                  ></path>
+                </svg>
+                <span>Everything in The Opener</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <svg
+                  class="w-5 h-5 text-neon-gold mt-0.5 drop-shadow-md"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="3"
+                    d="M5 13l4 4L19 7"
+                  ></path>
+                </svg>
+                <span>Inner & Outer Planets roasted</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <svg
+                  class="w-5 h-5 text-neon-gold mt-0.5 drop-shadow-md"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="3"
+                    d="M5 13l4 4L19 7"
+                  ></path>
+                </svg>
+                <span>Love, Career, and Trauma aspects</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <svg
+                  class="w-5 h-5 text-neon-gold mt-0.5 drop-shadow-md"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="3"
+                    d="M5 13l4 4L19 7"
+                  ></path>
+                </svg>
+                <span>Beautiful PDF output to share</span>
+              </li>
+            </ul>
+
+            <button
+              class="block w-full py-4 bg-neon-gold text-club-black font-display text-2xl uppercase tracking-widest rounded hover:bg-neon-goldLight hover:shadow-[0_0_20px_rgba(245,166,35,0.4)] transition-all"
+            >
+              Buy Front Row Ticket
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Reactions (Hecklers) -->
+    <section class="py-24 relative z-content bg-club-black overflow-hidden">
+      <div class="max-w-7xl mx-auto px-6">
+        <div class="text-center mb-16 gsap-fade-up">
+          <h2
+            class="font-display text-5xl md:text-7xl text-white mb-4 uppercase"
+          >
+            Audience Reactions
+          </h2>
+          <p class="text-gray-400 text-lg">
+            Don't just take our word for it. Here's what the victims are saying.
+          </p>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-6">
+          <!-- Tweet Card 1 -->
+          <div
+            class="bg-[#151515] p-6 rounded-xl border border-white/5 gsap-stagger-tweet"
+          >
+            <div class="flex items-center gap-3 mb-4">
+              <div
+                class="w-10 h-10 rounded-full bg-gradient-to-tr from-pink-500 to-yellow-500"
+              ></div>
+              <div>
+                <div class="font-bold text-white text-sm">Sarah (Taurus)</div>
+                <div class="text-neon-pink text-xs">@stubborn_sarah</div>
+              </div>
+            </div>
+            <p class="text-gray-300 text-sm leading-relaxed">
+              The stars really said "you're the problem" and charged me $5 for
+              it. I've never felt so attacked and so seen. 😭
+            </p>
+          </div>
+
+          <!-- Tweet Card 2 -->
+          <div
+            class="bg-[#151515] p-6 rounded-xl border border-white/5 gsap-stagger-tweet md:translate-y-8"
+          >
+            <div class="flex items-center gap-3 mb-4">
+              <div
+                class="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500"
+              ></div>
+              <div>
+                <div class="font-bold text-white text-sm">Marcus (Gemini)</div>
+                <div class="text-neon-blue text-xs">@two_faced_marc</div>
+              </div>
+            </div>
+            <p class="text-gray-300 text-sm leading-relaxed">
+              Better than therapy, cheaper than a psychic, meaner than my
+              mother. 10/10 would get roasted again.
+            </p>
+          </div>
+
+          <!-- Tweet Card 3 -->
+          <div
+            class="bg-[#151515] p-6 rounded-xl border border-white/5 gsap-stagger-tweet"
+          >
+            <div class="flex items-center gap-3 mb-4">
+              <div
+                class="w-10 h-10 rounded-full bg-gradient-to-tr from-red-500 to-orange-500"
+              ></div>
+              <div>
+                <div class="font-bold text-white text-sm">Elena (Aries)</div>
+                <div class="text-neon-gold text-xs">@fire_starter</div>
+              </div>
+            </div>
+            <p class="text-gray-300 text-sm leading-relaxed">
+              I tried to fight the AI after reading my Mars placement. It was
+              100% accurate. I am furious. 🤬🔥
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Final CTA -->
+    <section
+      class="py-32 relative z-content bg-club-black border-t border-gray-900 overflow-hidden flex justify-center items-center text-center"
+    >
+      <!-- Second Spotlight -->
+      <div
+        class="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-neon-pink/10 rounded-full blur-[120px] pointer-events-none"
+      ></div>
+
+      <div class="max-w-3xl mx-auto px-6 relative z-10 gsap-fade-up">
+        <h2
+          class="font-display text-6xl md:text-8xl text-white mb-6 uppercase leading-none drop-shadow-2xl"
+        >
+          Ready For <br />
+          <span class="text-neon-pink neon-text-pink">Your Set?</span>
+        </h2>
+        <p class="text-gray-400 text-xl mb-10">
+          Step up to the mic. Or let the stars do it for you.
+        </p>
+        <a
+          href="#roast-form"
+          class="inline-block px-12 py-5 bg-white text-black font-display text-3xl uppercase tracking-widest rounded-sm hover:bg-neon-pink hover:text-white transition-all duration-300 hover:shadow-[0_0_40px_rgba(255,45,135,0.6)] neon-border-pink"
+        >
+          ROAST ME NOW
+        </a>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer
+      class="bg-[#050505] py-12 border-t border-gray-900 relative z-content"
+    >
+      <div
+        class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6"
+      >
+        <div
+          class="flex items-center gap-2 grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition-all"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="w-6 h-6 text-neon-gold"
+            viewBox="0 0 256 256"
+            fill="currentColor"
+          >
+            <path
+              d="M128,176a48.05,48.05,0,0,0,48-48V64a48,48,0,0,0-96,0v64A48.05,48.05,0,0,0,128,176ZM96,64a32,32,0,0,1,64,0v64a32,32,0,0,1-64,0ZM200,128a8,8,0,0,1-16,0,56,56,0,0,1-112,0,8,8,0,0,1-16,0,72.08,72.08,0,0,0,64,71.49V232a8,8,0,0,0,16,0V199.49A72.08,72.08,0,0,0,200,128Z"
+            ></path>
+          </svg>
+          <span class="font-display text-xl tracking-wider text-white"
+            >ASTRO<span class="text-neon-gold">ROASTS</span></span
+          >
+        </div>
+
+        <p class="text-gray-600 text-sm text-center">
+          Made with audacity and Swiss Ephemeris data.<br />
+          &copy; 2023 Astro Roasts. We're not sorry.
+        </p>
+
+        <div class="flex gap-4 text-gray-500 text-sm">
+          <a href="#" class="hover:text-neon-pink transition-colors">Terms</a>
+          <a href="#" class="hover:text-neon-pink transition-colors">Privacy</a>
+          <a href="#" class="hover:text-neon-pink transition-colors"
+            >Refunds (lol no)</a
+          >
+        </div>
+      </div>
+    </footer>
+
+    <!-- GSAP & Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        // 1. Generate CSS Starfield
+        const starContainer = document.getElementById("star-container");
+        const numStars = 150;
+
+        for (let i = 0; i < numStars; i++) {
+          let star = document.createElement("div");
+          star.classList.add("star");
+          // Random position
+          star.style.left = `${Math.random() * 100}vw`;
+          star.style.top = `${Math.random() * 100}vh`;
+          // Random size (1px to 3px)
+          let size = Math.random() * 2 + 1;
+          star.style.width = `${size}px`;
+          star.style.height = `${size}px`;
+          // Random animation duration & delay
+          star.style.setProperty("--duration", `${Math.random() * 3 + 2}s`);
+          star.style.setProperty("--delay", `${Math.random() * 5}s`);
+
+          starContainer.appendChild(star);
+        }
+
+        // 2. Navbar Scroll Effect
+        const navbar = document.getElementById("navbar");
+        window.addEventListener("scroll", () => {
+          if (window.scrollY > 50) {
+            navbar.classList.add(
+              "bg-club-black/90",
+              "backdrop-blur-md",
+              "border-white/10",
+            );
+            navbar.classList.remove("border-transparent");
+          } else {
+            navbar.classList.remove(
+              "bg-club-black/90",
+              "backdrop-blur-md",
+              "border-white/10",
+            );
+            navbar.classList.add("border-transparent");
+          }
+        });
+
+        // 3. GSAP Animations
+        gsap.registerPlugin(ScrollTrigger);
+
+        // Hero Load Animation
+        const heroTl = gsap.timeline();
+        heroTl.fromTo(
+          ".gsap-hero-element",
+          { y: 50, opacity: 0 },
+          {
+            y: 0,
+            opacity: 1,
+            duration: 1,
+            stagger: 0.2,
+            ease: "power3.out",
+            delay: 0.2,
+          },
+        );
+
+        // Generic Fade Up Sections
+        gsap.utils.toArray(".gsap-fade-up").forEach((element) => {
+          gsap.fromTo(
+            element,
+            { y: 50, opacity: 0 },
+            {
+              scrollTrigger: {
+                trigger: element,
+                start: "top 85%",
+                toggleActions: "play none none none",
+              },
+              y: 0,
+              opacity: 1,
+              duration: 0.8,
+              ease: "power3.out",
+            },
+          );
+        });
+
+        // Staggered Cards (How it works)
+        gsap.fromTo(
+          ".gsap-stagger-card",
+          { y: 50, opacity: 0 },
+          {
+            scrollTrigger: {
+              trigger: ".gsap-stagger-card",
+              start: "top 80%",
+            },
+            y: 0,
+            opacity: 1,
+            duration: 0.6,
+            stagger: 0.2,
+            ease: "back.out(1.7)",
+          },
+        );
+
+        // Staggered Tweets
+        gsap.fromTo(
+          ".gsap-stagger-tweet",
+          { y: 30, opacity: 0, scale: 0.95 },
+          {
+            scrollTrigger: {
+              trigger: ".gsap-stagger-tweet",
+              start: "top 80%",
+            },
+            y: 0,
+            opacity: 1,
+            scale: 1,
+            duration: 0.5,
+            stagger: 0.15,
+            ease: "power2.out",
+          },
+        );
+
+        // Counter Animation
+        const counters = document.querySelectorAll(".counter");
+        counters.forEach((counter) => {
+          const target = parseInt(counter.getAttribute("data-target"));
+
+          ScrollTrigger.create({
+            trigger: counter,
+            start: "top 90%",
+            once: true,
+            onEnter: () => {
+              let obj = { val: 0 };
+              gsap.to(obj, {
+                val: target,
+                duration: 2.5,
+                ease: "power1.out",
+                onUpdate: () => {
+                  // Add commas for thousands
+                  counter.innerText = Math.floor(obj.val).toLocaleString(
+                    "en-US",
+                  );
+                },
+              });
+            },
+          });
+        });
+      });
+    </script>
+  </body>
+</html>

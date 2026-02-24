@@ -1,0 +1,928 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Astro Roasts | Your Cosmic Receipts</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600;700&family=Permanent+Marker&family=Poppins:ital,wght@0,400;0,600;0,700;1,400&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              hotpink: "#ff2d87",
+              magenta: "#be185d",
+              cream: "#fef3c7",
+              paper: "#fffbeb",
+              ink: "#1a1a1a",
+              gold: "#fbbf24",
+              lavender: "#c084fc",
+            },
+            fontFamily: {
+              marker: ['"Permanent Marker"', "cursive"],
+              caveat: ["Caveat", "cursive"],
+              sans: ["Poppins", "sans-serif"],
+            },
+            animation: {
+              wiggle: "wiggle 0.3s ease-in-out infinite",
+              float: "float 4s ease-in-out infinite",
+            },
+            keyframes: {
+              wiggle: {
+                "0%, 100%": { transform: "rotate(-2deg)" },
+                "50%": { transform: "rotate(2deg)" },
+              },
+              float: {
+                "0%, 100%": { transform: "translateY(0)" },
+                "50%": { transform: "translateY(-10px)" },
+              },
+            },
+          },
+        },
+      };
+    </script>
+
+    <!-- GSAP & ScrollTrigger -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+
+    <style>
+      /* Global & Textures */
+      body {
+        background-color: #fef3c7;
+        color: #1a1a1a;
+        overflow-x: hidden;
+      }
+
+      /* Paper Noise Overlay */
+      body::before {
+        content: "";
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.06'/%3E%3C/svg%3E");
+        pointer-events: none;
+        z-index: 50;
+      }
+
+      /* Lined Notebook Paper Effect */
+      .notebook {
+        background-color: #fffbeb;
+        background-image:
+          linear-gradient(
+            90deg,
+            transparent 60px,
+            #ff2d87 60px,
+            #ff2d87 62px,
+            transparent 62px
+          ),
+          linear-gradient(#60a5fa 1px, transparent 1px);
+        background-size:
+          100% 100%,
+          100% 2.5rem;
+        background-position:
+          0 0,
+          0 2.5rem;
+      }
+
+      /* Masking Tape */
+      .tape {
+        background-color: rgba(255, 255, 255, 0.4);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        backdrop-filter: blur(4px);
+        border-left: 1px dashed rgba(255, 255, 255, 0.5);
+        border-right: 1px dashed rgba(255, 255, 255, 0.5);
+        border-top: 1px solid rgba(0, 0, 0, 0.05);
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+      }
+
+      /* Torn Edge CSS Background */
+      .torn-top {
+        background-image: url("data:image/svg+xml;utf8,<svg viewBox='0 0 1000 20' xmlns='http://www.w3.org/2000/svg' preserveAspectRatio='none'><path d='M0,20 L0,10 Q10,20 20,5 T40,15 T60,5 T80,18 T100,5 T120,15 T140,5 T160,18 T180,5 T200,15 T220,5 T240,18 T260,5 T280,15 T300,5 T320,18 T340,5 T360,15 T380,5 T400,18 T420,5 T440,15 T460,5 T480,18 T500,5 T520,15 T540,5 T560,18 T580,5 T600,15 T620,5 T640,18 T660,5 T680,15 T700,5 T720,18 T740,5 T760,15 T780,5 T800,18 T820,5 T840,15 T860,5 T880,18 T900,5 T920,15 T940,5 T960,18 T980,5 T1000,15 L1000,20 Z' fill='%23ff2d87'/></svg>");
+        background-size: 100% 100%;
+      }
+      .torn-bottom {
+        background-image: url("data:image/svg+xml;utf8,<svg viewBox='0 0 1000 20' xmlns='http://www.w3.org/2000/svg' preserveAspectRatio='none'><path d='M0,0 L0,10 Q10,0 20,15 T40,5 T60,15 T80,2 T100,15 T120,5 T140,15 T160,2 T180,15 T200,5 T220,15 T240,2 T260,15 T280,5 T300,15 T320,2 T340,15 T360,5 T380,15 T400,2 T420,15 T440,5 T460,15 T480,2 T500,15 T520,5 T540,15 T560,2 T580,15 T600,5 T620,15 T640,2 T660,15 T680,5 T700,15 T720,2 T740,15 T760,5 T780,15 T800,2 T820,15 T840,5 T860,15 T880,2 T900,15 T920,5 T940,15 T960,2 T980,15 T1000,5 L1000,0 Z' fill='%23ff2d87'/></svg>");
+        background-size: 100% 100%;
+      }
+
+      /* Marker Underline */
+      .marker-underline {
+        position: relative;
+        display: inline-block;
+      }
+      .marker-underline::after {
+        content: "";
+        position: absolute;
+        width: 100%;
+        height: 12px;
+        bottom: -2px;
+        left: 0;
+        background: url("data:image/svg+xml;utf8,<svg viewBox='0 0 100 10' xmlns='http://www.w3.org/2000/svg' preserveAspectRatio='none'><path d='M0,5 Q20,1 40,5 T80,5 T100,5' stroke='%23be185d' stroke-width='3' fill='none' stroke-linecap='round'/></svg>");
+        background-size: 100% 100%;
+        z-index: -1;
+        transform: rotate(-1deg);
+      }
+
+      /* Highlight Selection */
+      ::selection {
+        background: #ff2d87;
+        color: #fffbeb;
+      }
+
+      /* Hide scrollbar for input fields */
+      input {
+        border-bottom: 2px dashed transparent;
+      }
+      input:focus {
+        border-bottom: 2px dashed #ff2d87;
+      }
+    </style>
+  </head>
+  <body class="antialiased selection:bg-hotpink selection:text-paper font-sans">
+    <!-- Navigation -->
+    <nav
+      class="fixed top-0 w-full z-40 transition-all duration-300 py-4"
+      id="navbar"
+    >
+      <div class="max-w-7xl mx-auto px-6 flex justify-between items-center">
+        <a
+          href="#"
+          class="font-marker text-3xl text-ink hover:text-hotpink transition-colors transform -rotate-2 inline-block"
+        >
+          Astro Roasts <span class="text-gold text-2xl">✨</span>
+        </a>
+        <a
+          href="#expose"
+          class="bg-hotpink text-paper font-marker px-6 py-2 rounded-full text-xl shadow-[3px_3px_0px_#1a1a1a] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[1px_1px_0px_#1a1a1a] transition-all duration-200"
+        >
+          Get Roasted
+        </a>
+      </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section
+      class="relative min-h-screen flex items-center justify-center pt-24 pb-16 overflow-hidden"
+      id="expose"
+    >
+      <!-- Background Decor (Stickers) -->
+      <div class="absolute inset-0 z-0 pointer-events-none">
+        <div
+          class="sticker absolute top-32 left-[10%] w-16 h-16 bg-paper rounded-full flex items-center justify-center shadow-lg border-2 border-dashed border-hotpink font-bold text-hotpink text-2xl transform rotate-12"
+        >
+          ♈
+        </div>
+        <div
+          class="sticker absolute top-1/4 right-[15%] w-14 h-14 bg-paper rounded-full flex items-center justify-center shadow-md border-2 border-magenta font-bold text-magenta text-xl transform -rotate-12"
+        >
+          ♏
+        </div>
+        <div
+          class="sticker absolute bottom-32 left-[20%] w-20 h-20 bg-paper rounded-full flex items-center justify-center shadow-xl border-4 border-gold font-bold text-gold text-3xl transform rotate-6"
+        >
+          ♌
+        </div>
+        <div
+          class="sticker absolute bottom-40 right-[10%] w-16 h-16 bg-paper rounded-full flex items-center justify-center shadow-lg border-2 border-dashed border-lavender font-bold text-lavender text-2xl transform -rotate-6"
+        >
+          ♓
+        </div>
+
+        <!-- Hand-drawn star doodles -->
+        <svg
+          class="absolute top-40 right-1/4 w-12 h-12 text-ink/30 animate-pulse"
+          viewBox="0 0 100 100"
+          fill="currentColor"
+        >
+          <path d="M50 0 L61 39 L100 50 L61 61 L50 100 L39 61 L0 50 L39 39 Z" />
+        </svg>
+        <svg
+          class="absolute bottom-1/4 left-1/4 w-8 h-8 text-hotpink/40 animate-pulse delay-150"
+          viewBox="0 0 100 100"
+          fill="currentColor"
+        >
+          <path d="M50 0 L61 39 L100 50 L61 61 L50 100 L39 61 L0 50 L39 39 Z" />
+        </svg>
+      </div>
+
+      <div
+        class="relative z-10 max-w-5xl mx-auto px-6 w-full flex flex-col md:flex-row items-center gap-12"
+      >
+        <!-- Left Copy -->
+        <div class="md:w-1/2 text-center md:text-left">
+          <h1
+            class="font-marker text-5xl md:text-7xl text-ink leading-[1.1] mb-6 transform -rotate-2"
+          >
+            Your
+            <span class="text-hotpink marker-underline">Cosmic Receipts</span>
+            Are Ready.
+          </h1>
+          <p class="font-sans text-xl font-semibold text-ink/80 mb-2">
+            Enter your birth deets. Get a roast so accurate it's basically
+            criminal.
+          </p>
+          <p class="font-caveat text-2xl text-magenta transform rotate-1">
+            (Powered by Swiss Ephemeris & Pure Shade) 💅
+          </p>
+
+          <!-- Doodle Arrow pointing to form (Desktop only) -->
+          <div
+            class="hidden md:block absolute top-1/2 left-[45%] transform translate-x-1/2 -translate-y-1/2 w-32"
+          >
+            <svg
+              viewBox="0 0 100 50"
+              fill="none"
+              stroke="#be185d"
+              stroke-width="3"
+              stroke-linecap="round"
+            >
+              <path d="M0 25 Q 50 -10, 90 25" fill="none" />
+              <path d="M80 15 L 95 28 L 75 35" fill="none" />
+            </svg>
+          </div>
+        </div>
+
+        <!-- Right Form (Notebook Page) -->
+        <div class="md:w-1/2 w-full max-w-md mx-auto">
+          <div
+            class="relative transform rotate-1 transition-transform hover:rotate-0 duration-300"
+          >
+            <!-- Tape -->
+            <div
+              class="tape absolute -top-4 left-1/2 -translate-x-1/2 w-32 h-8 -rotate-2 z-20"
+            ></div>
+
+            <div
+              class="notebook rounded-md shadow-2xl border border-ink/20 relative z-10"
+            >
+              <!-- Red Margin Line -->
+              <div
+                class="absolute left-[60px] top-0 bottom-0 w-[2px] bg-hotpink/60"
+              ></div>
+
+              <div class="p-8 pl-[80px] pt-12 pb-12">
+                <h2
+                  class="font-marker text-3xl mb-6 text-hotpink transform -rotate-2"
+                >
+                  Expose Yourself
+                </h2>
+
+                <form
+                  class="space-y-4 font-caveat text-3xl text-ink"
+                  onsubmit="
+                    event.preventDefault();
+                    document.getElementById('roast-preview').scrollIntoView();
+                  "
+                >
+                  <div class="flex items-end border-b border-transparent group">
+                    <label class="mr-2 text-ink/70">Date:</label>
+                    <input
+                      type="text"
+                      placeholder="MM/DD/YYYY"
+                      class="bg-transparent outline-none flex-1 text-ink placeholder-ink/30 pb-1"
+                      required
+                    />
+                  </div>
+                  <div class="flex items-end border-b border-transparent group">
+                    <label class="mr-2 text-ink/70">Time:</label>
+                    <input
+                      type="text"
+                      placeholder="HH:MM AM/PM"
+                      class="bg-transparent outline-none flex-1 text-ink placeholder-ink/30 pb-1"
+                      required
+                    />
+                  </div>
+                  <div class="flex items-end border-b border-transparent group">
+                    <label class="mr-2 text-ink/70">City:</label>
+                    <input
+                      type="text"
+                      placeholder="Where did it happen?"
+                      class="bg-transparent outline-none flex-1 text-ink placeholder-ink/30 pb-1"
+                      required
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    class="mt-8 w-full py-3 bg-hotpink text-paper font-marker text-2xl shadow-[4px_4px_0px_#1a1a1a] hover:translate-x-1 hover:translate-y-1 hover:shadow-[0px_0px_0px_#1a1a1a] transition-all duration-200 uppercase group relative overflow-hidden"
+                  >
+                    <span
+                      class="relative z-10 group-hover:animate-wiggle inline-block"
+                      >Pull My Chart</span
+                    >
+                  </button>
+                </form>
+              </div>
+            </div>
+            <!-- Scrap doodle behind -->
+            <div
+              class="absolute -bottom-6 -right-6 w-24 h-24 bg-gold rounded-full -z-10 mix-blend-multiply opacity-50 blur-xl"
+            ></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Stats Strip -->
+    <div class="w-full h-5 torn-top"></div>
+    <section class="bg-hotpink py-12 relative z-20">
+      <div
+        class="max-w-6xl mx-auto px-6 flex flex-col md:flex-row justify-around items-center gap-8 text-paper font-marker text-center"
+      >
+        <div class="scrap-card">
+          <div
+            class="text-5xl md:text-6xl mb-2 flex justify-center items-center gap-2"
+          >
+            <span class="counter" data-target="847" data-suffix="K">0</span>
+          </div>
+          <div
+            class="font-sans font-bold uppercase tracking-widest text-sm text-paper/80"
+          >
+            People Exposed
+          </div>
+        </div>
+        <div class="scrap-card">
+          <div
+            class="text-5xl md:text-6xl mb-2 flex justify-center items-center gap-2"
+          >
+            <span class="counter" data-target="12">0</span>
+          </div>
+          <div
+            class="font-sans font-bold uppercase tracking-widest text-sm text-paper/80"
+          >
+            Signs Dragged
+          </div>
+        </div>
+        <div class="scrap-card">
+          <div
+            class="text-5xl md:text-6xl mb-2 flex justify-center items-center gap-2"
+          >
+            <span class="counter" data-target="0">0</span>
+          </div>
+          <div
+            class="font-sans font-bold uppercase tracking-widest text-sm text-paper/80"
+          >
+            Feelings Spared
+          </div>
+        </div>
+      </div>
+    </section>
+    <div class="w-full h-5 torn-bottom mb-20"></div>
+
+    <!-- Sample Roast Section -->
+    <section class="py-16 relative" id="roast-preview">
+      <div class="max-w-4xl mx-auto px-6">
+        <div class="text-center mb-16">
+          <h2
+            class="font-marker text-4xl md:text-5xl text-ink transform rotate-1 inline-block relative"
+          >
+            What The Stars Said
+            <svg
+              class="absolute -bottom-4 left-0 w-full h-4 text-hotpink"
+              viewBox="0 0 100 20"
+              preserveAspectRatio="none"
+            >
+              <path
+                d="M0 10 Q 50 20, 100 0"
+                stroke="currentColor"
+                stroke-width="4"
+                fill="none"
+              />
+            </svg>
+          </h2>
+        </div>
+
+        <!-- Burn Book Page -->
+        <div
+          class="scrap-card bg-paper p-6 md:p-10 relative shadow-2xl max-w-2xl mx-auto transform -rotate-1 border border-ink/10"
+        >
+          <!-- Tape -->
+          <div
+            class="tape absolute -top-4 left-1/2 -translate-x-1/2 w-24 h-8 rotate-2 z-10"
+          ></div>
+          <div
+            class="tape absolute -bottom-4 right-10 w-20 h-8 -rotate-3 z-10"
+          ></div>
+
+          <div class="flex flex-col md:flex-row gap-8 items-start relative z-0">
+            <!-- Photo placeholder -->
+            <div
+              class="shrink-0 relative transform rotate-3 transition-transform hover:rotate-6 duration-300"
+            >
+              <div
+                class="w-40 h-48 bg-gradient-to-br from-lavender to-hotpink border-[8px] border-white shadow-lg flex items-center justify-center text-7xl"
+              >
+                🤡
+              </div>
+              <div
+                class="absolute -bottom-6 left-1/2 -translate-x-1/2 font-caveat text-2xl text-ink whitespace-nowrap bg-yellow-200 px-2 shadow-sm transform -rotate-6 border border-ink/20"
+              >
+                "Main Character"
+              </div>
+              <div
+                class="absolute -top-3 -left-3 sticker w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-md border-2 border-dashed border-magenta font-bold text-magenta transform -rotate-12"
+              >
+                ♌
+              </div>
+            </div>
+
+            <!-- Roast Text -->
+            <div class="flex-1 relative">
+              <p class="font-caveat text-3xl text-ink leading-relaxed">
+                Oh look, a
+                <span class="text-hotpink font-bold">Leo Sun</span> with a
+                <span class="text-lavender font-bold">Pisces Moon</span>. You
+                demand absolute worship but cry immediately when people actually
+                perceive you.
+              </p>
+              <p
+                class="font-caveat text-3xl text-ink leading-relaxed mt-4 relative"
+              >
+                And that
+                <span class="text-magenta font-bold">Venus in Scorpio</span>?
+                Basically a walking red flag who stalks their ex's new partner's
+                LinkedIn on incognito mode.
+
+                <!-- Doodle arrow pointing to text -->
+                <svg
+                  class="absolute -right-8 top-0 w-12 h-12 text-ink"
+                  viewBox="0 0 50 50"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path d="M10 40 Q 30 10, 40 20" />
+                  <path d="M30 25 L 42 22 L 35 12" />
+                </svg>
+                <span
+                  class="absolute -right-20 top-10 font-marker text-sm text-ink transform rotate-12 bg-white px-2 border border-black/20 shadow-sm"
+                  >FACTS.</span
+                >
+              </p>
+            </div>
+          </div>
+
+          <!-- Blurred "Full Receipts" area -->
+          <div
+            class="absolute bottom-0 left-0 w-full h-3/5 bg-gradient-to-t from-paper via-paper/95 to-transparent flex items-end justify-center pb-12 backdrop-blur-[3px] rounded-b-lg"
+          >
+            <a
+              href="#pricing"
+              class="bg-ink text-paper font-marker px-8 py-4 text-xl shadow-[4px_4px_0px_#ff2d87] hover:translate-x-1 hover:translate-y-1 hover:shadow-[0px_0px_0px_#ff2d87] transition-all duration-200 flex items-center gap-3 transform rotate-1 group"
+            >
+              <span class="text-2xl group-hover:animate-bounce">🔒</span> Unlock
+              Your Cosmic FBI File
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- How It Works Section -->
+    <section class="py-20 relative overflow-hidden">
+      <!-- Background Doodle -->
+      <svg
+        class="absolute top-0 right-0 w-64 h-64 text-lavender/20 -z-10"
+        viewBox="0 0 200 200"
+        fill="currentColor"
+      >
+        <path
+          d="M100 0 C 150 0, 200 50, 200 100 C 200 150, 150 200, 100 200 C 50 200, 0 150, 0 100 C 0 50, 50 0, 100 0 Z"
+        />
+      </svg>
+
+      <div class="max-w-6xl mx-auto px-6">
+        <h2
+          class="font-marker text-4xl md:text-5xl text-center text-ink mb-16 transform -rotate-2"
+        >
+          How To Get <span class="text-magenta">Dragged</span>
+        </h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <!-- Step 1 -->
+          <div
+            class="scrap-card bg-white p-8 shadow-xl border border-ink/10 relative transform rotate-2 hover:rotate-0 transition-transform duration-300 notebook"
+          >
+            <div
+              class="tape absolute -top-3 left-1/2 -translate-x-1/2 w-16 h-6 rotate-4 z-10"
+            ></div>
+            <div class="font-marker text-5xl text-hotpink mb-4 opacity-80">
+              1
+            </div>
+            <h3 class="font-marker text-2xl text-ink mb-2">Drop Your Deets</h3>
+            <p class="font-caveat text-2xl text-ink/80 leading-snug">
+              Date, time, and city. We need the exact coordinates of your
+              trauma.
+            </p>
+          </div>
+
+          <!-- Step 2 -->
+          <div
+            class="scrap-card bg-white p-8 shadow-xl border border-ink/10 relative transform -rotate-1 hover:rotate-0 transition-transform duration-300 notebook mt-4 md:mt-0"
+          >
+            <div
+              class="tape absolute -top-3 left-1/2 -translate-x-1/2 w-16 h-6 -rotate-2 z-10"
+            ></div>
+            <div class="font-marker text-5xl text-magenta mb-4 opacity-80">
+              2
+            </div>
+            <h3 class="font-marker text-2xl text-ink mb-2">
+              We Pull The Chart
+            </h3>
+            <p class="font-caveat text-2xl text-ink/80 leading-snug">
+              Our AI links up with Swiss Ephemeris to map every tragic placement
+              you have.
+            </p>
+          </div>
+
+          <!-- Step 3 -->
+          <div
+            class="scrap-card bg-white p-8 shadow-xl border border-ink/10 relative transform rotate-3 hover:rotate-0 transition-transform duration-300 notebook mt-4 md:mt-0"
+          >
+            <div
+              class="tape absolute -top-3 left-1/2 -translate-x-1/2 w-16 h-6 rotate-1 z-10"
+            ></div>
+            <div class="font-marker text-5xl text-lavender mb-4 opacity-80">
+              3
+            </div>
+            <h3 class="font-marker text-2xl text-ink mb-2">
+              Read The Receipts
+            </h3>
+            <p class="font-caveat text-2xl text-ink/80 leading-snug">
+              Cry, laugh, and screenshot it for your group chat. We won't judge
+              (much).
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section class="py-24 relative" id="pricing">
+      <div class="max-w-5xl mx-auto px-6 relative z-10">
+        <div
+          class="flex flex-col md:flex-row gap-12 items-center justify-center"
+        >
+          <!-- Free Tier -->
+          <div
+            class="scrap-card w-full md:w-1/3 bg-paper p-8 shadow-lg border border-ink/10 transform -rotate-2 relative"
+          >
+            <div
+              class="tape absolute -top-4 right-10 w-16 h-6 rotate-12 z-10"
+            ></div>
+            <h3 class="font-marker text-3xl text-ink mb-2">The Tea</h3>
+            <div
+              class="font-sans font-bold text-xl text-hotpink mb-4 uppercase"
+            >
+              Free
+            </div>
+            <ul class="font-caveat text-2xl text-ink/80 space-y-3 mb-8">
+              <li>✔️ A sip of your Sun sign shade</li>
+              <li>✔️ Immediate reality check</li>
+              <li>❌ The deep psychological damage</li>
+            </ul>
+            <button
+              class="w-full py-2 border-2 border-ink text-ink font-marker text-xl hover:bg-ink hover:text-paper transition-colors"
+            >
+              Sip It
+            </button>
+          </div>
+
+          <!-- Paid Tier ($5) -->
+          <div
+            class="scrap-card w-full md:w-1/2 bg-white p-10 shadow-2xl border-4 border-dashed border-gold transform rotate-1 relative"
+          >
+            <!-- "Best Seller" Sticker -->
+            <div
+              class="absolute -top-6 -right-6 w-24 h-24 bg-hotpink text-paper rounded-full flex items-center justify-center shadow-lg font-marker text-center leading-none transform rotate-12 border-2 border-white z-20"
+            >
+              <span class="transform -rotate-6">BEST<br />SELLER</span>
+            </div>
+
+            <div
+              class="tape absolute -top-4 left-1/2 -translate-x-1/2 w-24 h-8 -rotate-2 z-10"
+            ></div>
+
+            <h3 class="font-marker text-4xl text-ink mb-2 text-magenta">
+              The Full Exposé
+            </h3>
+            <div class="flex items-end gap-2 mb-6">
+              <div
+                class="font-sans font-bold text-5xl text-ink tracking-tighter"
+              >
+                $5
+              </div>
+              <div class="font-caveat text-2xl text-ink/60 mb-1">
+                One-time burn
+              </div>
+            </div>
+
+            <p
+              class="font-sans font-semibold text-ink/90 mb-6 bg-yellow-200 inline-block px-2 transform -rotate-1"
+            >
+              Basically your cosmic FBI file.
+            </p>
+
+            <ul class="font-caveat text-3xl text-ink space-y-4 mb-8">
+              <li class="flex items-start gap-2">
+                <span>🔥</span> Every planet, house, and toxic aspect
+              </li>
+              <li class="flex items-start gap-2">
+                <span>💅</span> Brutally honest relationship breakdown
+              </li>
+              <li class="flex items-start gap-2">
+                <span>📸</span> Screenshot-worthy roast cards
+              </li>
+            </ul>
+
+            <button
+              class="w-full py-4 bg-magenta text-paper font-marker text-2xl shadow-[5px_5px_0px_#1a1a1a] hover:translate-x-1 hover:translate-y-1 hover:shadow-[0px_0px_0px_#1a1a1a] transition-all duration-200 uppercase group relative overflow-hidden"
+            >
+              <span
+                class="relative z-10 group-hover:animate-wiggle inline-block"
+                >Destroy My Ego ($5)</span
+              >
+            </button>
+
+            <!-- Secret Stamp -->
+            <div
+              class="absolute bottom-4 right-4 border-4 border-red-500 text-red-500 font-marker text-2xl px-2 py-1 transform -rotate-12 opacity-50 pointer-events-none"
+            >
+              TOP SECRET
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Testimonials / Reactions -->
+    <section class="py-20 overflow-hidden relative">
+      <div class="max-w-7xl mx-auto px-6">
+        <h2 class="font-marker text-4xl text-center text-ink mb-16">
+          Victim Statements
+        </h2>
+
+        <div class="flex flex-wrap justify-center gap-8">
+          <!-- Reaction 1 -->
+          <div
+            class="scrap-card bg-yellow-200 p-6 shadow-md w-72 transform -rotate-3 relative group"
+          >
+            <!-- Pushpin -->
+            <div
+              class="absolute -top-3 left-1/2 -translate-x-1/2 w-6 h-6 rounded-full bg-red-500 shadow-sm border-2 border-red-700 z-10"
+            >
+              <div
+                class="absolute top-1 left-1 w-2 h-2 rounded-full bg-white/50"
+              ></div>
+            </div>
+            <div class="flex items-center gap-3 mb-4">
+              <div
+                class="w-10 h-10 bg-white rounded-full flex items-center justify-center text-xl shadow-sm border border-black/10"
+              >
+                😭
+              </div>
+              <div>
+                <div class="font-sans font-bold text-sm">@sag_tears</div>
+                <div class="font-sans text-xs text-ink/60">Sagittarius Sun</div>
+              </div>
+            </div>
+            <p class="font-caveat text-2xl leading-tight">
+              "they really put my Venus in Scorpio on blast like that. feeling
+              highly attacked rn."
+            </p>
+          </div>
+
+          <!-- Reaction 2 -->
+          <div
+            class="scrap-card bg-blue-100 p-6 shadow-md w-72 transform rotate-2 relative group mt-8 md:mt-0"
+          >
+            <div
+              class="tape absolute -top-3 left-10 w-12 h-5 -rotate-6 z-10"
+            ></div>
+            <div class="flex items-center gap-3 mb-4">
+              <div
+                class="w-10 h-10 bg-white rounded-full flex items-center justify-center text-xl shadow-sm border border-black/10"
+              >
+                🤡
+              </div>
+              <div>
+                <div class="font-sans font-bold text-sm">@toxic_gemini</div>
+                <div class="font-sans text-xs text-ink/60">Gemini Moon</div>
+              </div>
+            </div>
+            <p class="font-caveat text-2xl leading-tight">
+              "screenshot this and sent it to my whole group chat. we are
+              fighting now. 10/10 recommend."
+            </p>
+          </div>
+
+          <!-- Reaction 3 -->
+          <div
+            class="scrap-card bg-pink-100 p-6 shadow-md w-72 transform -rotate-1 relative group mt-8 md:mt-4"
+          >
+            <!-- Pushpin -->
+            <div
+              class="absolute -top-3 left-1/2 -translate-x-1/2 w-6 h-6 rounded-full bg-blue-500 shadow-sm border-2 border-blue-700 z-10"
+            >
+              <div
+                class="absolute top-1 left-1 w-2 h-2 rounded-full bg-white/50"
+              ></div>
+            </div>
+            <div class="flex items-center gap-3 mb-4">
+              <div
+                class="w-10 h-10 bg-white rounded-full flex items-center justify-center text-xl shadow-sm border border-black/10"
+              >
+                💅
+              </div>
+              <div>
+                <div class="font-sans font-bold text-sm">@aries_bitch</div>
+                <div class="font-sans text-xs text-ink/60">Aries Rising</div>
+              </div>
+            </div>
+            <p class="font-caveat text-2xl leading-tight">
+              "the accuracy is giving psychic but make it mean. i love it."
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Final CTA -->
+    <div class="w-full h-8 torn-top relative z-10 -mb-1"></div>
+    <section
+      class="bg-gradient-to-br from-hotpink to-magenta py-24 relative z-0"
+    >
+      <!-- Floating Stars -->
+      <div class="absolute inset-0 overflow-hidden pointer-events-none">
+        <div
+          class="absolute top-10 left-[20%] text-white/30 text-4xl animate-float"
+          style="animation-delay: 0s"
+        >
+          ✨
+        </div>
+        <div
+          class="absolute bottom-20 right-[25%] text-white/30 text-5xl animate-float"
+          style="animation-delay: 1s"
+        >
+          ✨
+        </div>
+        <div
+          class="absolute top-1/2 right-[10%] text-white/20 text-3xl animate-float"
+          style="animation-delay: 2s"
+        >
+          ⭐
+        </div>
+      </div>
+
+      <div class="max-w-4xl mx-auto px-6 text-center relative z-10">
+        <h2
+          class="font-marker text-5xl md:text-7xl text-paper mb-8 transform rotate-1"
+        >
+          Ready For Your Receipts?
+        </h2>
+        <p class="font-caveat text-3xl text-paper/90 mb-12 transform -rotate-1">
+          Stop dodging the truth. The stars are waiting.
+        </p>
+        <a
+          href="#expose"
+          class="inline-block bg-paper text-hotpink font-marker text-3xl px-12 py-5 shadow-[6px_6px_0px_#1a1a1a] hover:translate-x-1 hover:translate-y-1 hover:shadow-[0px_0px_0px_#1a1a1a] transition-all duration-200 uppercase transform -rotate-2"
+        >
+          Get Roasted Now
+        </a>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer
+      class="bg-ink text-paper py-12 relative border-t-[12px] border-solid border-paper"
+      style="
+        border-image: url(&quot;data:image/svg+xml;utf8,<svg viewBox='0 0 100 20' xmlns='http://www.w3.org/2000/svg'><path d='M0,10 Q5,20 10,10 T20,10 T30,10 T40,10 T50,10 T60,10 T70,10 T80,10 T90,10 T100,10 L100,0 L0,0 Z' fill='%23fffbeb'/></svg>&quot;)
+          20% stretch;
+      "
+    >
+      <div class="max-w-6xl mx-auto px-6 text-center">
+        <div class="font-marker text-3xl mb-4 text-hotpink">Astro Roasts</div>
+        <p class="font-caveat text-2xl text-paper/70 mb-8">
+          Made with pure shade & Swiss Ephemeris data.
+        </p>
+
+        <div
+          class="flex justify-center gap-6 font-sans text-sm font-semibold text-paper/50"
+        >
+          <a href="#" class="hover:text-hotpink transition-colors">TikTok</a>
+          <a href="#" class="hover:text-hotpink transition-colors">Insta</a>
+          <a href="#" class="hover:text-hotpink transition-colors"
+            >Terms of Trauma</a
+          >
+          <a href="#" class="hover:text-hotpink transition-colors">Privacy</a>
+        </div>
+
+        <div class="mt-12 text-xs font-sans text-paper/30">
+          © 2023 Astro Roasts. For entertainment purposes only. If you cry,
+          that's on you.
+        </div>
+      </div>
+    </footer>
+
+    <!-- Scripts for Animations -->
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        gsap.registerPlugin(ScrollTrigger);
+
+        // Floating Stickers Background Animation
+        const stickers = document.querySelectorAll(".sticker");
+        stickers.forEach((sticker, i) => {
+          gsap.to(sticker, {
+            y: "random(-15, 15)",
+            x: "random(-10, 10)",
+            rotation: "random(-20, 20)",
+            duration: "random(2.5, 4)",
+            yoyo: true,
+            repeat: -1,
+            ease: "sine.inOut",
+            delay: i * 0.1,
+          });
+        });
+
+        // Card Entry Staggers
+        gsap.utils.toArray(".scrap-card").forEach((card) => {
+          gsap.from(card, {
+            scrollTrigger: {
+              trigger: card,
+              start: "top 90%",
+              toggleActions: "play none none reverse",
+            },
+            y: 60,
+            opacity: 0,
+            rotation: "random(-15, 15)",
+            duration: 0.8,
+            ease: "back.out(1.6)",
+          });
+        });
+
+        // Number Counters
+        const counters = document.querySelectorAll(".counter");
+        counters.forEach((counter) => {
+          const target = parseInt(counter.getAttribute("data-target"));
+          const suffix = counter.getAttribute("data-suffix") || "";
+
+          ScrollTrigger.create({
+            trigger: counter,
+            start: "top 95%",
+            onEnter: () => {
+              let obj = { val: 0 };
+              gsap.to(obj, {
+                val: target,
+                duration: 2,
+                ease: "power2.out",
+                onUpdate: () => {
+                  counter.innerHTML = Math.floor(obj.val) + suffix;
+                },
+              });
+            },
+            once: true,
+          });
+        });
+
+        // Navbar Background on Scroll
+        const nav = document.getElementById("navbar");
+        window.addEventListener("scroll", () => {
+          if (window.scrollY > 50) {
+            nav.classList.add(
+              "bg-paper/90",
+              "backdrop-blur-md",
+              "shadow-sm",
+              "border-b",
+              "border-ink/10",
+            );
+            nav.classList.remove("py-4");
+            nav.classList.add("py-2");
+          } else {
+            nav.classList.remove(
+              "bg-paper/90",
+              "backdrop-blur-md",
+              "shadow-sm",
+              "border-b",
+              "border-ink/10",
+            );
+            nav.classList.remove("py-2");
+            nav.classList.add("py-4");
+          }
+        });
+      });
+    </script>
+  </body>
+</html>

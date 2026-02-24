@@ -1,0 +1,438 @@
+<!doctype html>
+<html lang="en" class="antialiased scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Astro Roasts | The Truth</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Inter:wght@300;400;500&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              serif: ['"Cormorant Garamond"', "serif"],
+              sans: ['"Inter"', "sans-serif"],
+            },
+            colors: {
+              bgDark: "#030304",
+              textMuted: "#8a8a93",
+              textBright: "#e6e6e8",
+              accent: "#2a2a32",
+            },
+            transitionTimingFunction: {
+              "slow-ease": "cubic-bezier(0.19, 1, 0.22, 1)",
+            },
+          },
+        },
+      };
+    </script>
+
+    <!-- Custom CSS -->
+    <style>
+      :root {
+        color-scheme: dark;
+      }
+
+      body {
+        background-color: #030304;
+        color: #e6e6e8;
+        overflow-x: hidden;
+        cursor: default;
+      }
+
+      /* Hide Scrollbar but keep functionality */
+      ::-webkit-scrollbar {
+        width: 0px;
+        background: transparent;
+      }
+
+      /* SVG Noise Texture */
+      .noise-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        pointer-events: none;
+        z-index: 50;
+        opacity: 0.035;
+        background: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+      }
+
+      /* Dynamic Spotlight */
+      .spotlight {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 60vw;
+        height: 60vw;
+        border-radius: 50%;
+        background: radial-gradient(
+          circle,
+          rgba(255, 255, 255, 0.03) 0%,
+          rgba(0, 0, 0, 0) 60%
+        );
+        transform: translate(-50%, -50%);
+        pointer-events: none;
+        z-index: 0;
+        filter: blur(40px);
+        will-change: transform;
+      }
+
+      /* Custom Input Styling */
+      input {
+        background-color: transparent;
+        border-radius: 0;
+        -webkit-appearance: none;
+      }
+
+      input:-webkit-autofill,
+      input:-webkit-autofill:hover,
+      input:-webkit-autofill:focus,
+      input:-webkit-autofill:active {
+        -webkit-box-shadow: 0 0 0 30px #030304 inset !important;
+        -webkit-text-fill-color: #e6e6e8 !important;
+        transition: background-color 5000s ease-in-out 0s;
+      }
+
+      /* Native Date/Time Picker Icon styling for dark mode */
+      ::-webkit-calendar-picker-indicator {
+        filter: invert(1);
+        opacity: 0.3;
+        cursor: pointer;
+        transition: opacity 0.3s ease;
+      }
+
+      ::-webkit-calendar-picker-indicator:hover {
+        opacity: 0.8;
+      }
+
+      /* Text reveal masks */
+      .reveal-mask {
+        overflow: hidden;
+        display: inline-block;
+        vertical-align: top;
+      }
+
+      .reveal-text {
+        display: inline-block;
+        transform: translateY(110%);
+        opacity: 0;
+        will-change: transform, opacity;
+      }
+
+      .fade-in {
+        opacity: 0;
+        will-change: opacity, transform;
+      }
+    </style>
+  </head>
+  <body class="selection:bg-white/20 selection:text-white">
+    <!-- Ambient Backgrounds -->
+    <div class="noise-overlay"></div>
+    <div class="spotlight" id="spotlight"></div>
+
+    <!-- Navigation -->
+    <nav
+      class="fixed top-0 left-0 w-full p-6 md:p-10 z-40 flex justify-between items-center mix-blend-difference fade-in"
+    >
+      <div class="font-sans text-xs tracking-[0.2em] uppercase text-textMuted">
+        Astro Roasts
+      </div>
+      <div class="w-1.5 h-1.5 rounded-full bg-textMuted animate-pulse"></div>
+    </nav>
+
+    <main class="relative z-10 w-full flex flex-col items-center">
+      <!-- Hero Section -->
+      <section
+        class="h-screen w-full flex flex-col justify-center items-center px-6"
+      >
+        <div class="max-w-4xl w-full text-center">
+          <h1
+            class="font-serif text-4xl md:text-6xl lg:text-7xl leading-[1.1] font-light tracking-wide text-textBright"
+          >
+            <span class="reveal-mask pb-2"
+              ><span class="reveal-text">The exact sky when</span></span
+            ><br />
+            <span class="reveal-mask pb-2"
+              ><span class="reveal-text">you were born.</span></span
+            >
+          </h1>
+          <div
+            class="mt-12 text-sm md:text-base font-sans font-light tracking-wide text-textMuted reveal-mask"
+          >
+            <span class="reveal-text">Translated into the truth.</span>
+          </div>
+        </div>
+
+        <!-- Scroll Indicator -->
+        <div
+          class="absolute bottom-12 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3 fade-in opacity-50"
+        >
+          <div
+            class="w-[1px] h-12 bg-gradient-to-b from-textMuted/0 via-textMuted/50 to-textMuted/0"
+          ></div>
+        </div>
+      </section>
+
+      <!-- Statement 1 -->
+      <section
+        class="h-screen w-full flex flex-col justify-center items-center px-6"
+      >
+        <div class="max-w-3xl w-full text-center">
+          <h2
+            class="font-serif text-3xl md:text-5xl leading-tight font-light text-textBright statement-text"
+          >
+            Based on where the planets actually were when you were born.
+          </h2>
+        </div>
+      </section>
+
+      <!-- Spacer -->
+      <div class="h-[30vh] w-full"></div>
+
+      <!-- Statement 2 -->
+      <section
+        class="h-screen w-full flex flex-col justify-center items-center px-6"
+      >
+        <div class="max-w-3xl w-full text-center">
+          <h2
+            class="font-serif text-3xl md:text-5xl leading-tight font-light text-textBright statement-text"
+          >
+            Most people screenshot theirs within 30 seconds.
+          </h2>
+        </div>
+      </section>
+
+      <!-- Spacer -->
+      <div class="h-[20vh] w-full"></div>
+
+      <!-- Form Section -->
+      <section
+        class="min-h-screen w-full flex flex-col justify-center items-center px-6 pb-24"
+      >
+        <div class="max-w-xl w-full form-container opacity-0 translate-y-8">
+          <div class="mb-16 text-center">
+            <p
+              class="font-sans text-xs tracking-[0.2em] uppercase text-textMuted mb-4"
+            >
+              The Gateway
+            </p>
+            <h3 class="font-serif text-4xl md:text-5xl font-light">
+              Enter your details.
+            </h3>
+          </div>
+
+          <form
+            id="astro-form"
+            class="space-y-10"
+            onsubmit="event.preventDefault()"
+          >
+            <!-- First Name -->
+            <div class="relative group">
+              <input
+                type="text"
+                id="name"
+                required
+                class="w-full pb-3 border-b border-white/10 text-xl font-serif text-white placeholder-white/20 focus:outline-none focus:border-white/60 transition-colors duration-500 peer"
+              />
+              <label
+                for="name"
+                class="absolute left-0 top-0 text-white/20 font-serif text-xl pointer-events-none transition-all duration-500 peer-focus:-translate-y-6 peer-focus:text-xs peer-focus:font-sans peer-focus:tracking-widest peer-focus:uppercase peer-focus:text-white/40 peer-valid:-translate-y-6 peer-valid:text-xs peer-valid:font-sans peer-valid:tracking-widest peer-valid:uppercase peer-valid:text-white/40"
+              >
+                First Name
+              </label>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+              <!-- Date -->
+              <div class="relative group">
+                <input
+                  type="date"
+                  id="date"
+                  required
+                  class="w-full pb-3 border-b border-white/10 text-lg font-sans font-light text-white placeholder-transparent focus:outline-none focus:border-white/60 transition-colors duration-500 peer"
+                />
+                <label
+                  for="date"
+                  class="absolute left-0 -translate-y-6 text-xs font-sans tracking-widest uppercase text-white/40 pointer-events-none transition-all duration-500"
+                >
+                  Date of Birth
+                </label>
+              </div>
+
+              <!-- Time -->
+              <div class="relative group">
+                <input
+                  type="time"
+                  id="time"
+                  required
+                  class="w-full pb-3 border-b border-white/10 text-lg font-sans font-light text-white placeholder-transparent focus:outline-none focus:border-white/60 transition-colors duration-500 peer"
+                />
+                <label
+                  for="time"
+                  class="absolute left-0 -translate-y-6 text-xs font-sans tracking-widest uppercase text-white/40 pointer-events-none transition-all duration-500"
+                >
+                  Exact Time
+                </label>
+              </div>
+            </div>
+
+            <!-- Place -->
+            <div class="relative group">
+              <input
+                type="text"
+                id="place"
+                required
+                class="w-full pb-3 border-b border-white/10 text-xl font-serif text-white placeholder-white/20 focus:outline-none focus:border-white/60 transition-colors duration-500 peer"
+              />
+              <label
+                for="place"
+                class="absolute left-0 top-0 text-white/20 font-serif text-xl pointer-events-none transition-all duration-500 peer-focus:-translate-y-6 peer-focus:text-xs peer-focus:font-sans peer-focus:tracking-widest peer-focus:uppercase peer-focus:text-white/40 peer-valid:-translate-y-6 peer-valid:text-xs peer-valid:font-sans peer-valid:tracking-widest peer-valid:uppercase peer-valid:text-white/40"
+              >
+                City of Birth
+              </label>
+            </div>
+
+            <!-- Submit Area -->
+            <div class="pt-8 flex flex-col items-center">
+              <button
+                type="submit"
+                class="group relative px-10 py-4 overflow-hidden border border-white/20 rounded-full transition-all duration-500 hover:border-white hover:bg-white"
+              >
+                <span
+                  class="relative z-10 font-sans text-sm tracking-widest uppercase text-white transition-colors duration-500 group-hover:text-black"
+                >
+                  Try it
+                </span>
+              </button>
+
+              <div class="mt-6 text-center">
+                <p class="font-sans text-sm font-light text-textMuted">
+                  Free preview. Full reading: $5.
+                </p>
+              </div>
+            </div>
+          </form>
+        </div>
+      </section>
+    </main>
+
+    <!-- GSAP & ScrollTrigger -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+
+    <script>
+      gsap.registerPlugin(ScrollTrigger);
+
+      // Spotlight Mouse Tracking
+      const spotlight = document.getElementById("spotlight");
+      let mouseX = window.innerWidth / 2;
+      let mouseY = window.innerHeight / 2;
+      let spotX = mouseX;
+      let spotY = mouseY;
+
+      document.addEventListener("mousemove", (e) => {
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+      });
+
+      function animateSpotlight() {
+        // Smooth easing for spotlight
+        spotX += (mouseX - spotX) * 0.05;
+        spotY += (mouseY - spotY) * 0.05;
+        spotlight.style.transform = `translate(${spotX}px, ${spotY}px) translate(-50%, -50%)`;
+        requestAnimationFrame(animateSpotlight);
+      }
+      animateSpotlight();
+
+      // Initial Load Animations
+      window.addEventListener("load", () => {
+        const tl = gsap.timeline();
+
+        tl.to(".fade-in", {
+          opacity: 1,
+          duration: 2,
+          ease: "power2.inOut",
+          stagger: 0.2,
+        }).to(
+          ".reveal-text",
+          {
+            y: "0%",
+            opacity: 1,
+            duration: 1.5,
+            ease: "power3.out",
+            stagger: 0.15,
+          },
+          "-=1.5",
+        );
+      });
+
+      // Scroll Animations for Statements
+      const statements = document.querySelectorAll(".statement-text");
+
+      statements.forEach((statement) => {
+        gsap.fromTo(
+          statement,
+          { opacity: 0, y: 40 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: 1.5,
+            ease: "power3.out",
+            scrollTrigger: {
+              trigger: statement,
+              start: "top 75%",
+              end: "top 40%",
+              scrub: false,
+              toggleActions: "play none none reverse",
+            },
+          },
+        );
+      });
+
+      // Form Section Animation
+      gsap.to(".form-container", {
+        opacity: 1,
+        y: 0,
+        duration: 1.5,
+        ease: "power3.out",
+        scrollTrigger: {
+          trigger: ".form-container",
+          start: "top 80%",
+        },
+      });
+
+      // Input Focus Effect (Dimming the rest of the form subtly)
+      const form = document.getElementById("astro-form");
+      const inputs = form.querySelectorAll("input");
+
+      inputs.forEach((input) => {
+        input.addEventListener("focus", () => {
+          inputs.forEach((otherInput) => {
+            if (otherInput !== input) {
+              otherInput.parentElement.style.opacity = "0.4";
+              otherInput.parentElement.style.transition = "opacity 0.5s ease";
+            }
+          });
+        });
+
+        input.addEventListener("blur", () => {
+          inputs.forEach((otherInput) => {
+            otherInput.parentElement.style.opacity = "1";
+          });
+        });
+      });
+    </script>
+  </body>
+</html>

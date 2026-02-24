@@ -1,0 +1,590 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Astro Roasts | Radical Cosmic Honesty</title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=Syne:wght@400;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              void: "#030303",
+              ash: "#E5E5E5",
+              blood: "#FF2A00",
+              bruise: "#1A0500",
+            },
+            fontFamily: {
+              syne: ["Syne", "sans-serif"],
+              mono: ["DM Mono", "monospace"],
+            },
+            animation: {
+              "spin-slow": "spin 20s linear infinite",
+              "pulse-slow": "pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+            },
+          },
+        },
+      };
+    </script>
+
+    <!-- GSAP & ScrollTrigger -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+
+    <style>
+      :root {
+        cursor: none;
+      }
+
+      body {
+        background-color: #030303;
+        color: #e5e5e5;
+        overflow-x: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      /* Noise Overlay */
+      .noise {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        pointer-events: none;
+        z-index: 50;
+        opacity: 0.04;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+      }
+
+      /* Custom Cursor */
+      #cursor {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 12px;
+        height: 12px;
+        background-color: #ff2a00;
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 9999;
+        transform: translate(-50%, -50%);
+        transition:
+          width 0.2s,
+          height 0.2s,
+          background-color 0.2s;
+        mix-blend-mode: difference;
+      }
+      #cursor.hovered {
+        width: 40px;
+        height: 40px;
+        background-color: #e5e5e5;
+      }
+
+      /* Outline Text */
+      .text-outline {
+        color: transparent;
+        -webkit-text-stroke: 1px #e5e5e5;
+      }
+      .text-outline-blood {
+        color: transparent;
+        -webkit-text-stroke: 1px #ff2a00;
+      }
+
+      /* Hide Scrollbar */
+      ::-webkit-scrollbar {
+        width: 0px;
+        background: transparent;
+      }
+
+      /* Form Input Autocomplete Override */
+      input:-webkit-autofill,
+      input:-webkit-autofill:hover,
+      input:-webkit-autofill:focus,
+      input:-webkit-autofill:active {
+        -webkit-box-shadow: 0 0 0 30px #030303 inset !important;
+        -webkit-text-fill-color: #e5e5e5 !important;
+        transition: background-color 5000s ease-in-out 0s;
+      }
+
+      /* Radio Button Styling */
+      input[type="radio"] {
+        appearance: none;
+        -webkit-appearance: none;
+        width: 20px;
+        height: 20px;
+        border: 1px solid #e5e5e5;
+        border-radius: 50%;
+        outline: none;
+        transition: all 0.3s ease;
+      }
+      input[type="radio"]:checked {
+        background-color: #ff2a00;
+        border-color: #ff2a00;
+        box-shadow: 0 0 15px rgba(255, 42, 0, 0.5);
+      }
+
+      .clip-text {
+        clip-path: polygon(0 0, 100% 0, 100% 100%, 0% 100%);
+      }
+    </style>
+  </head>
+  <body
+    class="font-mono text-ash bg-void selection:bg-blood selection:text-void"
+  >
+    <div class="noise"></div>
+    <div id="cursor"></div>
+
+    <!-- Navigation -->
+    <nav
+      class="fixed top-0 left-0 w-full p-6 md:p-8 flex justify-between items-start z-40 mix-blend-difference pointer-events-none"
+    >
+      <div
+        class="font-syne font-bold text-xl tracking-tighter uppercase leading-none"
+      >
+        Astro<br />Roasts
+      </div>
+      <div class="text-xs tracking-widest uppercase text-right opacity-60">
+        * Swiss Ephemeris Data<br />
+        * Zero Sugar Coating
+      </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section
+      class="relative h-screen w-full flex flex-col justify-center items-center overflow-hidden px-4"
+    >
+      <!-- Background SVG Graphic -->
+      <svg
+        class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[150vw] md:w-[80vw] h-auto opacity-10 animate-spin-slow pointer-events-none"
+        viewBox="0 0 100 100"
+        fill="none"
+        stroke="#E5E5E5"
+        stroke-width="0.2"
+      >
+        <circle cx="50" cy="50" r="48" stroke-dasharray="1 2" />
+        <circle cx="50" cy="50" r="38" />
+        <circle cx="50" cy="50" r="28" stroke-dasharray="4 4" />
+        <path
+          d="M50 2 L50 98 M2 50 L98 50 M16 16 L84 84 M16 84 L84 16"
+          opacity="0.5"
+        />
+        <polygon points="50,12 88,50 50,88 12,50" opacity="0.3" />
+      </svg>
+
+      <!-- Hero Typography -->
+      <div
+        class="relative z-10 w-full max-w-7xl mx-auto flex flex-col items-center text-center clip-text"
+      >
+        <h1
+          class="font-syne font-extrabold text-[12vw] md:text-[8vw] leading-[0.85] tracking-tighter uppercase flex flex-col items-center"
+        >
+          <div class="hero-line overflow-hidden">
+            <span class="block translate-y-[100%]">Stop blaming</span>
+          </div>
+          <div class="hero-line overflow-hidden">
+            <span class="block translate-y-[100%] text-outline">your moon</span>
+          </div>
+          <div class="hero-line overflow-hidden">
+            <span class="block translate-y-[100%] text-blood">sign.</span>
+          </div>
+        </h1>
+
+        <p
+          class="hero-fade mt-8 md:mt-12 text-sm md:text-base max-w-md opacity-0 font-light text-ash/70 leading-relaxed"
+        >
+          A radically honest, surgically precise teardown of your exact natal
+          chart. We see your patterns. We know your delusions.
+        </p>
+
+        <div class="hero-fade mt-16 opacity-0 flex flex-col items-center gap-4">
+          <span class="text-[10px] uppercase tracking-[0.3em] opacity-50"
+            >Scroll to face it</span
+          >
+          <div
+            class="w-[1px] h-16 bg-gradient-to-b from-ash to-transparent"
+          ></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Manifesto / Interrogation Section -->
+    <section id="manifesto" class="relative h-[300vh] w-full bg-void">
+      <div
+        class="sticky top-0 h-screen w-full flex items-center justify-center overflow-hidden px-4"
+      >
+        <div
+          class="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(26,5,0,0.8)_0%,rgba(3,3,3,1)_70%)] opacity-50"
+        ></div>
+
+        <div
+          class="relative z-10 w-full max-w-5xl mx-auto text-center font-syne font-bold text-4xl md:text-7xl uppercase tracking-tight leading-[1.1]"
+        >
+          <div
+            class="manifesto-text absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full opacity-100"
+          >
+            Your therapist is<br /><span class="text-outline">too nice.</span>
+          </div>
+          <div
+            class="manifesto-text absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full opacity-0"
+          >
+            Co-star is<br /><span class="text-outline">too vague.</span>
+          </div>
+          <div
+            class="manifesto-text absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full opacity-0"
+          >
+            The cosmos is<br /><span class="text-blood">neither.</span>
+          </div>
+          <div
+            class="manifesto-text absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full opacity-0 text-2xl md:text-5xl normal-case font-normal font-mono"
+          >
+            "It told me my fear of intimacy is masked as high standards. I
+            cried, paid $5, and cried again."
+            <div
+              class="mt-6 text-sm uppercase tracking-widest text-blood font-syne font-bold"
+            >
+              — Anonymous, Virgo Sun
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- The Confessional Form -->
+    <section
+      id="confessional"
+      class="relative min-h-screen w-full py-24 px-4 md:px-8 bg-void border-t border-ash/10"
+    >
+      <div
+        class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-8"
+      >
+        <!-- Left: Copy -->
+        <div class="lg:col-span-5 flex flex-col justify-start">
+          <h2
+            class="font-syne font-extrabold text-5xl md:text-7xl uppercase leading-none tracking-tighter mb-8"
+          >
+            Enter the<br /><span class="text-blood">Archive</span>
+          </h2>
+          <div
+            class="space-y-6 text-ash/70 text-sm md:text-base font-light leading-relaxed"
+          >
+            <p>
+              Input your exact birth details. Don't round to the nearest hour to
+              seem more interesting. The Swiss Ephemeris algorithm calculates
+              planets, houses, and aspects to the exact degree.
+            </p>
+            <p class="pl-4 border-l border-blood text-ash">
+              If you don't know your exact birth time, text your mother. If
+              you're not speaking to her, that's your first roast right there.
+            </p>
+          </div>
+        </div>
+
+        <!-- Right: Form -->
+        <div class="lg:col-span-7">
+          <form
+            class="space-y-12"
+            onsubmit="
+              event.preventDefault();
+              alert('The cosmos is judging you... (Demo only)');
+            "
+          >
+            <!-- Inputs Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-12">
+              <!-- Name -->
+              <div class="relative group interactive">
+                <input
+                  type="text"
+                  id="name"
+                  required
+                  class="w-full bg-transparent border-b border-ash/30 text-2xl md:text-3xl font-syne font-bold text-ash py-2 focus:border-blood focus:outline-none transition-colors peer placeholder-transparent"
+                  placeholder="Name"
+                />
+                <label
+                  for="name"
+                  class="absolute left-0 -top-6 text-xs uppercase tracking-widest text-ash/50 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:top-3 peer-focus:-top-6 peer-focus:text-xs peer-focus:text-blood"
+                >
+                  First Name
+                </label>
+              </div>
+
+              <!-- Date -->
+              <div class="relative group interactive">
+                <input
+                  type="date"
+                  id="date"
+                  required
+                  class="w-full bg-transparent border-b border-ash/30 text-2xl md:text-3xl font-syne font-bold text-ash py-2 focus:border-blood focus:outline-none transition-colors peer"
+                  style="color-scheme: dark"
+                />
+                <label
+                  for="date"
+                  class="absolute left-0 -top-6 text-xs uppercase tracking-widest text-ash/50 peer-focus:text-blood transition-colors"
+                >
+                  Date of Birth
+                </label>
+              </div>
+
+              <!-- Time -->
+              <div class="relative group interactive">
+                <input
+                  type="time"
+                  id="time"
+                  required
+                  class="w-full bg-transparent border-b border-ash/30 text-2xl md:text-3xl font-syne font-bold text-ash py-2 focus:border-blood focus:outline-none transition-colors peer"
+                  style="color-scheme: dark"
+                />
+                <label
+                  for="time"
+                  class="absolute left-0 -top-6 text-xs uppercase tracking-widest text-ash/50 peer-focus:text-blood transition-colors"
+                >
+                  Exact Time (Don't lie)
+                </label>
+              </div>
+
+              <!-- Location -->
+              <div class="relative group interactive">
+                <input
+                  type="text"
+                  id="location"
+                  required
+                  class="w-full bg-transparent border-b border-ash/30 text-2xl md:text-3xl font-syne font-bold text-ash py-2 focus:border-blood focus:outline-none transition-colors peer placeholder-transparent"
+                  placeholder="City, Country"
+                />
+                <label
+                  for="location"
+                  class="absolute left-0 -top-6 text-xs uppercase tracking-widest text-ash/50 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:top-3 peer-focus:-top-6 peer-focus:text-xs peer-focus:text-blood"
+                >
+                  City of Birth
+                </label>
+              </div>
+            </div>
+
+            <!-- Pricing Tiers -->
+            <div class="pt-8 space-y-6">
+              <div class="text-xs uppercase tracking-widest text-ash/50 mb-4">
+                Select your level of destruction
+              </div>
+
+              <!-- Tier 1: Free -->
+              <label
+                class="interactive block relative border border-ash/20 p-6 md:p-8 cursor-pointer hover:border-ash/50 transition-colors group has-[:checked]:border-blood has-[:checked]:bg-bruise/20"
+              >
+                <div class="flex items-start gap-4">
+                  <div class="mt-1">
+                    <input type="radio" name="tier" value="free" checked />
+                  </div>
+                  <div>
+                    <div class="flex items-center justify-between mb-2">
+                      <h3 class="font-syne font-bold text-xl uppercase">
+                        Level 0: The Teaser
+                      </h3>
+                      <span class="font-mono text-ash/50">$0</span>
+                    </div>
+                    <p class="text-sm font-light text-ash/70">
+                      One undeniable, stinging truth based on your Big Three. A
+                      free sample of self-awareness. Just enough to hurt your
+                      feelings.
+                    </p>
+                  </div>
+                </div>
+              </label>
+
+              <!-- Tier 2: Paid -->
+              <label
+                class="interactive block relative border border-ash/20 p-6 md:p-8 cursor-pointer hover:border-ash/50 transition-colors group has-[:checked]:border-blood has-[:checked]:bg-bruise/20"
+              >
+                <div
+                  class="absolute top-0 right-0 bg-blood text-void text-[10px] uppercase font-bold px-3 py-1 tracking-widest"
+                >
+                  Recommended
+                </div>
+                <div class="flex items-start gap-4">
+                  <div class="mt-1">
+                    <input type="radio" name="tier" value="paid" />
+                  </div>
+                  <div>
+                    <div class="flex items-center justify-between mb-2">
+                      <h3
+                        class="font-syne font-bold text-xl uppercase text-blood"
+                      >
+                        Level 1: The Autopsy
+                      </h3>
+                      <span class="font-mono text-blood font-bold">$5</span>
+                    </div>
+                    <p class="text-sm font-light text-ash/70">
+                      The full deep-cut. Houses, obscure aspects, and a brutal
+                      diagnosis of your recurring delusions. Includes the
+                      <span class="italic text-ash"
+                        >"Why you're still single/unpromoted"</span
+                      >
+                      module.
+                    </p>
+                  </div>
+                </div>
+              </label>
+            </div>
+
+            <!-- CTA -->
+            <div class="pt-8">
+              <button
+                type="submit"
+                class="interactive w-full bg-ash text-void font-syne font-bold text-2xl md:text-4xl uppercase py-8 hover:bg-blood hover:text-ash transition-colors duration-300 relative overflow-hidden group"
+              >
+                <span class="relative z-10">Expose Me</span>
+                <div
+                  class="absolute inset-0 bg-blood transform scale-y-0 origin-bottom group-hover:scale-y-100 transition-transform duration-300 ease-in-out z-0"
+                ></div>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="w-full border-t border-ash/10 py-12 px-4 md:px-8 bg-void">
+      <div
+        class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6"
+      >
+        <div class="font-syne font-bold text-2xl tracking-tighter uppercase">
+          Astro Roasts
+        </div>
+        <div
+          class="text-xs uppercase tracking-widest text-ash/40 text-center md:text-right"
+        >
+          © 2024 Astro Roasts.<br />
+          For entertainment purposes only, though we both know it's true.
+        </div>
+      </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script>
+      // Custom Cursor Logic
+      const cursor = document.getElementById("cursor");
+      const interactives = document.querySelectorAll(
+        ".interactive, input, button, label",
+      );
+
+      document.addEventListener("mousemove", (e) => {
+        // Smooth cursor follow
+        gsap.to(cursor, {
+          x: e.clientX,
+          y: e.clientY,
+          duration: 0.1,
+          ease: "power2.out",
+        });
+      });
+
+      interactives.forEach((el) => {
+        el.addEventListener("mouseenter", () =>
+          cursor.classList.add("hovered"),
+        );
+        el.addEventListener("mouseleave", () =>
+          cursor.classList.remove("hovered"),
+        );
+      });
+
+      // Hide cursor when leaving window
+      document.addEventListener("mouseout", () => {
+        cursor.style.opacity = 0;
+      });
+      document.addEventListener("mouseover", () => {
+        cursor.style.opacity = 1;
+      });
+
+      // GSAP Animations
+      gsap.registerPlugin(ScrollTrigger);
+
+      // Hero Init
+      const heroLines = document.querySelectorAll(".hero-line span");
+
+      gsap.to(heroLines, {
+        y: "0%",
+        duration: 1.2,
+        stagger: 0.2,
+        ease: "power4.out",
+        delay: 0.5,
+      });
+
+      gsap.to(".hero-fade", {
+        opacity: 1,
+        duration: 1,
+        stagger: 0.3,
+        ease: "power2.out",
+        delay: 1.5,
+      });
+
+      // Manifesto Scroll Sequence
+      const manifestoTexts = gsap.utils.toArray(".manifesto-text");
+
+      let tl = gsap.timeline({
+        scrollTrigger: {
+          trigger: "#manifesto",
+          start: "top top",
+          end: "bottom bottom",
+          scrub: 1,
+        },
+      });
+
+      // Step through each text block
+      manifestoTexts.forEach((text, i) => {
+        if (i !== 0) {
+          // Fade in next text
+          tl.to(text, { opacity: 1, duration: 1 }, "+=0.5");
+        }
+        if (i !== manifestoTexts.length - 1) {
+          // Fade out current text
+          tl.to(text, { opacity: 0, duration: 1 }, "+=1");
+        }
+      });
+
+      // Form Section Reveal
+      gsap.from("#confessional h2", {
+        scrollTrigger: {
+          trigger: "#confessional",
+          start: "top 70%",
+        },
+        y: 50,
+        opacity: 0,
+        duration: 1,
+        ease: "power3.out",
+      });
+
+      gsap.from("#confessional p", {
+        scrollTrigger: {
+          trigger: "#confessional",
+          start: "top 60%",
+        },
+        y: 30,
+        opacity: 0,
+        duration: 1,
+        stagger: 0.2,
+        ease: "power3.out",
+      });
+
+      gsap.from("form > div", {
+        scrollTrigger: {
+          trigger: "form",
+          start: "top 70%",
+        },
+        y: 40,
+        opacity: 0,
+        duration: 1,
+        stagger: 0.2,
+        ease: "power3.out",
+      });
+    </script>
+  </body>
+</html>

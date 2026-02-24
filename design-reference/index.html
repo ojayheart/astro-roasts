@@ -1,0 +1,1178 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Astro Roasts | Get Cosmically Destroyed</title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=Inter:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              display: ['"Space Grotesk"', "sans-serif"],
+              sans: ["Inter", "sans-serif"],
+            },
+            colors: {
+              space: {
+                900: "#0d0221",
+                800: "#1a0a3e",
+                700: "#2d1b54",
+              },
+              accent: {
+                orange: "#ff6b35",
+                red: "#ff2d55",
+                purple: "#bf5af2",
+                gold: "#ffd60a",
+                green: "#30d158",
+              },
+            },
+            backgroundImage: {
+              "gradient-fire":
+                "linear-gradient(135deg, #ff2d55 0%, #ff6b35 100%)",
+              "gradient-cosmic":
+                "linear-gradient(135deg, #bf5af2 0%, #ff2d55 100%)",
+            },
+          },
+        },
+      };
+    </script>
+
+    <!-- GSAP -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+
+    <style>
+      :root {
+        --color-bg: #0d0221;
+      }
+
+      body {
+        background-color: var(--color-bg);
+        color: #ffffff;
+        overflow-x: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      /* Animated Starfield Background */
+      .starfield {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        z-index: -1;
+        background: radial-gradient(circle at bottom, #1a0a3e 0%, #0d0221 100%);
+        overflow: hidden;
+      }
+
+      .stars {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        background-image:
+          radial-gradient(2px 2px at 20px 30px, #ffffff, rgba(0, 0, 0, 0)),
+          radial-gradient(2px 2px at 40px 70px, #ffffff, rgba(0, 0, 0, 0)),
+          radial-gradient(2px 2px at 50px 160px, #ffffff, rgba(0, 0, 0, 0)),
+          radial-gradient(2px 2px at 90px 40px, #ffffff, rgba(0, 0, 0, 0)),
+          radial-gradient(2px 2px at 130px 80px, #ffffff, rgba(0, 0, 0, 0)),
+          radial-gradient(2px 2px at 160px 120px, #ffffff, rgba(0, 0, 0, 0));
+        background-repeat: repeat;
+        background-size: 200px 200px;
+        animation: twinkle 5s infinite linear;
+        opacity: 0.3;
+      }
+
+      .stars2 {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        background-image:
+          radial-gradient(3px 3px at 50px 50px, #ffd60a, rgba(0, 0, 0, 0)),
+          radial-gradient(3px 3px at 150px 90px, #bf5af2, rgba(0, 0, 0, 0)),
+          radial-gradient(3px 3px at 250px 150px, #ff2d55, rgba(0, 0, 0, 0));
+        background-repeat: repeat;
+        background-size: 300px 300px;
+        animation: twinkle 7s infinite linear reverse;
+        opacity: 0.5;
+      }
+
+      @keyframes twinkle {
+        0% {
+          transform: translateY(0);
+        }
+        100% {
+          transform: translateY(-200px);
+        }
+      }
+
+      /* Typography Gradients */
+      .text-gradient-fire {
+        background: linear-gradient(
+          to right,
+          #ffd60a,
+          #ff6b35,
+          #ff2d55,
+          #bf5af2
+        );
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-size: 300% auto;
+        animation: text-shine 4s linear infinite;
+      }
+
+      @keyframes text-shine {
+        0% {
+          background-position: 0% center;
+        }
+        100% {
+          background-position: 300% center;
+        }
+      }
+
+      /* Buttons & Interactions */
+      .btn-fire {
+        background: linear-gradient(135deg, #ff2d55 0%, #ff6b35 100%);
+        box-shadow:
+          0 0 20px rgba(255, 45, 85, 0.4),
+          inset 0 0 10px rgba(255, 255, 255, 0.2);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .btn-fire::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 50%;
+        height: 100%;
+        background: linear-gradient(
+          to right,
+          transparent,
+          rgba(255, 255, 255, 0.3),
+          transparent
+        );
+        transform: skewX(-20deg);
+        animation: button-shine 3s infinite;
+      }
+
+      .btn-fire:hover {
+        box-shadow:
+          0 0 30px rgba(255, 107, 53, 0.7),
+          inset 0 0 15px rgba(255, 255, 255, 0.4);
+        transform: translateY(-2px) scale(1.02);
+      }
+
+      @keyframes button-shine {
+        0% {
+          left: -100%;
+        }
+        20% {
+          left: 200%;
+        }
+        100% {
+          left: 200%;
+        }
+      }
+
+      /* Glassmorphism */
+      .glass-panel {
+        background: rgba(255, 255, 255, 0.03);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      /* Marquee */
+      .marquee-wrapper {
+        display: flex;
+        width: 200%;
+        animation: marquee 20s linear infinite;
+      }
+
+      @keyframes marquee {
+        0% {
+          transform: translateX(0);
+        }
+        100% {
+          transform: translateX(-50%);
+        }
+      }
+
+      /* Premium Card Glow */
+      .premium-glow {
+        position: relative;
+      }
+      .premium-glow::before {
+        content: "";
+        position: absolute;
+        inset: -2px;
+        background: linear-gradient(
+          45deg,
+          #ff2d55,
+          #bf5af2,
+          #ff6b35,
+          #30d158,
+          #ff2d55
+        );
+        background-size: 400%;
+        border-radius: 26px;
+        z-index: -1;
+        animation: glow-spin 4s linear infinite;
+        opacity: 0.8;
+        filter: blur(4px);
+      }
+      .premium-inner {
+        background: #1a0a3e;
+        border-radius: 24px;
+        height: 100%;
+        position: relative;
+        z-index: 1;
+      }
+
+      @keyframes glow-spin {
+        0% {
+          background-position: 0% 50%;
+        }
+        100% {
+          background-position: 400% 50%;
+        }
+      }
+
+      /* Form Inputs */
+      .roast-input {
+        background: rgba(0, 0, 0, 0.4);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: white;
+        transition: all 0.3s ease;
+      }
+      .roast-input:focus {
+        outline: none;
+        border-color: #bf5af2;
+        box-shadow: 0 0 15px rgba(191, 90, 242, 0.3);
+        background: rgba(0, 0, 0, 0.6);
+      }
+
+      /* Custom Scrollbar */
+      ::-webkit-scrollbar {
+        width: 10px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #0d0221;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #ff2d55;
+        border-radius: 5px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #ff6b35;
+      }
+
+      .will-change-transform {
+        will-change: transform, opacity;
+      }
+
+      /* Utility for blurring text */
+      .text-blur {
+        color: transparent;
+        text-shadow: 0 0 10px rgba(255, 255, 255, 0.7);
+        user-select: none;
+      }
+    </style>
+  </head>
+  <body
+    class="font-sans antialiased selection:bg-accent-purple selection:text-white"
+  >
+    <!-- Starfield Background -->
+    <div class="starfield">
+      <div class="stars"></div>
+      <div class="stars2"></div>
+      <!-- Bottom Flame Glow -->
+      <div
+        class="absolute bottom-0 left-0 w-full h-64 bg-gradient-to-t from-accent-red/20 to-transparent blur-3xl mix-blend-screen"
+      ></div>
+    </div>
+
+    <!-- Navigation -->
+    <nav
+      id="navbar"
+      class="fixed top-0 w-full z-50 transition-all duration-300 py-4 px-6 md:px-12 flex justify-between items-center border-b border-transparent"
+    >
+      <div class="flex items-center gap-2 cursor-pointer">
+        <span
+          class="text-2xl font-display font-bold tracking-tight text-white flex items-center gap-2"
+        >
+          Astro Roasts <span class="text-xl">☄️</span>
+        </span>
+      </div>
+      <div
+        class="hidden md:flex gap-6 items-center font-medium text-sm text-gray-300"
+      >
+        <a href="#how-it-works" class="hover:text-white transition-colors"
+          >How it Works</a
+        >
+        <a href="#pricing" class="hover:text-white transition-colors"
+          >Pricing</a
+        >
+        <a href="#testimonials" class="hover:text-white transition-colors"
+          >Victims</a
+        >
+      </div>
+      <button
+        onclick="
+          document
+            .getElementById('roast-form')
+            .scrollIntoView({ behavior: 'smooth' })
+        "
+        class="btn-fire px-6 py-2.5 rounded-full font-bold text-sm tracking-wide text-white"
+      >
+        Get Roasted
+      </button>
+    </nav>
+
+    <!-- Hero Section -->
+    <section
+      class="relative min-h-screen flex items-center justify-center pt-24 pb-12 px-6 md:px-12"
+    >
+      <div
+        class="max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 lg:gap-20 items-center w-full"
+      >
+        <!-- Hero Copy -->
+        <div class="hero-content space-y-8 z-10 text-center lg:text-left">
+          <div
+            class="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-panel text-accent-orange text-sm font-semibold tracking-wide border-accent-orange/30 shadow-[0_0_15px_rgba(255,107,53,0.2)]"
+          >
+            <span class="animate-pulse">🔥</span> AI-Powered Astrological
+            Violence
+          </div>
+
+          <h1
+            class="text-5xl md:text-7xl lg:text-8xl font-display font-bold leading-[1.05] tracking-tight"
+          >
+            The Stars Have <br />
+            <span class="text-gradient-fire">Something to Say</span> <br />
+            About You.
+          </h1>
+
+          <p
+            class="text-lg md:text-xl text-gray-400 font-medium max-w-xl mx-auto lg:mx-0 leading-relaxed"
+          >
+            Enter your birth details. Get brutally, hilariously, astrologically
+            destroyed based on your real natal chart. Swiss Ephemeris accuracy,
+            zero mercy.
+          </p>
+
+          <div
+            class="flex flex-wrap gap-4 items-center justify-center lg:justify-start text-sm font-medium text-gray-400"
+          >
+            <div class="flex -space-x-3">
+              <div
+                class="w-8 h-8 rounded-full border-2 border-space-900 bg-accent-purple flex items-center justify-center text-xs"
+              >
+                😈
+              </div>
+              <div
+                class="w-8 h-8 rounded-full border-2 border-space-900 bg-accent-orange flex items-center justify-center text-xs"
+              >
+                💀
+              </div>
+              <div
+                class="w-8 h-8 rounded-full border-2 border-space-900 bg-accent-red flex items-center justify-center text-xs"
+              >
+                🤡
+              </div>
+            </div>
+            <span>Join 840K+ ruined egos</span>
+          </div>
+        </div>
+
+        <!-- Hero Form -->
+        <div
+          id="roast-form"
+          class="hero-form glass-panel p-8 md:p-10 rounded-3xl w-full max-w-md mx-auto lg:mx-0 relative z-10 shadow-2xl"
+        >
+          <div
+            class="absolute -top-4 -right-4 w-24 h-24 bg-accent-purple/30 rounded-full blur-2xl"
+          ></div>
+          <div
+            class="absolute -bottom-4 -left-4 w-24 h-24 bg-accent-orange/30 rounded-full blur-2xl"
+          ></div>
+
+          <div class="text-center mb-8 relative">
+            <h2 class="text-2xl font-display font-bold mb-2">
+              Summon Your Roast
+            </h2>
+            <p class="text-sm text-gray-400">
+              We need exact data to ruin your day properly.
+            </p>
+          </div>
+
+          <form
+            class="space-y-4 relative"
+            onsubmit="
+              event.preventDefault();
+              document
+                .getElementById('pricing')
+                .scrollIntoView({ behavior: 'smooth' });
+            "
+          >
+            <div>
+              <label
+                class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5"
+                >First Name</label
+              >
+              <input
+                type="text"
+                placeholder="e.g. Chad"
+                class="roast-input w-full px-4 py-3 rounded-xl"
+                required
+              />
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label
+                  class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5"
+                  >Date of Birth</label
+                >
+                <input
+                  type="date"
+                  class="roast-input w-full px-4 py-3 rounded-xl text-sm"
+                  required
+                />
+              </div>
+              <div>
+                <label
+                  class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5"
+                  >Exact Time</label
+                >
+                <input
+                  type="time"
+                  class="roast-input w-full px-4 py-3 rounded-xl text-sm"
+                  required
+                />
+              </div>
+            </div>
+            <div>
+              <label
+                class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5"
+                >City of Birth</label
+              >
+              <input
+                type="text"
+                placeholder="e.g. Los Angeles, CA"
+                class="roast-input w-full px-4 py-3 rounded-xl"
+                required
+              />
+            </div>
+
+            <button
+              type="submit"
+              class="btn-fire w-full py-4 mt-4 rounded-xl font-display font-bold text-lg tracking-wide flex items-center justify-center gap-2 group"
+            >
+              ROAST ME
+              <span
+                class="group-hover:rotate-12 transition-transform duration-300 inline-block"
+                >☄️</span
+              >
+            </button>
+
+            <p
+              class="text-center text-xs text-gray-500 mt-4 flex items-center justify-center gap-1"
+            >
+              <svg
+                class="w-3 h-3"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                ></path>
+              </svg>
+              Your data is never saved. We just judge it.
+            </p>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- Virality Social Proof Bar -->
+    <div
+      class="border-y border-white/10 bg-space-900/80 backdrop-blur-md overflow-hidden py-4 z-20 relative"
+    >
+      <div
+        class="marquee-wrapper flex gap-8 items-center text-lg md:text-xl font-display font-bold tracking-wide"
+      >
+        <!-- Repeated for seamless loop -->
+        <div
+          class="flex gap-12 items-center whitespace-nowrap min-w-full justify-around"
+        >
+          <span class="flex items-center gap-2"
+            ><span id="stat-roasts" class="text-accent-orange">847,293</span>
+            souls roasted 🔥</span
+          >
+          <span class="text-white/20">•</span>
+          <span class="flex items-center gap-2"
+            ><span id="stat-shares" class="text-accent-purple">4.2M</span>
+            screenshots shared 📸</span
+          >
+          <span class="text-white/20">•</span>
+          <span class="flex items-center gap-2"
+            ><span class="text-accent-green">12</span> zodiac signs,
+            <span class="text-accent-red">0</span> mercy 💀</span
+          >
+          <span class="text-white/20">•</span>
+        </div>
+        <div
+          class="flex gap-12 items-center whitespace-nowrap min-w-full justify-around"
+        >
+          <span class="flex items-center gap-2"
+            ><span class="text-accent-orange">847,293</span> souls roasted
+            🔥</span
+          >
+          <span class="text-white/20">•</span>
+          <span class="flex items-center gap-2"
+            ><span class="text-accent-purple">4.2M</span> screenshots shared
+            📸</span
+          >
+          <span class="text-white/20">•</span>
+          <span class="flex items-center gap-2"
+            ><span class="text-accent-green">12</span> zodiac signs,
+            <span class="text-accent-red">0</span> mercy 💀</span
+          >
+          <span class="text-white/20">•</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sample Roast Preview -->
+    <section class="py-24 px-6 md:px-12 relative z-10">
+      <div class="max-w-4xl mx-auto">
+        <div class="text-center mb-16 stagger-up">
+          <h2 class="text-3xl md:text-5xl font-display font-bold mb-4">
+            What To Expect
+          </h2>
+          <p class="text-gray-400 text-lg">
+            A highly shareable artifact of your own destruction.
+          </p>
+        </div>
+
+        <div
+          class="relative glass-panel rounded-3xl p-6 md:p-10 max-w-2xl mx-auto shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-white/10 stagger-up overflow-hidden group"
+        >
+          <!-- Watermark -->
+          <div
+            class="absolute -right-4 -bottom-4 text-[150px] font-display font-bold text-white/5 rotate-12 pointer-events-none select-none"
+          >
+            LEO
+          </div>
+
+          <!-- Header -->
+          <div class="flex justify-between items-start mb-8 relative z-10">
+            <div>
+              <h3 class="text-2xl font-bold font-display mb-1">
+                Sarah's Roast
+              </h3>
+              <p class="text-sm text-gray-400">Generated 2 mins ago</p>
+            </div>
+            <div
+              class="flex gap-3 text-2xl bg-space-800/80 px-4 py-2 rounded-2xl border border-white/5 shadow-inner"
+            >
+              <span title="Leo Sun" class="text-accent-gold">♌</span>
+              <span title="Pisces Moon" class="text-accent-purple">♓</span>
+              <span title="Virgo Rising" class="text-accent-green">♍</span>
+            </div>
+          </div>
+
+          <!-- Teaser Roast -->
+          <div class="space-y-4 mb-8 relative z-10">
+            <p class="text-lg text-gray-200 leading-relaxed font-medium">
+              Oh look, a Leo Sun with a Pisces Moon. So you demand to be the
+              center of attention, but cry when people actually look at you?
+              You're essentially a very theatrical puddle of emotions.
+            </p>
+            <p class="text-lg text-gray-200 leading-relaxed font-medium">
+              And that Virgo Rising? That's just the mask you wear so people
+              think you have your life together while you internally obsess over
+              a text message from 2019.
+            </p>
+          </div>
+
+          <!-- Blurred Full Roast Section -->
+          <div class="relative z-10 mt-8 border-t border-white/10 pt-8">
+            <div class="text-blur space-y-3 opacity-50">
+              <p>
+                With Mercury in Cancer, your communication style is basically
+                guilt-tripping disguised as "just checking in."
+              </p>
+              <p>
+                And let's not even start on your Venus placement. It explains
+                why your dating history looks like a true crime podcast outline.
+              </p>
+              <p>
+                Your 8th house Saturn suggests you're terrified of intimacy but
+                crave it, making you a walking contradiction of...
+              </p>
+            </div>
+
+            <!-- Unlock Overlay -->
+            <div
+              class="absolute inset-0 flex flex-col items-center justify-center bg-space-900/60 backdrop-blur-sm rounded-xl border border-white/5 transition-all duration-300 group-hover:bg-space-900/40"
+            >
+              <div
+                class="bg-space-800 px-6 py-4 rounded-2xl text-center shadow-xl border border-accent-purple/30"
+              >
+                <span class="block text-xl mb-2">🔒</span>
+                <h4 class="font-display font-bold text-lg mb-1">
+                  It Gets Worse.
+                </h4>
+                <p class="text-sm text-gray-300 mb-4">
+                  Unlock planets, houses, and aspects.
+                </p>
+                <button
+                  class="bg-white text-space-900 px-5 py-2 rounded-full font-bold text-sm hover:bg-gray-200 transition-colors"
+                >
+                  Pay $5 to read the rest
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- How It Works -->
+    <section
+      id="how-it-works"
+      class="py-24 px-6 md:px-12 bg-space-800/30 border-y border-white/5 relative z-10"
+    >
+      <div class="max-w-6xl mx-auto">
+        <div class="text-center mb-16 stagger-up">
+          <h2 class="text-3xl md:text-5xl font-display font-bold mb-4">
+            How The Magic Happens
+          </h2>
+          <p class="text-gray-400 text-lg">Three steps to spiritual damage.</p>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-8">
+          <!-- Step 1 -->
+          <div
+            class="glass-panel p-8 rounded-3xl text-center stagger-up hover:-translate-y-2 transition-transform duration-300"
+          >
+            <div
+              class="w-16 h-16 mx-auto bg-space-700 rounded-2xl flex items-center justify-center text-3xl mb-6 shadow-[0_0_20px_rgba(255,255,255,0.1)]"
+            >
+              📅
+            </div>
+            <h3 class="text-xl font-display font-bold mb-3">
+              1. Surrender Details
+            </h3>
+            <p class="text-gray-400 text-sm leading-relaxed">
+              Give us your exact birth date, time, and location. Don't lie, the
+              stars know if you're rounding up to sound cooler.
+            </p>
+          </div>
+
+          <!-- Step 2 -->
+          <div
+            class="glass-panel p-8 rounded-3xl text-center stagger-up hover:-translate-y-2 transition-transform duration-300"
+          >
+            <div
+              class="w-16 h-16 mx-auto bg-space-700 rounded-2xl flex items-center justify-center text-3xl mb-6 shadow-[0_0_20px_rgba(191,90,242,0.2)]"
+            >
+              ✨
+            </div>
+            <h3 class="text-xl font-display font-bold mb-3">
+              2. We Crunch The Sky
+            </h3>
+            <p class="text-gray-400 text-sm leading-relaxed">
+              Our AI uses real Swiss Ephemeris data to map your natal chart. We
+              see every planet, house, and embarrassing aspect.
+            </p>
+          </div>
+
+          <!-- Step 3 -->
+          <div
+            class="glass-panel p-8 rounded-3xl text-center stagger-up hover:-translate-y-2 transition-transform duration-300"
+          >
+            <div
+              class="w-16 h-16 mx-auto bg-space-700 rounded-2xl flex items-center justify-center text-3xl mb-6 shadow-[0_0_20px_rgba(255,45,85,0.3)]"
+            >
+              🔥
+            </div>
+            <h3 class="text-xl font-display font-bold mb-3">
+              3. Get Destroyed
+            </h3>
+            <p class="text-gray-400 text-sm leading-relaxed">
+              Receive a beautifully brutal, screenshot-worthy roast. Laugh, cry,
+              and send it to your group chat.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Pricing / Roast Tiers -->
+    <section id="pricing" class="py-24 px-6 md:px-12 relative z-10">
+      <div class="max-w-5xl mx-auto">
+        <div class="text-center mb-16 stagger-up">
+          <h2 class="text-3xl md:text-5xl font-display font-bold mb-4">
+            Choose Your Pain Level
+          </h2>
+          <p class="text-gray-400 text-lg">
+            A little burn, or the whole damn fire.
+          </p>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-8 items-center">
+          <!-- Free Tier -->
+          <div
+            class="glass-panel p-8 md:p-10 rounded-3xl stagger-up border border-white/5"
+          >
+            <div
+              class="inline-block px-3 py-1 rounded-full bg-white/10 text-xs font-bold uppercase tracking-widest mb-6"
+            >
+              The Teaser
+            </div>
+            <h3 class="text-4xl font-display font-bold mb-2">Free</h3>
+            <p class="text-gray-400 mb-8">A taste of the damage.</p>
+
+            <ul class="space-y-4 mb-10">
+              <li class="flex items-center gap-3 text-gray-300">
+                <span class="text-accent-green">✓</span> Sun, Moon & Rising
+                roast
+              </li>
+              <li class="flex items-center gap-3 text-gray-300">
+                <span class="text-accent-green">✓</span> Shareable format
+              </li>
+              <li class="flex items-center gap-3 text-gray-600">
+                <span class="text-gray-600">✗</span> Inner & Outer Planets
+              </li>
+              <li class="flex items-center gap-3 text-gray-600">
+                <span class="text-gray-600">✗</span> House Placements
+              </li>
+              <li class="flex items-center gap-3 text-gray-600">
+                <span class="text-gray-600">✗</span> Psychological read
+              </li>
+            </ul>
+
+            <button
+              onclick="
+                document
+                  .getElementById('roast-form')
+                  .scrollIntoView({ behavior: 'smooth' })
+              "
+              class="w-full py-4 rounded-xl border border-white/20 hover:bg-white/5 transition-colors font-bold text-center"
+            >
+              Try Free Teaser
+            </button>
+          </div>
+
+          <!-- Premium Tier -->
+          <div
+            class="premium-glow p-[2px] rounded-[26px] stagger-up transform md:-translate-y-4"
+          >
+            <div class="premium-inner p-8 md:p-10">
+              <div
+                class="absolute top-0 right-8 transform -translate-y-1/2 bg-accent-red text-white text-xs font-bold px-4 py-1.5 rounded-full shadow-[0_0_15px_rgba(255,45,85,0.5)]"
+              >
+                MOST UNHINGED
+              </div>
+
+              <div
+                class="inline-block px-3 py-1 rounded-full bg-accent-purple/20 text-accent-purple text-xs font-bold uppercase tracking-widest mb-6 border border-accent-purple/30"
+              >
+                The Full Roast
+              </div>
+              <h3 class="text-4xl font-display font-bold mb-2">$5</h3>
+              <p class="text-gray-300 mb-8 font-medium">
+                Every planet. Every pattern. No holding back.
+              </p>
+
+              <ul class="space-y-4 mb-10">
+                <li class="flex items-center gap-3 text-white">
+                  <span class="text-accent-green">✓</span>
+                  <strong class="font-semibold">Everything in Free</strong>
+                </li>
+                <li class="flex items-center gap-3 text-gray-200">
+                  <span class="text-accent-green">✓</span> Deep dive into
+                  Mercury, Venus & Mars
+                </li>
+                <li class="flex items-center gap-3 text-gray-200">
+                  <span class="text-accent-green">✓</span> Generational trauma
+                  (Outer planets)
+                </li>
+                <li class="flex items-center gap-3 text-gray-200">
+                  <span class="text-accent-green">✓</span> Toxic relationship
+                  patterns exposed
+                </li>
+                <li class="flex items-center gap-3 text-gray-200">
+                  <span class="text-accent-green">✓</span> Career & life path
+                  read
+                </li>
+              </ul>
+
+              <button
+                onclick="
+                  document
+                    .getElementById('roast-form')
+                    .scrollIntoView({ behavior: 'smooth' })
+                "
+                class="btn-fire w-full py-4 rounded-xl font-bold text-center text-lg"
+              >
+                Get the Full Roast
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Testimonials / Wall of Tears -->
+    <section
+      id="testimonials"
+      class="py-24 px-6 md:px-12 bg-space-800/30 border-y border-white/5 relative z-10 overflow-hidden"
+    >
+      <!-- Background elements -->
+      <div
+        class="absolute top-1/2 left-0 w-64 h-64 bg-accent-purple/10 rounded-full blur-[100px]"
+      ></div>
+      <div
+        class="absolute top-1/2 right-0 w-64 h-64 bg-accent-orange/10 rounded-full blur-[100px]"
+      ></div>
+
+      <div class="max-w-6xl mx-auto">
+        <div class="text-center mb-16 stagger-up">
+          <h2 class="text-3xl md:text-5xl font-display font-bold mb-4">
+            The Wall of Tears
+          </h2>
+          <p class="text-gray-400 text-lg">
+            Actual reactions from real victims.
+          </p>
+        </div>
+
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <!-- Tweet 1 -->
+          <div
+            class="glass-panel p-6 rounded-2xl stagger-up hover:bg-white/5 transition-colors"
+          >
+            <div class="flex items-center gap-3 mb-4">
+              <div
+                class="w-10 h-10 rounded-full bg-gradient-to-br from-accent-purple to-accent-red flex items-center justify-center text-sm font-bold"
+              >
+                M
+              </div>
+              <div>
+                <div class="font-bold text-sm">Mia T.</div>
+                <div class="text-xs text-gray-500">@miatweets • 2h ago</div>
+              </div>
+            </div>
+            <p class="text-gray-300 text-sm leading-relaxed">
+              My therapist charges $200/hour and the stars just dragged me
+              harder for $5. I've never felt so seen and so attacked
+              simultaneously. 😭💀
+            </p>
+          </div>
+
+          <!-- Tweet 2 -->
+          <div
+            class="glass-panel p-6 rounded-2xl stagger-up hover:bg-white/5 transition-colors lg:translate-y-6"
+          >
+            <div class="flex items-center gap-3 mb-4">
+              <div
+                class="w-10 h-10 rounded-full bg-gradient-to-br from-accent-green to-blue-500 flex items-center justify-center text-sm font-bold"
+              >
+                J
+              </div>
+              <div>
+                <div class="font-bold text-sm">Jake</div>
+                <div class="text-xs text-gray-500">@jake_vibes • 5h ago</div>
+              </div>
+            </div>
+            <p class="text-gray-300 text-sm leading-relaxed">
+              Sent my roast to my ex to prove I am "self-aware." They blocked
+              me. Astro Roasts is 10/10 accurate.
+            </p>
+          </div>
+
+          <!-- Tweet 3 -->
+          <div
+            class="glass-panel p-6 rounded-2xl stagger-up hover:bg-white/5 transition-colors lg:translate-y-12"
+          >
+            <div class="flex items-center gap-3 mb-4">
+              <div
+                class="w-10 h-10 rounded-full bg-gradient-to-br from-accent-orange to-accent-gold flex items-center justify-center text-sm font-bold text-space-900"
+              >
+                S
+              </div>
+              <div>
+                <div class="font-bold text-sm">Sarah_Scorpio</div>
+                <div class="text-xs text-gray-500">@scorp_queen • 1d ago</div>
+              </div>
+            </div>
+            <p class="text-gray-300 text-sm leading-relaxed">
+              "Your Venus placement explains why your dating history looks like
+              a true crime podcast outline." I AM CALLING THE POLICE. 🚨
+            </p>
+          </div>
+          <!-- Tweet 4 -->
+          <div
+            class="glass-panel p-6 rounded-2xl stagger-up hover:bg-white/5 transition-colors hidden md:block"
+          >
+            <div class="flex items-center gap-3 mb-4">
+              <div
+                class="w-10 h-10 rounded-full bg-gradient-to-br from-pink-500 to-accent-red flex items-center justify-center text-sm font-bold"
+              >
+                A
+              </div>
+              <div>
+                <div class="font-bold text-sm">Alex Chen</div>
+                <div class="text-xs text-gray-500">@alexc • 2d ago</div>
+              </div>
+            </div>
+            <p class="text-gray-300 text-sm leading-relaxed">
+              I thought astrology was fake until this site perfectly described
+              my inability to commit to dinner plans.
+            </p>
+          </div>
+          <!-- Tweet 5 -->
+          <div
+            class="glass-panel p-6 rounded-2xl stagger-up hover:bg-white/5 transition-colors lg:translate-y-6 hidden md:block"
+          >
+            <div class="flex items-center gap-3 mb-4">
+              <div
+                class="w-10 h-10 rounded-full bg-gradient-to-br from-teal-400 to-accent-green flex items-center justify-center text-sm font-bold text-space-900"
+              >
+                E
+              </div>
+              <div>
+                <div class="font-bold text-sm">Elena</div>
+                <div class="text-xs text-gray-500">@elena_reads • 2d ago</div>
+              </div>
+            </div>
+            <p class="text-gray-300 text-sm leading-relaxed">
+              Just bought roasts for my entire bridal party. The group chat is
+              currently on fire and two people are crying. Best $25 I ever
+              spent.
+            </p>
+          </div>
+          <!-- Tweet 6 -->
+          <div
+            class="glass-panel p-6 rounded-2xl stagger-up hover:bg-white/5 transition-colors lg:translate-y-12 hidden lg:block"
+          >
+            <div class="flex items-center gap-3 mb-4">
+              <div
+                class="w-10 h-10 rounded-full bg-gradient-to-br from-yellow-400 to-accent-orange flex items-center justify-center text-sm font-bold text-space-900"
+              >
+                T
+              </div>
+              <div>
+                <div class="font-bold text-sm">Tyler</div>
+                <div class="text-xs text-gray-500">@tyler_wtv • 3d ago</div>
+              </div>
+            </div>
+            <p class="text-gray-300 text-sm leading-relaxed">
+              As an Aries, I took this as a challenge. I lost. The roast was too
+              good. ♈🔥
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Bottom CTA -->
+    <section class="py-32 px-6 md:px-12 relative z-10 text-center">
+      <div class="absolute inset-0 flex items-center justify-center z-[-1]">
+        <div
+          class="w-96 h-96 bg-accent-red/20 rounded-full blur-[120px] animate-pulse"
+        ></div>
+      </div>
+
+      <div class="max-w-3xl mx-auto stagger-up">
+        <h2 class="text-5xl md:text-7xl font-display font-bold mb-6">
+          Ready to Face <br /><span class="text-gradient-fire">The Truth?</span>
+        </h2>
+        <p class="text-xl text-gray-400 mb-10 max-w-xl mx-auto">
+          Stop reading horoscopes that tell you what you want to hear. Get the
+          roast you actually need.
+        </p>
+
+        <button
+          onclick="
+            document
+              .getElementById('roast-form')
+              .scrollIntoView({ behavior: 'smooth' })
+          "
+          class="btn-fire px-10 py-5 rounded-full font-display font-bold text-xl tracking-wide inline-flex items-center gap-3 group"
+        >
+          GET ROASTED NOW
+          <span class="group-hover:translate-x-1 transition-transform">→</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer
+      class="border-t border-white/10 bg-space-900/80 backdrop-blur-lg py-12 px-6 md:px-12 relative z-10 text-center md:text-left"
+    >
+      <div
+        class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6"
+      >
+        <div>
+          <span
+            class="text-2xl font-display font-bold tracking-tight text-white flex items-center justify-center md:justify-start gap-2 mb-2"
+          >
+            Astro Roasts <span class="text-xl">☄️</span>
+          </span>
+          <p class="text-sm text-gray-500">
+            Made with fire, chaos, and Swiss Ephemeris data.
+          </p>
+        </div>
+
+        <div class="flex gap-6 text-sm text-gray-400 font-medium">
+          <a href="#" class="hover:text-white transition-colors">TikTok</a>
+          <a href="#" class="hover:text-white transition-colors">Instagram</a>
+          <a href="#" class="hover:text-white transition-colors"
+            >Terms of Ruin</a
+          >
+          <a href="#" class="hover:text-white transition-colors">Privacy</a>
+        </div>
+      </div>
+      <div
+        class="max-w-6xl mx-auto mt-8 pt-8 border-t border-white/5 text-center text-xs text-gray-600"
+      >
+        &copy; 2023 Astro Roasts. Not responsible for damaged egos, broken
+        relationships, or existential dread.
+      </div>
+    </footer>
+
+    <!-- GSAP Animations Script -->
+    <script>
+      document.addEventListener("DOMContentLoaded", (event) => {
+        // Register ScrollTrigger
+        gsap.registerPlugin(ScrollTrigger);
+
+        // Navbar transparent to solid on scroll
+        const navbar = document.getElementById("navbar");
+        window.addEventListener("scroll", () => {
+          if (window.scrollY > 50) {
+            navbar.classList.add(
+              "bg-space-900/80",
+              "backdrop-blur-md",
+              "border-white/10",
+              "shadow-lg",
+            );
+            navbar.classList.remove("border-transparent");
+          } else {
+            navbar.classList.remove(
+              "bg-space-900/80",
+              "backdrop-blur-md",
+              "border-white/10",
+              "shadow-lg",
+            );
+            navbar.classList.add("border-transparent");
+          }
+        });
+
+        // Hero Entrance Animation
+        const heroTl = gsap.timeline();
+        heroTl
+          .from(".hero-content > *", {
+            y: 40,
+            opacity: 0,
+            duration: 0.8,
+            stagger: 0.15,
+            ease: "power3.out",
+          })
+          .from(
+            ".hero-form",
+            {
+              y: 40,
+              opacity: 0,
+              scale: 0.95,
+              duration: 0.8,
+              ease: "power3.out",
+            },
+            "-=0.6",
+          );
+
+        // Stagger up elements on scroll
+        gsap.utils.toArray(".stagger-up").forEach((elem) => {
+          gsap.from(elem, {
+            scrollTrigger: {
+              trigger: elem,
+              start: "top 85%",
+              toggleActions: "play none none none",
+            },
+            y: 40,
+            opacity: 0,
+            duration: 0.8,
+            ease: "power3.out",
+            clearProps: "all",
+          });
+        });
+
+        // Number counters in marquee
+        // Only animate once
+        const formatNumber = (num) => {
+          if (num >= 1000000) return (num / 1000000).toFixed(1) + "M";
+          return num.toLocaleString();
+        };
+
+        let objStats = { roasts: 0 };
+        gsap.to(objStats, {
+          scrollTrigger: {
+            trigger: ".marquee-wrapper",
+            start: "top 90%",
+            once: true,
+          },
+          roasts: 847293,
+          duration: 2.5,
+          ease: "power2.out",
+          onUpdate: () => {
+            document.getElementById("stat-roasts").innerHTML = Math.floor(
+              objStats.roasts,
+            ).toLocaleString();
+          },
+        });
+
+        // Subtle parallax on stars background
+        gsap.to(".stars", {
+          yPercent: 20,
+          ease: "none",
+          scrollTrigger: {
+            trigger: "body",
+            start: "top top",
+            end: "bottom top",
+            scrub: true,
+          },
+        });
+        gsap.to(".stars2", {
+          yPercent: 30,
+          ease: "none",
+          scrollTrigger: {
+            trigger: "body",
+            start: "top top",
+            end: "bottom top",
+            scrub: true,
+          },
+        });
+      });
+    </script>
+  </body>
+</html>

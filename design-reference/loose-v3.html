@@ -1,0 +1,681 @@
+<!doctype html>
+<html
+  lang="en"
+  class="bg-[#030303] text-white antialiased selection:bg-[#FF3300] selection:text-white"
+>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Astro Roasts — The Universe is Tired of Your Excuses</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;700&family=Syne:wght@400;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              syne: ["Syne", "sans-serif"],
+              mono: ["JetBrains Mono", "monospace"],
+            },
+            colors: {
+              void: "#030303",
+              ash: "#888888",
+              blood: "#FF3300",
+              abyss: "#111111",
+            },
+            backgroundImage: {
+              "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
+            },
+          },
+        },
+      };
+    </script>
+
+    <!-- GSAP -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+
+    <style>
+      /* CSS Reset & Utilities */
+      body {
+        overflow-x: hidden;
+        cursor: crosshair;
+      }
+
+      /* SVG Noise Texture */
+      .noise-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        pointer-events: none;
+        z-index: 50;
+        opacity: 0.04;
+        background: url('data:image/svg+xml;utf8,%3Csvg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"%3E%3Cfilter id="noise"%3E%3CfeTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="4" stitchTiles="stitch"/%3E%3C/filter%3E%3Crect width="100%25" height="100%25" filter="url(%23noise)"/%3E%3C/svg%3E');
+      }
+
+      /* Dynamic Glow Orb */
+      .glow-orb {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        width: 600px;
+        height: 600px;
+        background: radial-gradient(
+          circle,
+          rgba(255, 51, 0, 0.15) 0%,
+          rgba(255, 51, 0, 0) 70%
+        );
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        pointer-events: none;
+        z-index: 0;
+        mix-blend-mode: screen;
+        transition:
+          width 0.3s,
+          height 0.3s;
+      }
+
+      /* Typography tricks */
+      .text-outline {
+        -webkit-text-stroke: 1px rgba(255, 255, 255, 0.3);
+        color: transparent;
+      }
+
+      .text-outline-hover:hover {
+        -webkit-text-stroke: 1px #ff3300;
+        color: #ff3300;
+        transition: all 0.3s ease;
+      }
+
+      .clip-text {
+        background-clip: text;
+        -webkit-background-clip: text;
+        color: transparent;
+      }
+
+      /* Form Styling */
+      .form-input {
+        background: transparent;
+        border: none;
+        border-bottom: 1px solid #333;
+        border-radius: 0;
+        color: white;
+        font-family: "JetBrains Mono", monospace;
+        padding: 1rem 0;
+        width: 100%;
+        transition: all 0.3s ease;
+      }
+      .form-input:focus {
+        outline: none;
+        border-bottom-color: #ff3300;
+        box-shadow: 0 10px 10px -10px rgba(255, 51, 0, 0.2);
+      }
+      .form-input::placeholder {
+        color: #555;
+      }
+
+      /* Custom Scrollbar */
+      ::-webkit-scrollbar {
+        width: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #030303;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #333;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #ff3300;
+      }
+
+      .line-mask {
+        overflow: hidden;
+      }
+
+      .marquee-container {
+        display: flex;
+        width: 200vw;
+      }
+
+      /* Magnetic Button */
+      .btn-magnetic {
+        position: relative;
+        overflow: hidden;
+      }
+      .btn-magnetic::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: #ff3300;
+        transform: translateY(100%);
+        transition: transform 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+        z-index: -1;
+      }
+      .btn-magnetic:hover::before {
+        transform: translateY(0);
+      }
+      .btn-magnetic:hover {
+        color: #000 !important;
+      }
+    </style>
+  </head>
+  <body class="font-syne relative">
+    <div class="noise-overlay"></div>
+    <div class="glow-orb" id="glowOrb"></div>
+
+    <!-- Navigation -->
+    <nav
+      class="fixed top-0 w-full p-6 flex justify-between items-center z-40 mix-blend-difference"
+    >
+      <div
+        class="font-syne font-bold text-xl tracking-tighter uppercase flex items-center gap-2"
+      >
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <circle cx="12" cy="12" r="10"></circle>
+          <path
+            d="M12 2v20M2 12h20M4.93 4.93l14.14 14.14M4.93 19.07L19.07 4.93"
+          ></path>
+        </svg>
+        Astro Roasts
+      </div>
+      <div class="font-mono text-xs text-ash flex gap-6">
+        <a href="#roast" class="hover:text-blood transition-colors">INITIATE</a>
+        <a href="#pricing" class="hover:text-blood transition-colors"
+          >PRICING</a
+        >
+      </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section
+      class="relative h-screen w-full flex flex-col justify-center px-6 md:px-12 z-10 pt-20"
+    >
+      <div class="max-w-[90vw]">
+        <div class="line-mask">
+          <h1
+            class="hero-text text-[12vw] md:text-[8vw] leading-[0.85] font-extrabold uppercase tracking-tighter text-outline text-outline-hover"
+          >
+            The Universe
+          </h1>
+        </div>
+        <div class="line-mask">
+          <h1
+            class="hero-text text-[12vw] md:text-[8vw] leading-[0.85] font-extrabold uppercase tracking-tighter"
+          >
+            Is Tired Of
+          </h1>
+        </div>
+        <div class="line-mask">
+          <h1
+            class="hero-text text-[12vw] md:text-[8vw] leading-[0.85] font-extrabold uppercase tracking-tighter bg-gradient-to-r from-blood to-[#FF007A] clip-text pb-4"
+          >
+            Your Excuses.
+          </h1>
+        </div>
+      </div>
+
+      <div
+        class="mt-12 md:mt-24 grid grid-cols-1 md:grid-cols-3 gap-8 w-full border-t border-white/10 pt-8"
+      >
+        <div class="font-mono text-xs text-ash md:col-span-1">
+          <p class="hero-sub fade-up">SYS_DATA: SWISS EPHEMERIS V2.1</p>
+          <p class="hero-sub fade-up mt-2 text-white/40">
+            LOC: 12.04.1994 // ACCURACY: BRUTAL
+          </p>
+        </div>
+        <div
+          class="md:col-span-2 font-syne text-lg md:text-2xl text-white/80 max-w-2xl leading-relaxed"
+        >
+          <p class="hero-sub fade-up">
+            Enter your exact birth details to receive an uncomfortably accurate,
+            mathematically precise personality reading. It’s not a vague
+            horoscope. It’s an intervention.
+          </p>
+        </div>
+      </div>
+
+      <div
+        class="absolute bottom-8 right-8 font-mono text-xs animate-bounce opacity-50"
+      >
+        ↓ SCROLL TO SUFFER
+      </div>
+    </section>
+
+    <!-- The Confrontation (Marquee & Truths) -->
+    <section
+      class="py-24 overflow-hidden bg-blood text-void flex flex-col justify-center"
+      id="confrontation"
+    >
+      <div class="marquee-container opacity-90">
+        <h2
+          class="text-[8vw] whitespace-nowrap font-extrabold uppercase tracking-tighter"
+        >
+          NOT VAGUE HOROSCOPE GARBAGE — NOT VAGUE HOROSCOPE GARBAGE —
+        </h2>
+      </div>
+    </section>
+
+    <!-- Compare Section (Sticky Scroll) -->
+    <section class="relative h-[200vh]" id="compare-section">
+      <div
+        class="sticky top-0 h-screen w-full flex flex-col md:flex-row items-center px-6 md:px-12 gap-12"
+      >
+        <!-- Left Side Fixed Text -->
+        <div class="w-full md:w-1/2">
+          <h2 class="text-4xl md:text-6xl font-bold uppercase tracking-tighter">
+            The Mirror<br /><span class="text-blood">Doesn't Lie.</span>
+          </h2>
+          <p class="font-mono text-sm mt-6 text-ash max-w-md">
+            While standard apps tell you what you want to hear to keep you
+            subscribing, we use exact planetary coordinates to diagnose your
+            toxic cycles.
+          </p>
+        </div>
+
+        <!-- Right Side Changing Cards -->
+        <div class="w-full md:w-1/2 h-[50vh] relative">
+          <!-- Card 1 -->
+          <div
+            class="compare-card absolute inset-0 bg-abyss border border-white/10 p-8 flex flex-col justify-center"
+          >
+            <div class="font-mono text-xs text-ash mb-4">
+              THEM (Co-Star / Sanctuary)
+            </div>
+            <div class="text-xl md:text-3xl font-syne">
+              "You are a fierce, independent spirit who deeply values your own
+              peace." 🦁✨
+            </div>
+          </div>
+          <!-- Card 2 -->
+          <div
+            class="compare-card absolute inset-0 bg-[#1a0a0a] border border-blood/30 p-8 flex flex-col justify-center"
+          >
+            <div class="font-mono text-xs text-blood mb-4">ASTRO ROASTS</div>
+            <div class="text-xl md:text-3xl font-syne text-white">
+              "You use 'protecting your peace' as a manipulative excuse to ghost
+              people when they hold you accountable." 🎯💀
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- The Form (The Altar) -->
+    <section class="py-32 relative z-20 px-6 md:px-12" id="roast">
+      <div
+        class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-5 gap-16 items-start"
+      >
+        <div class="lg:col-span-2">
+          <h2
+            class="text-[3rem] leading-none font-bold uppercase tracking-tighter"
+          >
+            Face The<br />Music.
+          </h2>
+          <p class="font-mono text-sm text-ash mt-6">
+            Input coordinates. Time of birth is critical for exact house
+            placement. If you don't know it, text your mother. You owe her a
+            text anyway.
+          </p>
+
+          <div
+            class="mt-12 flex gap-4 text-xs font-mono items-center border border-white/10 p-4 rounded-sm bg-black/50 backdrop-blur"
+          >
+            <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+            SYS.EPHEMERIS.CONNECTED
+          </div>
+        </div>
+
+        <!-- Form Interface -->
+        <div
+          class="lg:col-span-3 bg-abyss p-8 md:p-12 border border-white/10 relative overflow-hidden group"
+        >
+          <!-- Scanner effect line -->
+          <div
+            class="absolute top-0 left-0 w-full h-1 bg-blood/50 blur-[2px] transform -translate-y-full group-hover:animate-[scan_3s_ease-in-out_infinite]"
+          ></div>
+
+          <form
+            onsubmit="
+              event.preventDefault();
+              document
+                .getElementById('pricing')
+                .scrollIntoView({ behavior: 'smooth' });
+            "
+            class="space-y-8 relative z-10"
+          >
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div class="relative">
+                <label
+                  class="font-mono text-[10px] text-blood tracking-widest uppercase absolute -top-4"
+                  >Subject Name</label
+                >
+                <input
+                  type="text"
+                  required
+                  class="form-input"
+                  placeholder="Enter legal name (or alias)"
+                />
+              </div>
+              <div class="relative">
+                <label
+                  class="font-mono text-[10px] text-blood tracking-widest uppercase absolute -top-4"
+                  >Birth Location</label
+                >
+                <input
+                  type="text"
+                  required
+                  class="form-input"
+                  placeholder="City, Country"
+                />
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4">
+              <div class="relative">
+                <label
+                  class="font-mono text-[10px] text-blood tracking-widest uppercase absolute -top-4"
+                  >Date of Birth</label
+                >
+                <input
+                  type="date"
+                  required
+                  class="form-input text-white/80"
+                  style="color-scheme: dark"
+                />
+              </div>
+              <div class="relative">
+                <label
+                  class="font-mono text-[10px] text-blood tracking-widest uppercase absolute -top-4"
+                  >Exact Time</label
+                >
+                <input
+                  type="time"
+                  required
+                  class="form-input text-white/80"
+                  style="color-scheme: dark"
+                />
+              </div>
+            </div>
+
+            <div class="pt-8">
+              <button
+                type="submit"
+                class="btn-magnetic w-full border border-blood text-blood font-syne font-bold uppercase tracking-widest py-6 text-xl transition-colors z-10 relative"
+              >
+                Generate My Ruin
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- Pricing / Tiers -->
+    <section
+      class="py-32 px-6 md:px-12 bg-[#080808] border-t border-white/5"
+      id="pricing"
+    >
+      <div class="max-w-6xl mx-auto">
+        <div class="text-center mb-20">
+          <h2 class="text-4xl md:text-6xl font-bold uppercase tracking-tighter">
+            Choose Your Damage
+          </h2>
+          <p class="font-mono text-ash mt-4">
+            Calculations complete instantly. No refunds for hurt feelings.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <!-- Tier 1: Free -->
+          <div
+            class="border border-white/10 p-10 flex flex-col justify-between hover:border-white/30 transition-colors bg-void group"
+          >
+            <div>
+              <div class="font-mono text-blood text-sm mb-4">TIER 01</div>
+              <h3
+                class="text-4xl font-bold uppercase tracking-tighter mb-2 group-hover:text-outline-hover"
+              >
+                The Flinch
+              </h3>
+              <div class="text-2xl font-mono mb-8">FREE</div>
+
+              <ul class="space-y-4 font-mono text-sm text-ash">
+                <li class="flex items-start gap-3">
+                  <span class="text-blood">✕</span> Your Big 3 (Sun, Moon,
+                  Rising) brutally analyzed.
+                </li>
+                <li class="flex items-start gap-3">
+                  <span class="text-blood">✕</span> One glaring personality flaw
+                  exposed.
+                </li>
+                <li class="flex items-start gap-3">
+                  <span class="text-blood">✕</span> Just enough to sting, but
+                  not enough to heal.
+                </li>
+              </ul>
+            </div>
+            <button
+              class="mt-12 w-full py-4 border border-white/20 font-syne uppercase tracking-wider hover:bg-white hover:text-black transition-colors"
+            >
+              Preview Free
+            </button>
+          </div>
+
+          <!-- Tier 2: Paid -->
+          <div
+            class="border border-blood p-10 flex flex-col justify-between bg-blood/5 relative overflow-hidden group"
+          >
+            <div
+              class="absolute top-0 right-0 w-32 h-32 bg-blood/20 blur-[50px] rounded-full"
+            ></div>
+            <div class="relative z-10">
+              <div class="font-mono text-blood text-sm mb-4">TIER 02</div>
+              <h3
+                class="text-4xl font-bold uppercase tracking-tighter mb-2 text-white"
+              >
+                The Reckoning
+              </h3>
+              <div class="text-2xl font-mono mb-8">$5.00</div>
+
+              <ul class="space-y-4 font-mono text-sm text-white/80">
+                <li class="flex items-start gap-3">
+                  <span class="text-blood">✓</span> Full 12-House Planetary
+                  Teardown.
+                </li>
+                <li class="flex items-start gap-3">
+                  <span class="text-blood">✓</span> Aspects & Transits: Why you
+                  repeat the same toxic cycles.
+                </li>
+                <li class="flex items-start gap-3">
+                  <span class="text-blood">✓</span> The "Intervention" chapter:
+                  What you need to stop doing immediately.
+                </li>
+                <li class="flex items-start gap-3">
+                  <span class="text-blood">✓</span> Shareable, devastating
+                  summary card.
+                </li>
+              </ul>
+            </div>
+            <button
+              class="mt-12 w-full py-4 bg-blood text-black font-syne font-bold uppercase tracking-wider hover:bg-white transition-colors relative z-10"
+            >
+              Pay $5 To Be Destroyed
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-12 border-t border-white/10 text-center px-6">
+      <h4
+        class="font-syne text-2xl font-bold uppercase tracking-tighter text-white/50 mb-4"
+      >
+        Astro Roasts
+      </h4>
+      <p class="font-mono text-xs text-ash max-w-md mx-auto">
+        Powered by Swiss Ephemeris data. Entertainment purposes only. If this
+        reading causes an existential crisis, please consult a therapist, not
+        the stars.
+      </p>
+      <div class="mt-8 font-mono text-[10px] text-white/20">
+        © 2023 ASTRO ROASTS // VOID PROJECTIONS
+      </div>
+    </footer>
+
+    <!-- Animations & Logic -->
+    <style>
+      @keyframes scan {
+        0% {
+          transform: translateY(-100%);
+        }
+        100% {
+          transform: translateY(500px);
+        }
+      }
+    </style>
+
+    <script>
+      // Register GSAP ScrollTrigger
+      gsap.registerPlugin(ScrollTrigger);
+
+      // Custom Cursor / Orb Logic
+      const orb = document.getElementById("glowOrb");
+
+      window.addEventListener("mousemove", (e) => {
+        gsap.to(orb, {
+          x: e.clientX,
+          y: e.clientY,
+          xPercent: -50,
+          yPercent: -50,
+          duration: 0.8,
+          ease: "power3.out",
+        });
+      });
+
+      // Interactive hover for form to increase orb size
+      const inputs = document.querySelectorAll("input, button");
+      inputs.forEach((el) => {
+        el.addEventListener("mouseenter", () => {
+          orb.style.width = "800px";
+          orb.style.height = "800px";
+          orb.style.background =
+            "radial-gradient(circle, rgba(255,51,0,0.25) 0%, rgba(255,51,0,0) 70%)";
+        });
+        el.addEventListener("mouseleave", () => {
+          orb.style.width = "600px";
+          orb.style.height = "600px";
+          orb.style.background =
+            "radial-gradient(circle, rgba(255,51,0,0.15) 0%, rgba(255,51,0,0) 70%)";
+        });
+      });
+
+      // Hero Animations
+      const tl = gsap.timeline();
+
+      tl.from(".hero-text", {
+        y: 100,
+        opacity: 0,
+        duration: 1,
+        stagger: 0.15,
+        ease: "power4.out",
+        delay: 0.2,
+      }).from(
+        ".fade-up",
+        {
+          y: 20,
+          opacity: 0,
+          duration: 0.8,
+          stagger: 0.1,
+          ease: "power2.out",
+        },
+        "-=0.5",
+      );
+
+      // Marquee Animation
+      gsap.to(".marquee-container", {
+        xPercent: -50,
+        ease: "none",
+        duration: 10,
+        repeat: -1,
+      });
+
+      // Compare Section Sticky & Swap Animation
+      const compareTl = gsap.timeline({
+        scrollTrigger: {
+          trigger: "#compare-section",
+          start: "top top",
+          end: "bottom bottom",
+          scrub: 1,
+        },
+      });
+
+      const cards = gsap.utils.toArray(".compare-card");
+
+      // Hide second card initially
+      gsap.set(cards[1], { opacity: 0, scale: 0.95 });
+
+      compareTl
+        .to(cards[0], {
+          opacity: 0,
+          scale: 1.05,
+          duration: 1,
+        })
+        .to(
+          cards[1],
+          {
+            opacity: 1,
+            scale: 1,
+            duration: 1,
+          },
+          "<",
+        ); // animate at same time
+
+      // Form Section Parallax Reveal
+      gsap.from("#roast", {
+        scrollTrigger: {
+          trigger: "#roast",
+          start: "top 80%",
+        },
+        y: 50,
+        opacity: 0,
+        duration: 1,
+        ease: "power3.out",
+      });
+
+      // Pricing Cards Stagger
+      gsap.from("#pricing .border", {
+        scrollTrigger: {
+          trigger: "#pricing",
+          start: "top 70%",
+        },
+        y: 40,
+        opacity: 0,
+        duration: 0.8,
+        stagger: 0.2,
+        ease: "power2.out",
+      });
+    </script>
+  </body>
+</html>

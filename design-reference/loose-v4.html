@@ -1,0 +1,855 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth bg-[#050505] text-[#f4f4f5] antialiased">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Astro Roasts | The Universe is Tired of Your Sh*t</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Space+Grotesk:wght@300;400;500;700&family=Syne:wght@400;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              void: "#050505",
+              truth: "#D6FF00", // Acid green
+              bruise: "#5E17EB", // Deep purple
+              blood: "#FF003C", // Neon red
+            },
+            fontFamily: {
+              syne: ["Syne", "sans-serif"],
+              space: ["Space Grotesk", "sans-serif"],
+              inter: ["Inter", "sans-serif"],
+            },
+            animation: {
+              "spin-slow": "spin 12s linear infinite",
+              marquee: "marquee 25s linear infinite",
+              "pulse-glow":
+                "pulseGlow 4s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+            },
+            keyframes: {
+              marquee: {
+                "0%": { transform: "translateX(0%)" },
+                "100%": { transform: "translateX(-50%)" },
+              },
+              pulseGlow: {
+                "0%, 100%": { opacity: "0.4", transform: "scale(1)" },
+                "50%": { opacity: "0.7", transform: "scale(1.05)" },
+              },
+            },
+          },
+        },
+      };
+    </script>
+
+    <!-- Custom CSS -->
+    <style>
+      /* Hide scrollbar for aesthetics, Lenis handles smooth scrolling */
+      ::-webkit-scrollbar {
+        display: none;
+      }
+      * {
+        scrollbar-width: none;
+        cursor: none !important;
+      }
+
+      ::selection {
+        background-color: #d6ff00;
+        color: #050505;
+      }
+
+      /* Complex CSS Animations & Effects */
+      .noise-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        pointer-events: none;
+        z-index: 50;
+        opacity: 0.04;
+        mix-blend-mode: difference;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+      }
+
+      .blob-shape {
+        animation: blobMorph 15s infinite alternate ease-in-out;
+        filter: blur(80px);
+      }
+
+      @keyframes blobMorph {
+        0% {
+          border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%;
+          transform: rotate(0deg) scale(1);
+        }
+        34% {
+          border-radius: 70% 30% 50% 50% / 30% 30% 70% 70%;
+          transform: rotate(120deg) scale(1.1);
+        }
+        67% {
+          border-radius: 100% 60% 60% 100% / 100% 100% 60% 60%;
+          transform: rotate(240deg) scale(0.9);
+        }
+        100% {
+          border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%;
+          transform: rotate(360deg) scale(1);
+        }
+      }
+
+      /* Custom Cursor */
+      #custom-cursor {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 12px;
+        height: 12px;
+        background-color: #d6ff00;
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 9999;
+        transform: translate(-50%, -50%);
+        mix-blend-mode: difference;
+        transition:
+          width 0.3s,
+          height 0.3s,
+          background-color 0.3s;
+        will-change: transform;
+      }
+
+      .cursor-hover {
+        width: 60px !important;
+        height: 60px !important;
+        background-color: #fff !important;
+      }
+
+      /* Input autofill override */
+      input:-webkit-autofill {
+        -webkit-box-shadow: 0 0 0 30px #050505 inset !important;
+        -webkit-text-fill-color: #f4f4f5 !important;
+        transition: background-color 5000s ease-in-out 0s;
+      }
+
+      input[type="date"]::-webkit-calendar-picker-indicator,
+      input[type="time"]::-webkit-calendar-picker-indicator {
+        filter: invert(1);
+        opacity: 0.5;
+        cursor: none;
+      }
+
+      .text-outline {
+        color: transparent;
+        -webkit-text-stroke: 1px rgba(255, 255, 255, 0.2);
+      }
+
+      /* Math Grid Background */
+      .math-grid {
+        background-image:
+          linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+        background-size: 40px 40px;
+        mask-image: radial-gradient(
+          ellipse 80% 80% at 50% 50%,
+          #000 20%,
+          transparent 100%
+        );
+        -webkit-mask-image: radial-gradient(
+          ellipse 80% 80% at 50% 50%,
+          #000 20%,
+          transparent 100%
+        );
+      }
+    </style>
+  </head>
+  <body
+    class="overflow-x-hidden selection:bg-truth selection:text-void font-inter"
+  >
+    <!-- Noise Texture Overlay -->
+    <div class="noise-overlay"></div>
+
+    <!-- Custom Cursor -->
+    <div id="custom-cursor"></div>
+
+    <!-- Navigation -->
+    <nav
+      class="fixed top-0 w-full p-6 md:px-12 z-40 flex justify-between items-center mix-blend-difference"
+    >
+      <div
+        class="font-syne font-bold text-xl tracking-tight text-white flex items-center gap-2"
+      >
+        <svg
+          class="w-5 h-5 animate-spin-slow"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <path d="M12 2v20M17 5l-10 14M22 12H2M19 17L5 7" />
+        </svg>
+        ASTRO ROASTS
+      </div>
+      <a
+        href="#form-section"
+        class="interactive hover:text-truth transition-colors font-space text-sm uppercase tracking-widest border border-white/20 rounded-full px-6 py-2 hover:border-truth"
+      >
+        Get Checked
+      </a>
+    </nav>
+
+    <!-- Hero Section -->
+    <section
+      class="relative w-full h-screen flex flex-col items-center justify-center overflow-hidden"
+    >
+      <!-- Animated Background Orbs -->
+      <div
+        class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60vw] h-[60vw] max-w-[800px] max-h-[800px] blob-shape bg-gradient-to-tr from-bruise via-void to-blood opacity-60 mix-blend-screen pointer-events-none parallax-bg"
+      ></div>
+      <div
+        class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[40vw] h-[40vw] max-w-[500px] max-h-[500px] blob-shape bg-gradient-to-bl from-truth to-transparent opacity-30 mix-blend-screen pointer-events-none parallax-bg-fast"
+        style="animation-direction: reverse; animation-duration: 20s"
+      ></div>
+
+      <!-- Hero Content -->
+      <div
+        class="relative z-10 flex flex-col items-center text-center px-4 w-full"
+      >
+        <div class="overflow-hidden mb-4">
+          <p
+            class="hero-reveal font-space text-truth uppercase tracking-[0.3em] text-xs md:text-sm font-medium"
+          >
+            The Universe Kept a Journal
+          </p>
+        </div>
+
+        <h1
+          class="font-syne font-extrabold text-[clamp(4rem,15vw,12rem)] leading-[0.85] tracking-tighter mix-blend-difference text-white w-full uppercase"
+        >
+          <span class="block hero-title overflow-hidden"
+            ><span class="block transform translate-y-full">ASTRO</span></span
+          >
+          <span class="block hero-title overflow-hidden"
+            ><span class="block transform translate-y-full text-outline"
+              >ROASTS.</span
+            ></span
+          >
+        </h1>
+
+        <div class="overflow-hidden mt-8 max-w-md">
+          <p
+            class="hero-reveal font-inter text-white/60 text-lg md:text-xl leading-relaxed"
+          >
+            Astrology for people who are tired of being told they're "creative
+            and intuitive." Time for the brutal truth.
+          </p>
+        </div>
+      </div>
+
+      <!-- Scroll Indicator -->
+      <div
+        class="absolute bottom-12 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3 opacity-50 hero-reveal"
+      >
+        <span
+          class="font-space text-xs uppercase tracking-widest rotate-90 mb-4"
+          >Scroll</span
+        >
+        <div
+          class="w-[1px] h-12 bg-gradient-to-b from-white to-transparent"
+        ></div>
+      </div>
+    </section>
+
+    <!-- Infinite Marquee -->
+    <div
+      class="w-full bg-truth text-void py-3 md:py-4 overflow-hidden flex whitespace-nowrap border-y border-truth relative z-20 shadow-[0_0_30px_rgba(214,255,0,0.2)]"
+    >
+      <div
+        class="animate-marquee font-syne font-bold text-xl md:text-3xl uppercase tracking-wide flex items-center gap-4"
+      >
+        <span>YOUR MOTHER WAS RIGHT</span> <span class="text-sm">✦</span>
+        <span>YOU ARE THE RED FLAG</span> <span class="text-sm">✦</span>
+        <span>NO CRYSTALS</span> <span class="text-sm">✦</span>
+        <span>NO BS</span> <span class="text-sm">✦</span>
+        <span>STOP BLAMING MERCURY</span> <span class="text-sm">✦</span>
+        <span>YOUR MOTHER WAS RIGHT</span> <span class="text-sm">✦</span>
+        <span>YOU ARE THE RED FLAG</span> <span class="text-sm">✦</span>
+        <span>NO CRYSTALS</span> <span class="text-sm">✦</span>
+        <span>NO BS</span> <span class="text-sm">✦</span>
+        <span>STOP BLAMING MERCURY</span> <span class="text-sm">✦</span>
+        <span>YOUR MOTHER WAS RIGHT</span> <span class="text-sm">✦</span>
+        <span>YOU ARE THE RED FLAG</span> <span class="text-sm">✦</span>
+        <span>NO CRYSTALS</span> <span class="text-sm">✦</span>
+        <span>NO BS</span> <span class="text-sm">✦</span>
+        <span>STOP BLAMING MERCURY</span> <span class="text-sm">✦</span>
+      </div>
+    </div>
+
+    <!-- Manifesto / The Roast Section -->
+    <section
+      class="py-32 md:py-48 px-6 md:px-12 lg:px-24 max-w-[1400px] mx-auto relative"
+    >
+      <div class="w-full max-w-6xl">
+        <p
+          class="font-space text-truth uppercase tracking-widest text-sm mb-12 flex items-center gap-4"
+        >
+          <span class="w-12 h-[1px] bg-truth inline-block"></span> The Manifesto
+        </p>
+        <h2
+          class="split-text font-syne text-3xl md:text-5xl lg:text-7xl leading-[1.1] font-semibold text-white"
+        >
+          You've blamed your exes. You've blamed your boss. You've blamed
+          Mercury retrograde. But the Swiss Ephemeris doesn't lie. Enter your
+          exact birth time, and let's look at the mathematical proof that you
+          use your intuition to justify bad decisions.
+        </h2>
+      </div>
+    </section>
+
+    <!-- Comparison Section -->
+    <section
+      class="py-24 px-6 md:px-12 lg:px-24 bg-white/[0.02] border-y border-white/5 relative overflow-hidden"
+    >
+      <div class="absolute inset-0 math-grid pointer-events-none"></div>
+
+      <div class="max-w-[1400px] mx-auto relative z-10">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-24">
+          <!-- Standard Astrology -->
+          <div
+            class="flex flex-col justify-center space-y-6 opacity-40 grayscale transition-all duration-500 hover:opacity-100 hover:grayscale-0"
+          >
+            <div
+              class="font-space text-white/50 uppercase tracking-widest text-xs border border-white/20 rounded-full px-4 py-1 w-max"
+            >
+              Other Apps
+            </div>
+            <div class="text-5xl md:text-6xl">✨</div>
+            <h3 class="font-syne text-3xl md:text-4xl font-bold">
+              "You are complex and deeply misunderstood."
+            </h3>
+            <p
+              class="font-inter text-lg text-white/60 leading-relaxed border-l border-white/20 pl-6"
+            >
+              Vague compliments designed to make you feel validated so you keep
+              paying for their premium crystals subscription.
+            </p>
+          </div>
+
+          <!-- Astro Roasts -->
+          <div class="flex flex-col justify-center space-y-6 relative group">
+            <div
+              class="absolute -left-8 top-0 w-[2px] h-full bg-gradient-to-b from-truth to-transparent scale-y-0 group-hover:scale-y-100 transition-transform duration-500 origin-top"
+            ></div>
+            <div
+              class="font-space text-void bg-truth uppercase tracking-widest text-xs rounded-full px-4 py-1 w-max font-bold shadow-[0_0_15px_rgba(214,255,0,0.4)]"
+            >
+              Astro Roasts
+            </div>
+            <div class="text-5xl md:text-6xl">🔪</div>
+            <h3
+              class="font-syne text-3xl md:text-4xl font-bold text-white group-hover:text-truth transition-colors"
+            >
+              "You fake emotional depth to avoid real commitment."
+            </h3>
+            <p
+              class="font-inter text-lg text-white/80 leading-relaxed border-l border-truth/40 pl-6"
+            >
+              Real natal chart data powered by Swiss Ephemeris math, translated
+              into the hyper-specific truths you pay your therapist to ignore.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Social Proof / Reviews -->
+    <section class="py-32 px-6 overflow-hidden">
+      <div class="flex flex-wrap justify-center gap-6 max-w-[1400px] mx-auto">
+        <!-- Review 1 -->
+        <div
+          class="interactive w-full md:w-[400px] p-8 rounded-3xl bg-void border border-white/10 hover:border-truth/50 transition-colors transform hover:-translate-y-2 duration-300"
+        >
+          <div class="flex gap-1 mb-4 text-truth text-xl">★★★★★</div>
+          <p class="font-inter text-white/80 text-lg mb-6">
+            "I paid $5 to be told my moon sign makes me emotionally
+            manipulative. 10/10, sent it to my ex immediately."
+          </p>
+          <p class="font-space text-sm text-white/40">— Sarah, Gemini Sun</p>
+        </div>
+        <!-- Review 2 -->
+        <div
+          class="interactive w-full md:w-[400px] p-8 rounded-3xl bg-void border border-white/10 hover:border-truth/50 transition-colors transform hover:-translate-y-2 duration-300 md:translate-y-8"
+        >
+          <div class="flex gap-1 mb-4 text-truth text-xl">★★★★★</div>
+          <p class="font-inter text-white/80 text-lg mb-6">
+            "This app looked at my birth time and told me to apologize to my
+            mother. I hate it here. Highly recommend."
+          </p>
+          <p class="font-space text-sm text-white/40">
+            — Marcus, Scorpio Rising
+          </p>
+        </div>
+        <!-- Review 3 -->
+        <div
+          class="interactive w-full md:w-[400px] p-8 rounded-3xl bg-void border border-white/10 hover:border-truth/50 transition-colors transform hover:-translate-y-2 duration-300"
+        >
+          <div class="flex gap-1 mb-4 text-truth text-xl">★★★★★</div>
+          <p class="font-inter text-white/80 text-lg mb-6">
+            "Finally, an astrology reading that doesn't treat me like a delicate
+            flower. It dragged me for 15 pages."
+          </p>
+          <p class="font-space text-sm text-white/40">— Elena, Aries Venus</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- The Form Section -->
+    <section
+      id="form-section"
+      class="py-32 px-6 md:px-12 relative min-h-screen flex items-center"
+    >
+      <!-- Background elements -->
+      <div
+        class="absolute inset-0 bg-gradient-to-b from-transparent via-bruise/5 to-void pointer-events-none"
+      ></div>
+      <div
+        class="absolute top-0 right-0 w-[500px] h-[500px] bg-truth/10 blur-[120px] rounded-full pointer-events-none"
+      ></div>
+
+      <div class="max-w-5xl mx-auto w-full relative z-10">
+        <div class="text-center mb-16">
+          <h2 class="font-syne text-5xl md:text-7xl font-extrabold mb-6">
+            PULL YOUR CHART.
+          </h2>
+          <p
+            class="font-space text-white/50 text-lg md:text-xl max-w-2xl mx-auto"
+          >
+            NASA-level math. 100% precision. 0% empathy.
+          </p>
+        </div>
+
+        <form
+          id="roastForm"
+          class="bg-black/40 backdrop-blur-xl border border-white/10 rounded-[2rem] p-8 md:p-16 shadow-2xl relative overflow-hidden"
+        >
+          <!-- Inner glow -->
+          <div
+            class="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-[1px] bg-gradient-to-r from-transparent via-truth to-transparent opacity-50"
+          ></div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-12 mb-16">
+            <!-- Name Input -->
+            <div class="relative group interactive">
+              <input
+                type="text"
+                id="name"
+                required
+                class="peer w-full bg-transparent border-b border-white/20 py-4 text-2xl font-syne text-white placeholder-transparent focus:outline-none focus:border-truth transition-colors rounded-none"
+                placeholder="Name"
+              />
+              <label
+                for="name"
+                class="absolute left-0 top-4 text-white/40 text-lg font-space transition-all duration-300 peer-placeholder-shown:text-xl peer-placeholder-shown:top-4 peer-focus:-top-6 peer-focus:text-sm peer-focus:text-truth peer-valid:-top-6 peer-valid:text-sm peer-valid:text-white/60 pointer-events-none"
+                >First Name (the one you lie with)</label
+              >
+            </div>
+
+            <!-- Date Input -->
+            <div class="relative group interactive">
+              <input
+                type="date"
+                id="date"
+                required
+                class="peer w-full bg-transparent border-b border-white/20 py-4 text-2xl font-syne text-white focus:outline-none focus:border-truth transition-colors rounded-none"
+                placeholder="Date"
+              />
+              <label
+                for="date"
+                class="absolute left-0 -top-6 text-truth text-sm font-space transition-all duration-300 pointer-events-none"
+                >Date of Birth (when it started)</label
+              >
+            </div>
+
+            <!-- Time Input -->
+            <div class="relative group interactive">
+              <input
+                type="time"
+                id="time"
+                required
+                class="peer w-full bg-transparent border-b border-white/20 py-4 text-2xl font-syne text-white focus:outline-none focus:border-truth transition-colors rounded-none"
+                placeholder="Time"
+              />
+              <label
+                for="time"
+                class="absolute left-0 -top-6 text-truth text-sm font-space transition-all duration-300 pointer-events-none"
+                >Exact Time (text your mom)</label
+              >
+            </div>
+
+            <!-- Location Input -->
+            <div class="relative group interactive">
+              <input
+                type="text"
+                id="location"
+                required
+                class="peer w-full bg-transparent border-b border-white/20 py-4 text-2xl font-syne text-white placeholder-transparent focus:outline-none focus:border-truth transition-colors rounded-none"
+                placeholder="City"
+              />
+              <label
+                for="location"
+                class="absolute left-0 top-4 text-white/40 text-lg font-space transition-all duration-300 peer-placeholder-shown:text-xl peer-placeholder-shown:top-4 peer-focus:-top-6 peer-focus:text-sm peer-focus:text-truth peer-valid:-top-6 peer-valid:text-sm peer-valid:text-white/60 pointer-events-none"
+                >City of Birth (ground zero)</label
+              >
+            </div>
+          </div>
+
+          <!-- Pricing Tier Selection -->
+          <div class="mb-16">
+            <p
+              class="font-space text-white/40 text-sm uppercase tracking-widest text-center mb-8"
+            >
+              Choose Your Punishment
+            </p>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <!-- Free Tier -->
+              <label class="relative cursor-pointer group interactive">
+                <input
+                  type="radio"
+                  name="tier"
+                  value="free"
+                  class="peer sr-only"
+                  checked
+                />
+                <div
+                  class="h-full p-8 border border-white/10 rounded-3xl bg-white/[0.01] peer-checked:border-white/50 peer-checked:bg-white/[0.05] transition-all duration-300 hover:bg-white/[0.03]"
+                >
+                  <div class="flex justify-between items-start mb-4">
+                    <h3 class="font-syne text-2xl font-bold text-white">
+                      The Taste
+                    </h3>
+                    <span
+                      class="font-space text-xl text-white/50 bg-white/10 px-3 py-1 rounded-full"
+                      >$0</span
+                    >
+                  </div>
+                  <p class="font-inter text-white/60 text-sm leading-relaxed">
+                    Your Big Three (Sun, Moon, Rising). Just enough to ruin your
+                    afternoon and make you question your choices.
+                  </p>
+                </div>
+              </label>
+
+              <!-- Paid Tier -->
+              <label class="relative cursor-pointer group interactive">
+                <input
+                  type="radio"
+                  name="tier"
+                  value="paid"
+                  class="peer sr-only"
+                />
+                <div
+                  class="h-full p-8 border border-truth/30 rounded-3xl bg-truth/[0.02] peer-checked:border-truth peer-checked:bg-truth/[0.08] peer-checked:shadow-[0_0_30px_rgba(214,255,0,0.1)] transition-all duration-300 hover:bg-truth/[0.05] relative overflow-hidden"
+                >
+                  <!-- Badge -->
+                  <div
+                    class="absolute top-6 right-6 font-space text-[10px] uppercase tracking-widest bg-truth text-void px-3 py-1 rounded-full font-bold"
+                  >
+                    Recommended
+                  </div>
+
+                  <div class="flex justify-between items-start mb-4 mt-2">
+                    <h3 class="font-syne text-2xl font-bold text-truth">
+                      The Full Roast
+                    </h3>
+                    <span class="font-space text-xl text-truth font-bold"
+                      >$5</span
+                    >
+                  </div>
+                  <p
+                    class="font-inter text-white/80 text-sm leading-relaxed mb-4"
+                  >
+                    Every planet, every house, every toxic pattern. 15+ pages of
+                    hyper-specific dragging mathematically proven by your chart.
+                  </p>
+
+                  <ul class="font-space text-xs text-truth/80 space-y-2">
+                    <li class="flex items-center gap-2">
+                      <svg
+                        class="w-3 h-3"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M5 13l4 4L19 7"
+                        ></path>
+                      </svg>
+                      Full Natal Chart Breakdown
+                    </li>
+                    <li class="flex items-center gap-2">
+                      <svg
+                        class="w-3 h-3"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M5 13l4 4L19 7"
+                        ></path>
+                      </svg>
+                      Relationship Self-Sabotage Analysis
+                    </li>
+                    <li class="flex items-center gap-2">
+                      <svg
+                        class="w-3 h-3"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M5 13l4 4L19 7"
+                        ></path>
+                      </svg>
+                      Career Delusions Exposed
+                    </li>
+                  </ul>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <!-- Submit Button -->
+          <div class="text-center">
+            <button
+              type="submit"
+              id="submitBtn"
+              class="interactive relative inline-flex items-center justify-center px-12 py-6 overflow-hidden font-syne font-bold text-void bg-truth rounded-full group w-full md:w-auto text-xl md:text-2xl transition-transform hover:scale-[1.02] active:scale-[0.98]"
+            >
+              <span
+                class="absolute w-0 h-0 transition-all duration-500 ease-out bg-white rounded-full group-hover:w-[150%] group-hover:h-56"
+              ></span>
+              <span id="btnText" class="relative flex items-center gap-3">
+                GENERATE MY TRUTH
+                <svg
+                  class="w-6 h-6 transform group-hover:translate-x-1 transition-transform"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M14 5l7 7m0 0l-7 7m7-7H3"
+                  ></path>
+                </svg>
+              </span>
+            </button>
+            <p class="font-space text-white/30 text-xs mt-6 tracking-wide">
+              *No refunds if you cry. By clicking this, you admit the universe
+              is right.
+            </p>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer
+      class="py-12 border-t border-white/10 text-center relative z-10 bg-void"
+    >
+      <div class="font-syne font-bold text-2xl text-white mb-4">
+        ASTRO ROASTS.
+      </div>
+      <p class="font-space text-white/40 text-sm">
+        © 2024 The Universe. All your flaws reserved.
+      </p>
+    </footer>
+
+    <!-- Scripts -->
+    <!-- GSAP & Lenis for Awwwards-level smooth scrolling and animations -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <script src="https://unpkg.com/@studio-freight/lenis@1.0.34/dist/lenis.min.js"></script>
+
+    <script>
+      // Initialize Lenis Smooth Scroll
+      const lenis = new Lenis({
+        duration: 1.2,
+        easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+        direction: "vertical",
+        gestureDirection: "vertical",
+        smooth: true,
+        mouseMultiplier: 1,
+        smoothTouch: false,
+        touchMultiplier: 2,
+        infinite: false,
+      });
+
+      // Connect Lenis to GSAP ScrollTrigger
+      lenis.on("scroll", ScrollTrigger.update);
+      gsap.ticker.add((time) => {
+        lenis.raf(time * 1000);
+      });
+      gsap.ticker.lagSmoothing(0);
+
+      // Custom Cursor Logic
+      const cursor = document.getElementById("custom-cursor");
+      const interactiveElements = document.querySelectorAll(
+        ".interactive, a, button, input, label",
+      );
+
+      document.addEventListener("mousemove", (e) => {
+        gsap.to(cursor, {
+          x: e.clientX,
+          y: e.clientY,
+          duration: 0.1,
+          ease: "power2.out",
+        });
+      });
+
+      interactiveElements.forEach((el) => {
+        el.addEventListener("mouseenter", () => {
+          cursor.classList.add("cursor-hover");
+        });
+        el.addEventListener("mouseleave", () => {
+          cursor.classList.remove("cursor-hover");
+        });
+      });
+
+      // Hide cursor when leaving window
+      document.addEventListener("mouseleave", () => {
+        cursor.style.opacity = 0;
+      });
+      document.addEventListener("mouseenter", () => {
+        cursor.style.opacity = 1;
+      });
+
+      // Hero Entrance Animations
+      const tlHero = gsap.timeline();
+      tlHero
+        .from(".hero-title span block", {
+          y: "110%",
+          duration: 1.2,
+          stagger: 0.1,
+          ease: "power4.out",
+          delay: 0.2,
+        })
+        .from(
+          ".hero-reveal",
+          {
+            y: 30,
+            opacity: 0,
+            duration: 1,
+            stagger: 0.15,
+            ease: "power3.out",
+          },
+          "-=0.8",
+        );
+
+      // Split Text Animation for Manifesto
+      const splitTextEls = document.querySelectorAll(".split-text");
+      splitTextEls.forEach((el) => {
+        const text = el.innerText;
+        const words = text.split(" ");
+        el.innerHTML = "";
+        words.forEach((word) => {
+          const span = document.createElement("span");
+          span.innerText = word + " ";
+          span.className =
+            "inline-block opacity-10 translate-y-4 transition-all duration-300 will-change-[opacity,transform]";
+          el.appendChild(span);
+        });
+
+        gsap.to(el.querySelectorAll("span"), {
+          scrollTrigger: {
+            trigger: el,
+            start: "top 85%",
+            end: "bottom 45%",
+            scrub: 1.5,
+          },
+          opacity: 1,
+          y: 0,
+          stagger: 0.05,
+          ease: "none",
+          color: "#fff",
+        });
+      });
+
+      // Parallax effects on background elements
+      gsap.to(".parallax-bg", {
+        yPercent: 30,
+        ease: "none",
+        scrollTrigger: {
+          trigger: "body",
+          start: "top top",
+          end: "bottom bottom",
+          scrub: true,
+        },
+      });
+
+      gsap.to(".parallax-bg-fast", {
+        yPercent: -50,
+        ease: "none",
+        scrollTrigger: {
+          trigger: "body",
+          start: "top top",
+          end: "bottom bottom",
+          scrub: true,
+        },
+      });
+
+      // Form Submit Interaction Mock
+      document
+        .getElementById("roastForm")
+        .addEventListener("submit", function (e) {
+          e.preventDefault();
+          const btn = document.getElementById("submitBtn");
+          const btnText = document.getElementById("btnText");
+          const originalHTML = btnText.innerHTML;
+
+          // Loading state
+          btnText.innerHTML = `<span class="animate-pulse">CALCULATING TOXICITY...</span>`;
+          btn.classList.add("pointer-events-none");
+
+          // Simulate API call / Math calculation
+          setTimeout(() => {
+            // Change style to error/brutal theme temporarily
+            btn.classList.remove("bg-truth");
+            btn.classList.add("bg-blood", "text-white");
+            btnText.innerHTML = `FATAL FLAW DETECTED. REDIRECTING...`;
+
+            setTimeout(() => {
+              alert(
+                "The Swiss Ephemeris has spoken. You are the problem. \n\n(This is a concept demo. In production, this redirects to Stripe or the free chart result based on tier selection).",
+              );
+              // Reset
+              btnText.innerHTML = originalHTML;
+              btn.classList.remove(
+                "bg-blood",
+                "text-white",
+                "pointer-events-none",
+              );
+              btn.classList.add("bg-truth");
+            }, 1500);
+          }, 2000);
+        });
+    </script>
+  </body>
+</html>
