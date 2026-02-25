@@ -66,6 +66,9 @@ export default function CityAutocomplete({
 
   return (
     <div ref={wrapperRef} className="relative group interactive">
+      <label className="block text-[11px] uppercase tracking-[0.2em] text-ash/40 mb-4 font-mono">
+        City of Birth
+      </label>
       <input
         type="text"
         required
@@ -75,13 +78,10 @@ export default function CityAutocomplete({
         onFocus={() => {
           if (results.length > 0) setOpen(true);
         }}
-        className="w-full bg-transparent border-b border-ash/30 text-2xl md:text-3xl font-syne font-bold text-ash py-2 focus:border-blood focus:outline-none transition-colors peer placeholder-transparent"
-        placeholder="City, Country"
+        className="w-full bg-transparent border-b border-ash/20 text-2xl md:text-3xl font-syne font-bold text-ash py-3 focus:border-blood focus:outline-none transition-colors placeholder:text-ash/20"
+        placeholder="Start typing a city"
         autoComplete="off"
       />
-      <label className="absolute left-0 -top-6 text-xs uppercase tracking-widest text-ash/50 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:top-3 peer-focus:-top-6 peer-focus:text-xs peer-focus:text-blood">
-        City of Birth
-      </label>
 
       {open && results.length > 0 && (
         <ul className="absolute z-50 top-full left-0 w-full mt-2 border border-ash/20 bg-void max-h-60 overflow-y-auto">

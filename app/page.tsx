@@ -24,23 +24,23 @@ export default function Home() {
       {/* The Confessional Form */}
       <section
         id="confessional"
-        className="relative min-h-screen w-full py-24 px-4 md:px-8 bg-void border-t border-ash/10"
+        className="relative min-h-screen w-full py-32 px-4 md:px-12 lg:px-16 bg-void border-t border-ash/10"
       >
-        <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-8">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-32 items-start">
           {/* Left: Copy */}
-          <div className="lg:col-span-5 flex flex-col justify-start">
-            <h2 className="font-syne font-extrabold text-5xl md:text-7xl uppercase leading-none tracking-tighter mb-8">
+          <div className="flex flex-col justify-start lg:sticky lg:top-32">
+            <h2 className="font-syne font-extrabold text-5xl md:text-7xl lg:text-8xl uppercase leading-[0.9] tracking-tighter mb-10">
               Enter the
               <br />
               <span className="text-blood">Archive</span>
             </h2>
-            <div className="space-y-6 text-ash/70 text-sm md:text-base font-light leading-relaxed">
+            <div className="space-y-8 text-ash/60 text-sm md:text-base font-light leading-relaxed max-w-md">
               <p>
                 Input your exact birth details. Don&apos;t round to the nearest
                 hour to seem more interesting. The Swiss Ephemeris algorithm
                 calculates planets, houses, and aspects to the exact degree.
               </p>
-              <p className="pl-4 border-l border-blood text-ash">
+              <p className="pl-5 border-l-2 border-blood text-ash/90">
                 If you don&apos;t know your exact birth time, text your mother.
                 If you&apos;re not speaking to her, that&apos;s your first roast
                 right there.
@@ -49,7 +49,7 @@ export default function Home() {
           </div>
 
           {/* Right: Form */}
-          <div className="lg:col-span-7">
+          <div className="lg:pt-4">
             <BirthForm />
           </div>
         </div>

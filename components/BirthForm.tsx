@@ -43,51 +43,54 @@ export default function BirthForm() {
   };
 
   return (
-    <form className="space-y-12" onSubmit={handleSubmit}>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-12">
+    <form className="space-y-16" onSubmit={handleSubmit}>
+      <div className="space-y-14">
         {/* Name */}
         <div className="relative group interactive">
+          <label className="block text-[11px] uppercase tracking-[0.2em] text-ash/40 mb-4 font-mono">
+            First Name
+          </label>
           <input
             type="text"
             required
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full bg-transparent border-b border-ash/30 text-2xl md:text-3xl font-syne font-bold text-ash py-2 focus:border-blood focus:outline-none transition-colors peer placeholder-transparent"
-            placeholder="Name"
+            className="w-full bg-transparent border-b border-ash/20 text-2xl md:text-3xl font-syne font-bold text-ash py-3 focus:border-blood focus:outline-none transition-colors placeholder:text-ash/20"
+            placeholder="Enter your name"
           />
-          <label className="absolute left-0 -top-6 text-xs uppercase tracking-widest text-ash/50 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:top-3 peer-focus:-top-6 peer-focus:text-xs peer-focus:text-blood">
-            First Name
-          </label>
         </div>
 
-        {/* Date */}
-        <div className="relative group interactive">
-          <input
-            type="date"
-            required
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            className="w-full bg-transparent border-b border-ash/30 text-2xl md:text-3xl font-syne font-bold text-ash py-2 focus:border-blood focus:outline-none transition-colors peer"
-            style={{ colorScheme: "dark" }}
-          />
-          <label className="absolute left-0 -top-6 text-xs uppercase tracking-widest text-ash/50 peer-focus:text-blood transition-colors">
-            Date of Birth
-          </label>
-        </div>
+        {/* Date + Time row */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-14">
+          {/* Date */}
+          <div className="relative group interactive">
+            <label className="block text-[11px] uppercase tracking-[0.2em] text-ash/40 mb-4 font-mono">
+              Date of Birth
+            </label>
+            <input
+              type="date"
+              required
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              className="w-full bg-transparent border-b border-ash/20 text-2xl md:text-3xl font-syne font-bold text-ash py-3 focus:border-blood focus:outline-none transition-colors"
+              style={{ colorScheme: "dark" }}
+            />
+          </div>
 
-        {/* Time */}
-        <div className="relative group interactive">
-          <input
-            type="time"
-            required
-            value={time}
-            onChange={(e) => setTime(e.target.value)}
-            className="w-full bg-transparent border-b border-ash/30 text-2xl md:text-3xl font-syne font-bold text-ash py-2 focus:border-blood focus:outline-none transition-colors peer"
-            style={{ colorScheme: "dark" }}
-          />
-          <label className="absolute left-0 -top-6 text-xs uppercase tracking-widest text-ash/50 peer-focus:text-blood transition-colors">
-            Exact Time (Don&apos;t lie)
-          </label>
+          {/* Time */}
+          <div className="relative group interactive">
+            <label className="block text-[11px] uppercase tracking-[0.2em] text-ash/40 mb-4 font-mono">
+              Exact Time (Don&apos;t lie)
+            </label>
+            <input
+              type="time"
+              required
+              value={time}
+              onChange={(e) => setTime(e.target.value)}
+              className="w-full bg-transparent border-b border-ash/20 text-2xl md:text-3xl font-syne font-bold text-ash py-3 focus:border-blood focus:outline-none transition-colors"
+              style={{ colorScheme: "dark" }}
+            />
+          </div>
         </div>
 
         {/* City */}
@@ -97,7 +100,7 @@ export default function BirthForm() {
       {error && <p className="text-blood text-sm font-mono">{error}</p>}
 
       {/* CTA */}
-      <div className="pt-8">
+      <div className="pt-4">
         <button
           type="submit"
           disabled={loading}
