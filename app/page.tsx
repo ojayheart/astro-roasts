@@ -26,10 +26,10 @@ export default function Home() {
         id="confessional"
         className="relative min-h-screen w-full py-32 px-4 md:px-12 lg:px-16 bg-void border-t border-ash/10"
       >
-        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-32 items-start">
+        <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-24 items-start">
           {/* Left: Copy */}
           <div className="flex flex-col justify-start lg:sticky lg:top-32">
-            <h2 className="font-syne font-extrabold text-5xl md:text-7xl lg:text-8xl uppercase leading-[0.9] tracking-tighter mb-10">
+            <h2 className="font-syne font-extrabold text-4xl md:text-5xl lg:text-6xl uppercase leading-[0.9] tracking-tighter mb-8">
               Enter the
               <br />
               <span className="text-blood">Archive</span>

@@ -43,11 +43,11 @@ export default function BirthForm() {
   };
 
   return (
-    <form className="space-y-16" onSubmit={handleSubmit}>
-      <div className="space-y-14">
+    <form className="space-y-10" onSubmit={handleSubmit}>
+      <div className="space-y-10">
         {/* Name */}
         <div className="relative group interactive">
-          <label className="block text-[11px] uppercase tracking-[0.2em] text-ash/40 mb-4 font-mono">
+          <label className="block text-xs uppercase tracking-[0.2em] text-ash/50 mb-3 font-mono">
             First Name
           </label>
           <input
@@ -55,7 +55,7 @@ export default function BirthForm() {
             required
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full bg-transparent border-b border-ash/20 text-2xl md:text-3xl font-syne font-bold text-ash py-3 focus:border-blood focus:outline-none transition-colors placeholder:text-ash/20"
+            className="w-full bg-transparent border-b border-ash/20 text-lg md:text-xl font-syne font-bold text-ash py-3 focus:border-blood focus:outline-none transition-colors placeholder:text-ash/20"
             placeholder="Enter your name"
           />
         </div>
@@ -64,7 +64,7 @@ export default function BirthForm() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-14">
           {/* Date */}
           <div className="relative group interactive">
-            <label className="block text-[11px] uppercase tracking-[0.2em] text-ash/40 mb-4 font-mono">
+            <label className="block text-xs uppercase tracking-[0.2em] text-ash/50 mb-3 font-mono">
               Date of Birth
             </label>
             <input
@@ -72,14 +72,14 @@ export default function BirthForm() {
               required
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="w-full bg-transparent border-b border-ash/20 text-2xl md:text-3xl font-syne font-bold text-ash py-3 focus:border-blood focus:outline-none transition-colors"
+              className="w-full bg-transparent border-b border-ash/20 text-lg md:text-xl font-syne font-bold text-ash py-3 focus:border-blood focus:outline-none transition-colors"
               style={{ colorScheme: "dark" }}
             />
           </div>
 
           {/* Time */}
           <div className="relative group interactive">
-            <label className="block text-[11px] uppercase tracking-[0.2em] text-ash/40 mb-4 font-mono">
+            <label className="block text-xs uppercase tracking-[0.2em] text-ash/50 mb-3 font-mono">
               Exact Time (Don&apos;t lie)
             </label>
             <input
@@ -87,7 +87,7 @@ export default function BirthForm() {
               required
               value={time}
               onChange={(e) => setTime(e.target.value)}
-              className="w-full bg-transparent border-b border-ash/20 text-2xl md:text-3xl font-syne font-bold text-ash py-3 focus:border-blood focus:outline-none transition-colors"
+              className="w-full bg-transparent border-b border-ash/20 text-lg md:text-xl font-syne font-bold text-ash py-3 focus:border-blood focus:outline-none transition-colors"
               style={{ colorScheme: "dark" }}
             />
           </div>
@@ -104,7 +104,7 @@ export default function BirthForm() {
         <button
           type="submit"
           disabled={loading}
-          className="interactive w-full bg-ash text-void font-syne font-bold text-2xl md:text-4xl uppercase py-8 hover:bg-blood hover:text-ash transition-colors duration-300 relative overflow-hidden group disabled:opacity-50 disabled:cursor-not-allowed"
+          className="interactive w-full bg-ash text-void font-syne font-bold text-lg md:text-2xl uppercase py-5 hover:bg-blood hover:text-ash transition-colors duration-300 relative overflow-hidden group disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <span className="relative z-10">
             {loading ? "Reading the stars..." : "Expose Me"}
