@@ -33,7 +33,7 @@ export default function PricingPage() {
                   The Roast
                 </h2>
                 <span className="font-syne font-extrabold text-3xl md:text-4xl text-blood">
-                  $9
+                  $5
                 </span>
               </div>
               <ul className="space-y-3 text-ash/60">
