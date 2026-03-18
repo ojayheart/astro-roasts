@@ -1,6 +1,7 @@
 import BirthForm from "@/components/BirthForm";
 import HeroSection from "@/components/HeroSection";
 import ManifestoSection from "@/components/ManifestoSection";
+import Link from "next/link";
 
 export default function Home() {
   return (
@@ -61,10 +62,18 @@ export default function Home() {
           <div className="font-syne font-bold text-2xl tracking-tighter uppercase">
             Astro Roasts
           </div>
-          <div className="text-xs uppercase tracking-[0.15em] text-ash/40 text-center md:text-right">
-            &copy; 2025 Astro Roasts.
-            <br />
-            For entertainment purposes only, though we both know it&apos;s true.
+          <div className="flex flex-col items-center md:items-end gap-4">
+            <div className="flex gap-6 text-xs uppercase tracking-[0.15em] text-ash/40">
+              <Link href="/pricing" className="hover:text-ash/60 transition-colors">Pricing</Link>
+              <Link href="/terms" className="hover:text-ash/60 transition-colors">Terms</Link>
+              <Link href="/privacy" className="hover:text-ash/60 transition-colors">Privacy</Link>
+              <Link href="/refund" className="hover:text-ash/60 transition-colors">Refund</Link>
+            </div>
+            <div className="text-xs uppercase tracking-[0.15em] text-ash/40 text-center md:text-right">
+              &copy; 2026 Astro Roasts.
+              <br />
+              For entertainment purposes only, though we both know it&apos;s true.
+            </div>
           </div>
         </div>
       </footer>
