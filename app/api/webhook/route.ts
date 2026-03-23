@@ -2,30 +2,54 @@ import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 import { inngest } from "@/inngest/client";
 
+function verifyPaddleSignature(
+  rawBody: string,
+  signature: string,
+  secret: string,
+): boolean {
+  // Paddle-Signature format: ts=TIMESTAMP;h1=HASH
+  const parts = Object.fromEntries(
+    signature.split(";").map((p) => {
+      const [key, ...rest] = p.split("=");
+      return [key, rest.join("=")];
+    }),
+  );
+
+  if (!parts.ts || !parts.h1) return false;
+
+  const payload = `${parts.ts}:${rawBody}`;
+  const expectedSignature = crypto
+    .createHmac("sha256", secret)
+    .update(payload)
+    .digest("hex");
+
+  return crypto.timingSafeEqual(
+    Buffer.from(parts.h1),
+    Buffer.from(expectedSignature),
+  );
+}
+
 export async function POST(req: NextRequest) {
   try {
     const rawBody = await req.text();
-    const signature = req.headers.get("x-signature");
-    const secret = process.env.LEMON_SQUEEZY_WEBHOOK_SECRET;
+    const signature = req.headers.get("paddle-signature");
+    const secret = process.env.PADDLE_WEBHOOK_SECRET;
 
     if (!secret || !signature) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Verify Lemon Squeezy webhook signature
-    const hmac = crypto.createHmac("sha256", secret);
-    const digest = hmac.update(rawBody).digest("hex");
-
-    if (digest !== signature) {
+    if (!verifyPaddleSignature(rawBody, signature, secret)) {
       return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
     }
 
     const payload = JSON.parse(rawBody);
-    const eventName = payload.meta?.event_name;
+    const eventType = payload.event_type;
 
-    // Only process successful orders
-    if (eventName === "order_created") {
-      const roastId = payload.meta?.custom_data?.roast_id;
+    // Process completed transactions
+    if (eventType === "transaction.completed") {
+      const customData = payload.data?.custom_data;
+      const roastId = customData?.roastId;
 
       if (roastId) {
         await inngest.send({

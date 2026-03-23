@@ -44,9 +44,12 @@ export default function RootLayout({
         <CustomCursor />
         {children}
         <Script
-          src="https://app.lemonsqueezy.com/js/lemon.js"
-          strategy="lazyOnload"
+          src="https://cdn.paddle.com/paddle/v2/paddle.js"
+          strategy="afterInteractive"
         />
+        <Script id="paddle-init" strategy="afterInteractive">
+          {`if (typeof Paddle !== 'undefined') { Paddle.Initialize({ token: '${process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN || ""}' }); }`}
+        </Script>
       </body>
     </html>
   );
