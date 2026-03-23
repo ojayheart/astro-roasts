@@ -48,7 +48,7 @@ export default function RootLayout({
           strategy="afterInteractive"
         />
         <Script id="paddle-init" strategy="afterInteractive">
-          {`if (typeof Paddle !== 'undefined') { Paddle.Initialize({ token: '${process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN || ""}' }); }`}
+          {`if (typeof Paddle !== 'undefined') { Paddle.Initialize({ token: '${process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN || ""}'${process.env.NEXT_PUBLIC_PADDLE_ENVIRONMENT === "sandbox" ? ", environment: 'sandbox'" : ""} }); }`}
         </Script>
       </body>
     </html>
