@@ -1,7 +1,7 @@
 import { kv } from "@vercel/kv";
 import type { RoastData } from "./types";
 
-const ROAST_TTL = 60 * 60 * 24 * 30; // 30 days
+const ROAST_TTL = 60 * 60 * 24 * 90; // 90 days
 
 export async function getRoast(id: string): Promise<RoastData | null> {
   return kv.get<RoastData>(`roast:${id}`);
