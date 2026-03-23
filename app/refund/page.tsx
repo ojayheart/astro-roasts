@@ -60,7 +60,9 @@ export default function RefundPage() {
                 </li>
                 <li className="flex items-start gap-3">
                   <span className="text-blood mt-1">*</span>
-                  <span>You were charged multiple times for the same roast</span>
+                  <span>
+                    You were charged multiple times for the same roast
+                  </span>
                 </li>
               </ul>
             </section>

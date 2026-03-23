@@ -39,10 +39,10 @@ export default function TermsPage() {
               </h2>
               <p>
                 Astro Roasts (&quot;the Service&quot;) is an entertainment
-                product operated by Oliver Hart (&quot;we&quot;, &quot;us&quot;).
-                We generate comedic natal chart readings based on your birth
-                data. This is entertainment, not professional astrological,
-                psychological, medical, or financial advice.
+                product operated by Oliver Hart (&quot;we&quot;,
+                &quot;us&quot;). We generate comedic natal chart readings based
+                on your birth data. This is entertainment, not professional
+                astrological, psychological, medical, or financial advice.
               </p>
             </section>
 
@@ -112,8 +112,8 @@ export default function TermsPage() {
               </h2>
               <p>
                 Roasts are AI-generated comedy based on astrological positions.
-                They are intentionally exaggerated for comedic effect. We are not
-                responsible for hurt feelings, existential crises, or the
+                They are intentionally exaggerated for comedic effect. We are
+                not responsible for hurt feelings, existential crises, or the
                 unsettling accuracy of your reading.
               </p>
             </section>

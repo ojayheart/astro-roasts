@@ -55,8 +55,8 @@ export default function PrivacyPage() {
                 <li className="flex items-start gap-3">
                   <span className="text-blood mt-1">*</span>
                   <span>
-                    <strong>Payment data:</strong> processed entirely by Paddle —
-                    we never see your card details
+                    <strong>Payment data:</strong> processed entirely by Paddle
+                    — we never see your card details
                   </span>
                 </li>
               </ul>
@@ -81,7 +81,9 @@ export default function PrivacyPage() {
                 </li>
                 <li className="flex items-start gap-3">
                   <span className="text-blood mt-1">*</span>
-                  <span>Store your roast so you can access it via your link</span>
+                  <span>
+                    Store your roast so you can access it via your link
+                  </span>
                 </li>
               </ul>
               <p>
