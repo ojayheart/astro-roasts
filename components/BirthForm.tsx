@@ -1,45 +1,41 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import CityAutocomplete from "./CityAutocomplete";
 
-export default function BirthForm() {
-  const router = useRouter();
+interface BirthFormProps {
+  onSubmit: (data: {
+    name: string;
+    email?: string;
+    date: string;
+    time?: string;
+    city: string;
+  }) => void;
+}
+
+export default function BirthForm({ onSubmit }: BirthFormProps) {
   const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
   const [city, setCity] = useState("");
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!city) {
       setError("Select a city from the dropdown");
       return;
     }
-    setLoading(true);
     setError("");
 
-    try {
-      const res = await fetch("/api/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, date, time, city }),
-      });
-
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || "Something went wrong");
-      }
-
-      const { id } = await res.json();
-      router.push(`/roast/${id}`);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to generate");
-      setLoading(false);
-    }
+    onSubmit({
+      name,
+      email: email || undefined,
+      date,
+      time: time || undefined,
+      city,
+    });
   };
 
   return (
@@ -57,6 +53,20 @@ export default function BirthForm() {
             onChange={(e) => setName(e.target.value)}
             className="w-full bg-transparent border-b border-ash/20 text-lg md:text-xl font-syne font-bold text-ash py-3 focus:border-blood focus:outline-none transition-colors placeholder:text-ash/20"
             placeholder="Enter your name"
+          />
+        </div>
+
+        {/* Email */}
+        <div className="relative group interactive">
+          <label className="block text-xs uppercase tracking-[0.2em] text-ash/50 mb-3 font-mono">
+            Email (for your roast)
+          </label>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full bg-transparent border-b border-ash/20 text-lg md:text-xl font-syne font-bold text-ash py-3 focus:border-blood focus:outline-none transition-colors placeholder:text-ash/20"
+            placeholder="optional@email.com"
           />
         </div>
 
@@ -80,11 +90,13 @@ export default function BirthForm() {
           {/* Time */}
           <div className="relative group interactive">
             <label className="block text-xs uppercase tracking-[0.2em] text-ash/50 mb-3 font-mono">
-              Exact Time (Don&apos;t lie)
+              Exact Time{" "}
+              <span className="text-ash/30 normal-case tracking-normal">
+                (optional)
+              </span>
             </label>
             <input
               type="time"
-              required
               value={time}
               onChange={(e) => setTime(e.target.value)}
               className="w-full bg-transparent border-b border-ash/20 text-lg md:text-xl font-syne font-bold text-ash py-3 focus:border-blood focus:outline-none transition-colors"
@@ -103,12 +115,9 @@ export default function BirthForm() {
       <div className="pt-4">
         <button
           type="submit"
-          disabled={loading}
-          className="interactive w-full bg-ash text-void font-syne font-bold text-lg md:text-2xl uppercase py-5 hover:bg-blood hover:text-ash transition-colors duration-300 relative overflow-hidden group disabled:opacity-50 disabled:cursor-not-allowed"
+          className="interactive w-full bg-ash text-void font-syne font-bold text-lg md:text-2xl uppercase py-5 hover:bg-blood hover:text-ash transition-colors duration-300 relative overflow-hidden group"
         >
-          <span className="relative z-10">
-            {loading ? "Reading the stars..." : "Expose Me"}
-          </span>
+          <span className="relative z-10">Expose Me</span>
           <div className="absolute inset-0 bg-blood transform scale-y-0 origin-bottom group-hover:scale-y-100 transition-transform duration-300 ease-in-out z-0" />
         </button>
       </div>

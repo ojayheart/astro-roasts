@@ -11,7 +11,6 @@ interface TeaserViewProps {
   moonSign: string;
   rising: string;
   teaser: string;
-  sectionHeaders: string[];
   roastId: string;
 }
 
@@ -34,17 +33,12 @@ function glyph(sign: string): string {
   return ZODIAC_GLYPHS[sign] || "";
 }
 
-// Placeholder text for blurred sections
-const BLUR_PLACEHOLDER =
-  "The patterns encoded in your chart reveal something you already suspect but refuse to acknowledge. Every placement, every aspect, every house cusp points toward a singular truth that you have been carefully constructing elaborate defenses against for your entire life.";
-
 export default function TeaserView({
   name,
   sunSign,
   moonSign,
   rising,
   teaser,
-  sectionHeaders,
   roastId,
 }: TeaserViewProps) {
   useEffect(() => {
@@ -86,27 +80,6 @@ export default function TeaserView({
         "-=1",
       );
 
-    // Blur section reveals
-    document.querySelectorAll(".blur-section").forEach((section) => {
-      const targetOpacity = section.getAttribute("data-opacity") || "0.3";
-      gsap.fromTo(
-        section,
-        { y: 60, opacity: 0 },
-        {
-          y: 0,
-          opacity: parseFloat(targetOpacity),
-          duration: 1.5,
-          ease: "power3.out",
-          scrollTrigger: {
-            trigger: section,
-            start: "top 85%",
-            end: "top 60%",
-            toggleActions: "play none none reverse",
-          },
-        },
-      );
-    });
-
     return () => {
       ScrollTrigger.getAll().forEach((t) => t.kill());
     };
@@ -114,15 +87,6 @@ export default function TeaserView({
 
   // Split teaser into paragraphs
   const teaserParagraphs = teaser.split("\n\n").filter((p) => p.trim());
-
-  const blurLevels = [
-    { blur: 1, opacity: 0.7 },
-    { blur: 2, opacity: 0.5 },
-    { blur: 3, opacity: 0.35 },
-    { blur: 4, opacity: 0.25 },
-    { blur: 5, opacity: 0.15 },
-    { blur: 6, opacity: 0.1 },
-  ];
 
   return (
     <>
@@ -184,41 +148,37 @@ export default function TeaserView({
           Analysis Complete
         </h1>
 
-        {/* Free Teaser */}
-        <div className="teaser-block pl-6 md:pl-8 py-2 mb-8 space-y-8 text-lg md:text-xl text-ash/90 font-light leading-relaxed">
-          {teaserParagraphs.map((p, i) => (
-            <p key={i} className="teaser-p">
-              {p}
-            </p>
-          ))}
+        {/* Free Teaser with Progressive Blur */}
+        <div className="teaser-block pl-6 md:pl-8 py-2 mb-8 space-y-8 text-lg md:text-xl text-ash/90 font-light leading-relaxed relative">
+          {teaserParagraphs.map((p, i) => {
+            // Apply progressive blur to later paragraphs
+            const isLast = i === teaserParagraphs.length - 1;
+            const isSecondLast = i === teaserParagraphs.length - 2;
+            const blurStyle = isLast
+              ? { filter: "blur(2px)", opacity: 0.5 }
+              : isSecondLast
+                ? { filter: "blur(0.5px)", opacity: 0.75 }
+                : undefined;
+
+            return (
+              <p key={i} className="teaser-p" style={blurStyle}>
+                {p}
+              </p>
+            );
+          })}
+          {/* Gradient fade overlay at the bottom */}
+          <div
+            className="absolute bottom-0 left-0 right-0 h-32 pointer-events-none"
+            style={{
+              background:
+                "linear-gradient(to bottom, transparent, var(--color-void, #0a0a0a))",
+            }}
+          />
         </div>
 
         {/* Share */}
         <div className="share-wrapper mb-20 pl-6 md:pl-8">
           <ShareButton roastId={roastId} />
-        </div>
-
-        {/* Progressive Blur Paywall */}
-        <div className="blur-container space-y-24 blur-protect">
-          {sectionHeaders.map((title, i) => {
-            const level = blurLevels[i] || blurLevels[blurLevels.length - 1];
-            return (
-              <article
-                key={i}
-                className="blur-section"
-                data-opacity={level.opacity}
-              >
-                <div style={{ filter: `blur(${level.blur}px)` }}>
-                  <h3 className="font-syne text-2xl md:text-3xl font-extrabold uppercase tracking-tighter mb-4 text-outline">
-                    {title}
-                  </h3>
-                  <p className="text-lg text-ash/90 leading-relaxed font-light">
-                    {BLUR_PLACEHOLDER}
-                  </p>
-                </div>
-              </article>
-            );
-          })}
         </div>
       </main>
     </>

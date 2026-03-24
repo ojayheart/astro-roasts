@@ -1,4 +1,6 @@
-import { getRoast } from "@/lib/kv";
+import { db } from "@/lib/db";
+import { roasts } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import RoastClient from "./RoastClient";
 
@@ -8,11 +10,38 @@ interface Props {
 
 export default async function RoastPage({ params }: Props) {
   const { id } = await params;
-  const roast = await getRoast(id);
+
+  const roast = await db.query.roasts.findFirst({
+    where: eq(roasts.id, id),
+    with: { user: true },
+  });
 
   if (!roast) {
     notFound();
   }
 
-  return <RoastClient roastId={id} initialData={roast} />;
+  const user = Array.isArray(roast.user) ? roast.user[0] : roast.user;
+
+  return (
+    <RoastClient
+      roastId={id}
+      initialData={{
+        id: roast.id,
+        name: user.name,
+        sunSign: roast.sunSign || "",
+        moonSign: roast.moonSign || "",
+        rising: roast.rising || "",
+        mercurySign: roast.mercurySign || "",
+        venusSign: roast.venusSign || "",
+        marsSign: roast.marsSign || "",
+        jupiterSign: roast.jupiterSign || "",
+        saturnSign: roast.saturnSign || "",
+        teaser: roast.teaser || "",
+        fullText: roast.fullText || "",
+        callouts: roast.callouts ? roast.callouts.split("|") : [],
+        paid: roast.paid,
+        createdAt: roast.createdAt.toISOString(),
+      }}
+    />
+  );
 }

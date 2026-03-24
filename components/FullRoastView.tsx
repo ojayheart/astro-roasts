@@ -4,7 +4,6 @@ import { useEffect } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import ShareButton from "./ShareButton";
-import type { RoastSection } from "@/lib/types";
 
 interface FullRoastViewProps {
   name: string;
@@ -16,7 +15,8 @@ interface FullRoastViewProps {
   mars: string;
   jupiter: string;
   saturn: string;
-  sections: RoastSection[];
+  fullText: string;
+  callouts: string[];
   roastId: string;
 }
 
@@ -49,7 +49,8 @@ export default function FullRoastView({
   mars,
   jupiter,
   saturn,
-  sections,
+  fullText,
+  callouts,
   roastId,
 }: FullRoastViewProps) {
   useEffect(() => {
@@ -102,6 +103,14 @@ export default function FullRoastView({
     { label: "SATURN", value: saturn },
   ];
 
+  // Split prose into paragraphs
+  const paragraphs = fullText.split("\n\n").filter((p) => p.trim());
+
+  // Distribute callouts evenly through the text as pull-quotes
+  const calloutPositions = callouts.map((_, i) =>
+    Math.floor(((i + 1) * paragraphs.length) / (callouts.length + 1)),
+  );
+
   return (
     <>
       {/* Scroll Progress */}
@@ -144,29 +153,25 @@ export default function FullRoastView({
           </div>
         </header>
 
-        {/* Sections */}
-        {sections.map((section, i) => (
-          <section
-            key={i}
-            className="border-t border-ash/10 pt-20 mt-20 gs-reveal relative"
-          >
-            <h2 className="font-syne font-extrabold text-4xl md:text-5xl tracking-tighter uppercase mb-10 text-ash">
-              {String(i + 1).padStart(2, "0")} // {section.title}
-            </h2>
-
-            <div className="space-y-8 text-ash/70">
-              {section.content.split("\n\n").map((p, j) => (
-                <p key={j}>{p}</p>
-              ))}
-
-              {section.callout && (
-                <div className="callout border-l-2 border-blood pl-6 py-6 my-12 text-ash font-medium text-xl md:text-2xl leading-relaxed italic">
-                  &ldquo;{section.callout}&rdquo;
+        {/* Continuous Prose */}
+        <section className="border-t border-ash/10 pt-20 mt-20 gs-reveal relative">
+          <div className="space-y-8 text-ash/70">
+            {paragraphs.map((p, i) => {
+              // Check if a callout should appear before this paragraph
+              const calloutIndex = calloutPositions.indexOf(i);
+              return (
+                <div key={i}>
+                  {calloutIndex !== -1 && callouts[calloutIndex] && (
+                    <div className="callout border-l-2 border-blood pl-6 py-6 my-12 text-ash font-medium text-xl md:text-2xl leading-relaxed italic">
+                      &ldquo;{callouts[calloutIndex]}&rdquo;
+                    </div>
+                  )}
+                  <p>{p}</p>
                 </div>
-              )}
-            </div>
-          </section>
-        ))}
+              );
+            })}
+          </div>
+        </section>
 
         {/* Footer */}
         <footer className="border-t border-ash/10 pt-16 mt-32 pb-16 gs-reveal">

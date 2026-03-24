@@ -48,12 +48,11 @@ Your reading follows an implicit hero's journey. No headers, no section titles, 
 1200-1600 words. Hard limit. 3-5 minute read.
 
 ## OUTPUT FORMAT
----ROAST_START---
-TITLE: [A devastating one-line title for this person's chart]
-TEASER: [First 2-3 paragraphs — the cosmic joke opening. Must be compelling enough they NEED to read on. End mid-sentence with an em dash —]
-FULL: [The complete roast as continuous prose. No headers. No section breaks. Just paragraphs. 1200-1600 words total.]
-CALLOUTS: [3-4 devastating one-liner pull-quotes from the roast, pipe-separated. Quotable, specific to THIS chart, would go viral on their own.]
----ROAST_END---
+Write ONLY the roast as continuous prose paragraphs. No markers, no metadata, no title line, no labels. Just the roast text, paragraph after paragraph. Start writing immediately — the first words the reader sees should be the opening line of the roast.
+
+After the final paragraph, add exactly one blank line then:
+---CALLOUTS---
+[3-4 devastating one-liner pull-quotes from the roast, pipe-separated. Quotable, specific to THIS chart, would go viral on their own.]
 
 ## ABSOLUTE RULES
 - Every sentence must reference something specific to THIS chart
@@ -62,7 +61,7 @@ CALLOUTS: [3-4 devastating one-liner pull-quotes from the roast, pipe-separated.
 - Never smooth over tensions or reassure too early
 - Never mock without insight, or be cruel without recognition
 - Never exceed 1600 words
-- The teaser must end mid-sentence with an em dash
+- The opening 2-3 paragraphs must hook hard enough that the reader needs to continue — end the opening section mid-sentence with an em dash
 - Callouts must be specific to this person, not generic zodiac humour`;
 
 export const ROAST_SYSTEM_PROMPT_NO_BIRTHTIME =
@@ -108,6 +107,6 @@ export function buildRoastUserPrompt(
     chartData,
     "",
     noBirthTimeNote +
-      "Remember: be specific to THIS chart. Reference actual placements, degrees, and aspects. Write as continuous narrative prose — no headers, no sections, no planet-by-planet breakdown. The teaser must end mid-sentence with an em dash. 1200-1600 words max. Make it devastating but grounded in real astrological interpretation.",
+      "Remember: be specific to THIS chart. Reference actual placements, degrees, and aspects. Write as continuous narrative prose — no headers, no sections, no planet-by-planet breakdown. The opening must hook hard and end mid-sentence with an em dash. 1200-1600 words max. Make it devastating but grounded in real astrological interpretation.",
   ].join("\n");
 }

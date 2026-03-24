@@ -1,57 +1,52 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getRoast } from "@/lib/kv";
+import { db } from "@/lib/db";
+import { roasts } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
 
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
-  const roast = await getRoast(id);
+
+  const roast = await db.query.roasts.findFirst({
+    where: eq(roasts.id, id),
+    with: { user: true },
+  });
 
   if (!roast) {
     return NextResponse.json({ error: "Roast not found" }, { status: 404 });
   }
 
-  if (roast.status === "generating") {
-    return NextResponse.json({ status: "generating" });
-  }
-
-  if (roast.status === "error") {
-    return NextResponse.json(
-      { status: "error", error: roast.error },
-      { status: 500 },
-    );
-  }
+  // Extract user from relation (Drizzle types this as object | array, but it's always an object for one-to-one)
+  const user = Array.isArray(roast.user) ? roast.user[0] : roast.user;
 
   // If not paid, return teaser only — no full content in response
   if (!roast.paid) {
     return NextResponse.json({
-      status: "ready",
       paid: false,
-      name: roast.name,
+      name: user.name,
       sunSign: roast.sunSign,
       moonSign: roast.moonSign,
       rising: roast.rising,
       teaser: roast.teaser,
-      // Send section headers only (for blur placeholders), not content
-      sectionHeaders: roast.sections?.map((s) => s.title) || [],
     });
   }
 
   // Paid — return everything
   return NextResponse.json({
-    status: "ready",
     paid: true,
-    name: roast.name,
+    name: user.name,
     sunSign: roast.sunSign,
     moonSign: roast.moonSign,
     rising: roast.rising,
-    mercury: roast.mercury,
-    venus: roast.venus,
-    mars: roast.mars,
-    jupiter: roast.jupiter,
-    saturn: roast.saturn,
+    mercurySign: roast.mercurySign,
+    venusSign: roast.venusSign,
+    marsSign: roast.marsSign,
+    jupiterSign: roast.jupiterSign,
+    saturnSign: roast.saturnSign,
     teaser: roast.teaser,
-    sections: roast.sections,
+    fullText: roast.fullText,
+    callouts: roast.callouts ? roast.callouts.split("|") : [],
   });
 }

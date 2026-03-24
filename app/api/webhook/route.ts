@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
-import { inngest } from "@/inngest/client";
+import { db } from "@/lib/db";
+import { roasts } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
 
 function verifyPaddleSignature(
   rawBody: string,
@@ -52,10 +54,10 @@ export async function POST(req: NextRequest) {
       const roastId = customData?.roastId;
 
       if (roastId) {
-        await inngest.send({
-          name: "payment/completed",
-          data: { roastId },
-        });
+        await db
+          .update(roasts)
+          .set({ paid: true })
+          .where(eq(roasts.id, roastId));
       }
     }
 

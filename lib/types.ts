@@ -1,10 +1,11 @@
 export interface BirthDetails {
   name: string;
+  email?: string;
   year: number;
   month: number;
   day: number;
-  hour: number;
-  minute: number;
+  hour?: number;
+  minute?: number;
   city: string;
   lat: number;
   lon: number;
@@ -12,27 +13,22 @@ export interface BirthDetails {
 }
 
 export interface RoastData {
-  status: "generating" | "ready" | "error";
+  id: string;
   name: string;
-  sunSign?: string;
-  moonSign?: string;
-  rising?: string;
-  mercury?: string;
-  venus?: string;
-  mars?: string;
-  jupiter?: string;
-  saturn?: string;
-  teaser?: string;
-  sections?: RoastSection[];
+  email?: string;
+  sunSign: string;
+  moonSign: string;
+  rising: string;
+  mercurySign: string;
+  venusSign: string;
+  marsSign: string;
+  jupiterSign: string;
+  saturnSign: string;
+  teaser: string;
+  fullText: string;
+  callouts: string[];
   paid: boolean;
-  createdAt: number;
-  error?: string;
-}
-
-export interface RoastSection {
-  title: string;
-  content: string;
-  callout?: string;
+  createdAt: string;
 }
 
 export interface ChartData {
@@ -53,11 +49,8 @@ export interface ChartData {
 
 export interface GenerateRequest {
   name: string;
+  email?: string;
   date: string; // YYYY-MM-DD
-  time: string; // HH:MM
+  time?: string; // HH:MM, optional (no birth time mode)
   city: string;
-}
-
-export interface GenerateResponse {
-  id: string;
 }
