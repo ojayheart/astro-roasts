@@ -18,12 +18,23 @@ export async function GET(
     return NextResponse.json({ error: "Roast not found" }, { status: 404 });
   }
 
-  // Extract user from relation (Drizzle types this as object | array, but it's always an object for one-to-one)
+  // Still generating
+  if (roast.status === "generating") {
+    return NextResponse.json({ status: "generating" });
+  }
+
+  // Error during generation
+  if (roast.status === "error") {
+    return NextResponse.json({ status: "error" });
+  }
+
+  // Extract user from relation
   const user = Array.isArray(roast.user) ? roast.user[0] : roast.user;
 
-  // If not paid, return teaser only — no full content in response
+  // If not paid, return teaser only
   if (!roast.paid) {
     return NextResponse.json({
+      status: "ready",
       paid: false,
       name: user.name,
       sunSign: roast.sunSign,
@@ -35,6 +46,7 @@ export async function GET(
 
   // Paid — return everything
   return NextResponse.json({
+    status: "ready",
     paid: true,
     name: user.name,
     sunSign: roast.sunSign,

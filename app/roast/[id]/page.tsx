@@ -28,6 +28,8 @@ export default async function RoastPage({ params }: Props) {
       initialData={{
         id: roast.id,
         name: user.name,
+        status:
+          (roast.status as "generating" | "ready" | "error") || "generating",
         sunSign: roast.sunSign || "",
         moonSign: roast.moonSign || "",
         rising: roast.rising || "",

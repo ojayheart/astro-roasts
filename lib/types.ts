@@ -16,6 +16,7 @@ export interface RoastData {
   id: string;
   name: string;
   email?: string;
+  status: "generating" | "ready" | "error";
   sunSign: string;
   moonSign: string;
   rising: string;
@@ -29,6 +30,43 @@ export interface RoastData {
   callouts: string[];
   paid: boolean;
   createdAt: string;
+}
+
+export interface HumorProfile {
+  voice: string; // voice preset name
+  burnRatio: string; // e.g. "3:1"
+  crueltyCeiling: number; // 1-5
+  warmthFloor: number; // 1-5
+  secondPersonDensity: "low" | "medium" | "high";
+  specificity: number; // 1-5
+  escalationDepth: number; // 1-5
+  encryptionLevel: number; // 1-5
+  pratchettReversals: number; // 0-5
+  emphasisStyle: "italics" | "CAPS" | "mixed";
+  astroJargon: number; // 1-5
+  pronouns: string;
+}
+
+export interface MetaphorPalette {
+  centralTension: string;
+  throughline: string;
+  probableWorld: string;
+  publicMask: string;
+  privateMachinery: string;
+  freshConstraint?: string;
+}
+
+export interface RoastAnalysis {
+  spine: string[]; // 3-5 tightest aspects
+  centralParadox: string;
+  humorProfile: HumorProfile;
+  metaphorPalette: MetaphorPalette;
+}
+
+export interface ValidationScore {
+  dimension: string;
+  score: number;
+  notes: string;
 }
 
 export interface ChartData {

@@ -1,4 +1,4 @@
-import RoastFlow from "@/components/RoastFlow";
+import BirthForm from "@/components/BirthForm";
 import HeroSection from "@/components/HeroSection";
 import ManifestoSection from "@/components/ManifestoSection";
 import Link from "next/link";
@@ -51,7 +51,7 @@ export default function Home() {
 
           {/* Right: Form */}
           <div className="lg:pt-4">
-            <RoastFlow />
+            <BirthForm />
           </div>
         </div>
       </section>

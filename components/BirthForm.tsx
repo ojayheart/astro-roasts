@@ -1,41 +1,54 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import CityAutocomplete from "./CityAutocomplete";
 
-interface BirthFormProps {
-  onSubmit: (data: {
-    name: string;
-    email?: string;
-    date: string;
-    time?: string;
-    city: string;
-  }) => void;
-}
-
-export default function BirthForm({ onSubmit }: BirthFormProps) {
+export default function BirthForm() {
+  const router = useRouter();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
   const [city, setCity] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!city) {
       setError("Select a city from the dropdown");
       return;
     }
     setError("");
+    setLoading(true);
 
-    onSubmit({
-      name,
-      email: email || undefined,
-      date,
-      time: time || undefined,
-      city,
-    });
+    try {
+      const res = await fetch("/api/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name,
+          email: email || undefined,
+          date,
+          time: time || undefined,
+          city,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || "Something went wrong");
+        setLoading(false);
+        return;
+      }
+
+      router.push(`/roast/${data.id}`);
+    } catch {
+      setError("Connection failed. Please try again.");
+      setLoading(false);
+    }
   };
 
   return (
@@ -51,7 +64,8 @@ export default function BirthForm({ onSubmit }: BirthFormProps) {
             required
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full bg-transparent border-b border-ash/20 text-lg md:text-xl font-syne font-bold text-ash py-3 focus:border-blood focus:outline-none transition-colors placeholder:text-ash/20"
+            disabled={loading}
+            className="w-full bg-transparent border-b border-ash/20 text-lg md:text-xl font-syne font-bold text-ash py-3 focus:border-blood focus:outline-none transition-colors placeholder:text-ash/20 disabled:opacity-50 disabled:cursor-not-allowed"
             placeholder="Enter your name"
           />
         </div>
@@ -65,7 +79,8 @@ export default function BirthForm({ onSubmit }: BirthFormProps) {
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full bg-transparent border-b border-ash/20 text-lg md:text-xl font-syne font-bold text-ash py-3 focus:border-blood focus:outline-none transition-colors placeholder:text-ash/20"
+            disabled={loading}
+            className="w-full bg-transparent border-b border-ash/20 text-lg md:text-xl font-syne font-bold text-ash py-3 focus:border-blood focus:outline-none transition-colors placeholder:text-ash/20 disabled:opacity-50 disabled:cursor-not-allowed"
             placeholder="optional@email.com"
           />
         </div>
@@ -82,7 +97,8 @@ export default function BirthForm({ onSubmit }: BirthFormProps) {
               required
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="w-full bg-transparent border-b border-ash/20 text-lg md:text-xl font-syne font-bold text-ash py-3 focus:border-blood focus:outline-none transition-colors"
+              disabled={loading}
+              className="w-full bg-transparent border-b border-ash/20 text-lg md:text-xl font-syne font-bold text-ash py-3 focus:border-blood focus:outline-none transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               style={{ colorScheme: "dark" }}
             />
           </div>
@@ -99,7 +115,8 @@ export default function BirthForm({ onSubmit }: BirthFormProps) {
               type="time"
               value={time}
               onChange={(e) => setTime(e.target.value)}
-              className="w-full bg-transparent border-b border-ash/20 text-lg md:text-xl font-syne font-bold text-ash py-3 focus:border-blood focus:outline-none transition-colors"
+              disabled={loading}
+              className="w-full bg-transparent border-b border-ash/20 text-lg md:text-xl font-syne font-bold text-ash py-3 focus:border-blood focus:outline-none transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               style={{ colorScheme: "dark" }}
             />
           </div>
@@ -115,9 +132,12 @@ export default function BirthForm({ onSubmit }: BirthFormProps) {
       <div className="pt-4">
         <button
           type="submit"
-          className="interactive w-full bg-ash text-void font-syne font-bold text-lg md:text-2xl uppercase py-5 hover:bg-blood hover:text-ash transition-colors duration-300 relative overflow-hidden group"
+          disabled={loading}
+          className="interactive w-full bg-ash text-void font-syne font-bold text-lg md:text-2xl uppercase py-5 hover:bg-blood hover:text-ash transition-colors duration-300 relative overflow-hidden group disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <span className="relative z-10">Expose Me</span>
+          <span className="relative z-10">
+            {loading ? "Summoning the stars..." : "Expose Me"}
+          </span>
           <div className="absolute inset-0 bg-blood transform scale-y-0 origin-bottom group-hover:scale-y-100 transition-transform duration-300 ease-in-out z-0" />
         </button>
       </div>

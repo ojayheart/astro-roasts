@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import ShareButton from "./ShareButton";
+import PaywallCTA from "./PaywallCTA";
 
 interface TeaserViewProps {
   name: string;
@@ -41,6 +42,28 @@ export default function TeaserView({
   teaser,
   roastId,
 }: TeaserViewProps) {
+  const [showPaywall, setShowPaywall] = useState(false);
+  const sentinelRef = useRef<HTMLDivElement>(null);
+
+  // Scroll-triggered paywall: appears after user scrolls past 3rd paragraph
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setShowPaywall(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.5 },
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, []);
+
   useEffect(() => {
     gsap.registerPlugin(ScrollTrigger);
 
@@ -161,9 +184,13 @@ export default function TeaserView({
                 : undefined;
 
             return (
-              <p key={i} className="teaser-p" style={blurStyle}>
-                {p}
-              </p>
+              <div key={i}>
+                <p className="teaser-p" style={blurStyle}>
+                  {p}
+                </p>
+                {/* Sentinel after 3rd paragraph triggers paywall */}
+                {i === 2 && <div ref={sentinelRef} className="h-0" />}
+              </div>
             );
           })}
           {/* Gradient fade overlay at the bottom */}
@@ -181,6 +208,17 @@ export default function TeaserView({
           <ShareButton roastId={roastId} />
         </div>
       </main>
+
+      {/* Scroll-triggered paywall */}
+      <div
+        className={`transition-all duration-700 ease-out ${
+          showPaywall
+            ? "translate-y-0 opacity-100"
+            : "translate-y-full opacity-0"
+        }`}
+      >
+        <PaywallCTA roastId={roastId} />
+      </div>
     </>
   );
 }
