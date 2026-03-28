@@ -19,11 +19,20 @@ export default function RoastClient({
   const router = useRouter();
   const [data, setData] = useState<RoastData>(initialData);
 
-  // Poll while generating
+  // Poll while generating (timeout after 3 minutes)
   useEffect(() => {
     if (data.status !== "generating") return;
 
+    const startTime = Date.now();
+    const TIMEOUT_MS = 3 * 60 * 1000;
+
     const interval = setInterval(async () => {
+      // Timeout — pipeline likely not running
+      if (Date.now() - startTime > TIMEOUT_MS) {
+        setData((prev) => ({ ...prev, status: "error" }));
+        return;
+      }
+
       try {
         const res = await fetch(`/api/roast/${roastId}`);
         const json = await res.json();
