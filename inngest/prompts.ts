@@ -317,15 +317,15 @@ export const VALIDATION_SYSTEM_PROMPT = `You are a quality assurance editor for 
 
 | Dimension | What to Check | Common Fix If Low |
 |-----------|--------------|-------------------|
-| Recognition | Would this specific person feel seen? Are the tightest aspects (under 2 degrees) actually driving the narrative, or mentioned but not central? | Go back to chart data. Find the tightest aspect you underused and build a paragraph around the specific behaviour it produces. |
-| Arc | Does it move through the implicit hero's journey? Can you feel cosmic joke → wound → crack → close? Is there a clear turn where comedy gives way to depth? | The turn is usually missing. Insert a Pratchett Reverse between the wound and the close. |
-| Comedy front-loading | Is the first third genuinely the funniest? Or does it start slow with setup? The opening 3-4 paragraphs should have the highest joke density. | Move the funniest observation to paragraph 1-2. Kill any throat-clearing. |
-| The wound | Is the wound section the most carefully written part? Does the comedy around Venus-Chiron / Moon-Pluto / Saturn land because it's exactly right, or does it feel generic with a punchline stapled on? | Rewrite with more specificity. What exactly does that aspect DO to this person's Tuesday night? |
-| Pratchett Reverses | Can you point to 2-3 specific moments where a joke becomes profound without stopping being funny? If you can't find them, the piece is missing its emotional core. | Write 1-2 new lines where a joke catches in the throat. |
-| Warmth | Does the narrator love this person? Not saccharine — "I studied you carefully and decided you were worth the effort." Does the close land with genuine tenderness? | Rewrite the last 2-3 paragraphs. Ask: "what would I say to this person if I could only say one true thing?" |
+| Recognition | Would this specific person feel seen? Are the tightest aspects (under 2°) actually driving the narrative? | Go back to chart data. Find the tightest aspect you underused and build a paragraph around the specific behaviour it produces. |
+| Social accuracy | Would people who KNOW this person — including people who find them difficult — recognise this portrait? Does the roast describe what this person is like to be around, or only what they're like inside their own head? | Identify the external impression — what would their best friend say at a dinner party? What would an ex say? What would a colleague who finds them "a lot" say? Write THAT. |
+| Honesty | Does the roast tell the truth, even when unflattering? Are difficult patterns named as clearly as gifts? Or has the reading softened into a portrait nicer than the chart? | Go back to the hardest aspect — the square, the opposition, the debilitated planet — and ask: what does this ACTUALLY do to this person's behaviour? Not the archetype. The behaviour people deal with. |
+| Arc | Does it move? Can you feel the implicit journey? Or does it plateau — funny throughout but emotionally flat? | The turn is usually missing. Insert a Pratchett Reverse between the wound and the close. |
+| Comedy front-loading | Is the first third genuinely the funniest? Or does it start slow with setup? | Move the funniest observation to paragraph 1-2. Kill any throat-clearing. |
+| The wound | Is the wound section the most carefully written part? Does the comedy land because it's exactly right? | Rewrite with more specificity. What exactly does this aspect DO to this person's Tuesday night? |
+| Pratchett Reverses | Can you point to 2-3 specific moments where a joke becomes profound without stopping being funny? | Write 1-2 new lines where a joke catches in the throat. |
 | Synthesis | Is it a woven story or a disguised list? Test: remove all astrological jargon — does it still read as a coherent narrative about a person? | Pick the 3 strongest themes, cut everything else, connect what remains with narrative tissue. |
-| Specificity | Count generic lines. "You overthink" = generic. "You researched spontaneity" = specific. If more than 2-3 generic lines survive, rewrite them. | Replace each generic line with a concrete, behavioural observation drawn from the chart. |
-| Mask vs machinery | Does the roast name the external perception AND the internal reality? Would they think "that's exactly what people assume about me"? | Identify the dominant external impression and write 2-3 lines naming what people assume, then pivot to what's actually happening underneath. |
+| Specificity | Count generic lines. "You overthink" = generic. "You researched spontaneity" = specific. More than 2-3 generic lines = rewrite them. | Replace each generic line with a concrete behavioural observation drawn from the chart. |
 
 ## Rewrite Rules
 - Do NOT rewrite the whole thing — surgery, not amputation
@@ -340,14 +340,14 @@ Output ONLY this JSON (no markdown fences):
 {
   "scores": [
     { "dimension": "Recognition", "score": 4, "notes": "..." },
+    { "dimension": "Social accuracy", "score": 3, "notes": "..." },
+    { "dimension": "Honesty", "score": 4, "notes": "..." },
     { "dimension": "Arc", "score": 5, "notes": "..." },
     { "dimension": "Comedy front-loading", "score": 4, "notes": "..." },
     { "dimension": "The wound", "score": 3, "notes": "..." },
     { "dimension": "Pratchett Reverses", "score": 4, "notes": "..." },
-    { "dimension": "Warmth", "score": 4, "notes": "..." },
     { "dimension": "Synthesis", "score": 4, "notes": "..." },
-    { "dimension": "Specificity", "score": 4, "notes": "..." },
-    { "dimension": "Mask vs machinery", "score": 3, "notes": "..." }
+    { "dimension": "Specificity", "score": 4, "notes": "..." }
   ],
   "lowestDimension": "name of lowest scoring dimension",
   "needsRewrite": true,
