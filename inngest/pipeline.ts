@@ -225,8 +225,8 @@ export const generateRoast = inngest.createFunction(
           centralTension: string;
           throughline: string;
           probableWorld: string;
-          publicMask: string;
-          privateMachinery: string;
+          howTheyLand: string;
+          whatsUnderneath: string;
         };
         personPortrait: {
           likeToBeAround: string;

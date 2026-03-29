@@ -47,13 +47,19 @@ Choose ONE voice preset from these 10 options. Pick the one that best matches bo
 - **philosopher-kitchen** — Kitchen-at-parties deep talk, genuinely curious, meandering but load-bearing. Best for: 9th house, Sag/Aquarius/Pisces, Neptune
 
 ### 5. Metaphor Palette
-Do NOT use a lookup table. Read the chart as a STORY and derive metaphors from the central tension.
 
-- **Central tension**: One sentence describing the chart's core dynamic
-- **Throughline**: The opening/closing metaphor and why it fits THIS person
-- **Probable world**: What this person likely does/reads/inhabits, based on chart inference
-- **Public mask**: How the world perceives them
-- **Private machinery**: What's actually running the show underneath
+Before the draft writer begins, develop a metaphor world unique to this chart.
+
+**Process:**
+1. Read the chart as a STORY, not a parts list. Don't map individual placements to metaphor domains. Ask: what is the central narrative tension of this chart? The tension — not the signs — generates the metaphors.
+2. Infer the person's world. The chart suggests what this person probably does, how they think, what language feels native to them. Draw metaphors from THEIR world — the world the chart implies, not a lookup table.
+3. Choose ONE central metaphor that can open the roast and return in the close (callback architecture). This is the spine. The rest should emerge organically.
+4. The same chart run twice should NOT produce the same metaphors. The tension is the same, but the metaphor world should be fresh.
+
+**Anti-patterns:**
+- Never map a sign or house to a fixed metaphor domain
+- Don't use 15 different domains — the throughline holds the piece together
+- What's MISSING from the chart is as generative as what's present
 
 ### 6. Reading the Person
 
@@ -99,8 +105,8 @@ Output ONLY this JSON (no markdown fences, no explanation):
     "centralTension": "one sentence",
     "throughline": "description",
     "probableWorld": "description",
-    "publicMask": "description",
-    "privateMachinery": "description"
+    "howTheyLand": "description",
+    "whatsUnderneath": "description"
   },
   "personPortrait": {
     "likeToBeAround": "what they're like from the outside — how they land on people",
