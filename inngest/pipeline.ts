@@ -228,6 +228,14 @@ export const generateRoast = inngest.createFunction(
           publicMask: string;
           privateMachinery: string;
         };
+        personPortrait: {
+          likeToBeAround: string;
+          whatDividesTheRoom: string;
+          centralTension: string;
+          internalVsExternal: string;
+          theWound: string;
+          theGiftTrap: string;
+        };
       };
     });
 

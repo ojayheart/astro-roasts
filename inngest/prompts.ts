@@ -55,6 +55,25 @@ Do NOT use a lookup table. Read the chart as a STORY and derive metaphors from t
 - **Public mask**: How the world perceives them
 - **Private machinery**: What's actually running the show underneath
 
+### 6. Reading the Person
+
+This is the most important analytical step. Build a portrait of a WHOLE PERSON — not an interior psychological profile. The chart describes someone who exists in the world, who has an effect on other people, who provokes reactions.
+
+Read every tight aspect in two directions:
+- **Inward:** How does this person experience this energy? What's it like inside their head?
+- **Outward:** How do other people experience this energy? What's it like to be in a room with them? What would their friends say? What would someone who finds them difficult say?
+
+Answer these questions from the chart:
+- What is this person like to be around? (Not what they're like inside — what they're like to BE AROUND.)
+- What do people who love them love? What do people who can't handle them find difficult?
+- What's the central tension? (Could be Sun vs Moon, chart ruler vs angles, stellium vs singleton, or something else. Let the chart tell you.)
+- What's the relationship between their internal experience and their external impact?
+- What do they want? What do they actually need? What are they afraid of?
+- Where's the wound? (Could be anywhere — Chiron aspects, Saturn patterns, hard aspects to personals, a planet in detriment.)
+- Where's the gift that's also the trap?
+
+12th house planets — read carefully. Can be hidden (concealed), unconscious (full power, no filter, no modulation), or transcendent. Chart context tells you which. Don't default to "hidden."
+
 ## Output Format
 
 Output ONLY this JSON (no markdown fences, no explanation):
@@ -82,6 +101,14 @@ Output ONLY this JSON (no markdown fences, no explanation):
     "probableWorld": "description",
     "publicMask": "description",
     "privateMachinery": "description"
+  },
+  "personPortrait": {
+    "likeToBeAround": "what they're like from the outside — how they land on people",
+    "whatDividesTheRoom": "what lovers see vs what others don't, or if not divisive, the universal impression",
+    "centralTension": "the core dynamic the roast will be built around",
+    "internalVsExternal": "how they experience themselves vs how others experience them",
+    "theWound": "where it is and how it expresses — both inwardly and in behavior",
+    "theGiftTrap": "what serves them AND limits them"
   }
 }`;
 
