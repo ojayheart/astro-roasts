@@ -1,57 +1,29 @@
 /**
- * 5-step Inngest roast generation pipeline.
+ * 3-step Inngest roast generation pipeline.
  *
  * Step 1: Calculate natal chart via /api/chart
- * Step 2: Analyze chart — humor profile, voice preset, metaphor palette
- * Step 3: Write first draft using analysis brief
- * Step 4: Validate + rewrite (max 2 passes)
- * Step 5: Parse output, save final content, send email
+ * Step 2: Generate roast via headless `claude -p` on hermes runner
+ * Step 3: Parse, save, email
  */
 
-import Anthropic from "@anthropic-ai/sdk";
 import { eq } from "drizzle-orm";
 import { inngest } from "./client";
 import { db } from "@/lib/db";
-import { roasts, users } from "@/lib/db/schema";
+import { roasts } from "@/lib/db/schema";
 import { sendRoastEmail } from "@/lib/email";
-import {
-  ANALYSIS_SYSTEM_PROMPT,
-  VALIDATION_SYSTEM_PROMPT,
-  buildDraftSystemPrompt,
-  buildDraftSystemPromptNoBirthtime,
-  buildAnalysisUserPrompt,
-  buildDraftUserPrompt,
-  buildValidationUserPrompt,
-} from "./prompts";
 
-const MODEL = "claude-sonnet-4-6";
+const ROAST_RUNNER_URL = process.env.ROAST_RUNNER_URL;
+const ROAST_RUNNER_SECRET = process.env.ROAST_RUNNER_SECRET;
 
-/**
- * Parse JSON from a Claude response, handling potential markdown wrapping.
- */
-function parseJsonResponse(text: string): unknown {
-  try {
-    return JSON.parse(text);
-  } catch {
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      return JSON.parse(jsonMatch[0]);
-    }
-    throw new Error("Failed to parse JSON from response");
-  }
+if (!ROAST_RUNNER_URL || !ROAST_RUNNER_SECRET) {
+  console.warn(
+    "ROAST_RUNNER_URL or ROAST_RUNNER_SECRET missing — roast generation will fail.",
+  );
 }
 
 /**
- * Extract text content from an Anthropic message response.
- */
-function extractText(response: Anthropic.Message): string {
-  const block = response.content[0];
-  return block.type === "text" ? block.text : "";
-}
-
-/**
- * Parse the structured roast output format (---ROAST_START--- markers).
- * Falls back to legacy ---CALLOUTS--- format if structured markers are missing.
+ * Parse the structured roast output (---ROAST_START--- markers).
+ * Falls back to plain prose if markers missing.
  */
 function parseRoastOutput(raw: string): {
   title: string;
@@ -59,10 +31,10 @@ function parseRoastOutput(raw: string): {
   fullText: string;
   callouts: string;
 } {
-  const hasStructuredFormat =
+  const hasStructured =
     raw.includes("---ROAST_START---") && raw.includes("---ROAST_END---");
 
-  if (hasStructuredFormat) {
+  if (hasStructured) {
     const content = raw
       .split("---ROAST_START---")[1]
       .split("---ROAST_END---")[0]
@@ -73,15 +45,14 @@ function parseRoastOutput(raw: string): {
     const fullMatch = content.match(/FULL:\s*([\s\S]*?)(?=\nCALLOUTS:)/);
     const calloutsMatch = content.match(/CALLOUTS:\s*([\s\S]*?)$/);
 
-    const title = titleMatch?.[1]?.trim() || "";
-    const teaser = teaserMatch?.[1]?.trim() || "";
-    const fullText = fullMatch?.[1]?.trim() || "";
-    const callouts = calloutsMatch?.[1]?.trim() || "";
-
-    return { title, teaser, fullText, callouts };
+    return {
+      title: titleMatch?.[1]?.trim() || "",
+      teaser: teaserMatch?.[1]?.trim() || "",
+      fullText: fullMatch?.[1]?.trim() || "",
+      callouts: calloutsMatch?.[1]?.trim() || "",
+    };
   }
 
-  // Fallback: treat as plain prose with optional ---CALLOUTS--- marker
   const mainText = raw.split("---CALLOUTS---")[0].trim();
   const calloutsRaw = raw.split("---CALLOUTS---")[1]?.trim() || "";
   const paragraphs = mainText.split("\n\n");
@@ -97,29 +68,30 @@ function parseRoastOutput(raw: string): {
   };
 }
 
-// ─── The Pipeline ────────────────────────────────────────────────────────────
+class RateLimitError extends Error {
+  constructor(public detail: string) {
+    super("rate_limited");
+  }
+}
 
 export const generateRoast = inngest.createFunction(
   {
     id: "generate-roast",
     retries: 2,
     triggers: [{ event: "roast/generate" }],
-    onFailure: async ({ event }) => {
-      // On total failure, mark the roast as errored
+    onFailure: async ({ event, error }) => {
       const roastId = (
         event.data as { event?: { data?: { roastId?: string } } }
       )?.event?.data?.roastId;
-      if (roastId) {
-        await db
-          .update(roasts)
-          .set({ status: "error" })
-          .where(eq(roasts.id, roastId));
-      }
+      if (!roastId) return;
+
+      const status =
+        error?.name === "RateLimitError" ? "rate_limited" : "error";
+      await db.update(roasts).set({ status }).where(eq(roasts.id, roastId));
     },
   },
   async ({ event, step }) => {
-    const { roastId, userId, name, email, date, time, lat, lon, tz, city } =
-      event.data;
+    const { roastId, name, email, date, time, lat, lon, tz } = event.data;
 
     const hasBirthTime = !!time;
     const [year, month, day] = date.split("-").map(Number);
@@ -150,13 +122,11 @@ export const generateRoast = inngest.createFunction(
       });
 
       if (!res.ok) {
-        const err = await res.text();
-        throw new Error(`Chart calculation failed: ${err}`);
+        throw new Error(`Chart calculation failed: ${await res.text()}`);
       }
 
       const data = await res.json();
 
-      // Save chart data + sign placements to the roast row
       await db
         .update(roasts)
         .set({
@@ -175,185 +145,55 @@ export const generateRoast = inngest.createFunction(
       return data;
     });
 
-    // ─── Step 2: Analysis (Humor Profile + Voice + Metaphor Palette) ──
-    const analysis = await step.run("analyze-chart", async () => {
-      const anthropic = new Anthropic();
-
-      const response = await anthropic.messages.create({
-        model: MODEL,
-        max_tokens: 2000,
-        system: ANALYSIS_SYSTEM_PROMPT,
-        messages: [
-          {
-            role: "user",
-            content: buildAnalysisUserPrompt(
-              name,
-              chartData.formatted_output,
-              hasBirthTime,
-            ),
-          },
-        ],
-      });
-
-      const text = extractText(response);
-      const analysisJson = parseJsonResponse(text);
-
-      // Persist analysis to the roast row
-      await db
-        .update(roasts)
-        .set({ analysis: analysisJson })
-        .where(eq(roasts.id, roastId));
-
-      return analysisJson as {
-        spine: string[];
-        centralParadox: string;
-        humorProfile: {
-          voice: string;
-          burnRatio: string;
-          crueltyCeiling: number;
-          warmthFloor: number;
-          secondPersonDensity: string;
-          specificity: number;
-          escalationDepth: number;
-          encryptionLevel: number;
-          pratchettReversals: number;
-          emphasisStyle: string;
-          astroJargon: number;
-          pronouns: string;
-        };
-        metaphorPalette: {
-          centralTension: string;
-          throughline: string;
-          probableWorld: string;
-          howTheyLand: string;
-          whatsUnderneath: string;
-        };
-        personPortrait: {
-          likeToBeAround: string;
-          whatDividesTheRoom: string;
-          centralTension: string;
-          internalVsExternal: string;
-          theWound: string;
-          theGiftTrap: string;
-        };
-      };
-    });
-
-    // ─── Step 3: First Draft ──────────────────────────────────────────
-    const draft = await step.run("write-draft", async () => {
-      const anthropic = new Anthropic();
-      const voicePreset = analysis.humorProfile?.voice || "cold-literary";
-
-      const systemPrompt = hasBirthTime
-        ? buildDraftSystemPrompt(voicePreset)
-        : buildDraftSystemPromptNoBirthtime(voicePreset);
-
-      const response = await anthropic.messages.create({
-        model: MODEL,
-        max_tokens: 4000,
-        system: systemPrompt,
-        messages: [
-          {
-            role: "user",
-            content: buildDraftUserPrompt(
-              name,
-              chartData.formatted_output,
-              JSON.stringify(analysis, null, 2),
-              hasBirthTime,
-            ),
-          },
-        ],
-      });
-
-      const text = extractText(response);
-
-      // Save first draft
-      await db
-        .update(roasts)
-        .set({ draft: text })
-        .where(eq(roasts.id, roastId));
-
-      return text;
-    });
-
-    // ─── Step 4: Validation + Rewrite (max 2 passes) ─────────────────
-    const finalRoast = await step.run("validate-and-rewrite", async () => {
-      const anthropic = new Anthropic();
-      let currentDraft = draft;
-      let validationNotes = "";
-
-      for (let pass = 0; pass < 2; pass++) {
-        const response = await anthropic.messages.create({
-          model: MODEL,
-          max_tokens: 6000,
-          system: VALIDATION_SYSTEM_PROMPT,
-          messages: [
-            {
-              role: "user",
-              content: buildValidationUserPrompt(
-                name,
-                chartData.formatted_output,
-                JSON.stringify(analysis, null, 2),
-                currentDraft,
-              ),
-            },
-          ],
-        });
-
-        const text = extractText(response);
-
-        let validationResult: {
-          scores: { dimension: string; score: number; notes: string }[];
-          lowestDimension: string;
-          needsRewrite: boolean;
-          rewriteNotes: string;
-          finalRoast: string;
-        };
-
-        try {
-          validationResult = parseJsonResponse(text) as typeof validationResult;
-        } catch {
-          // Can't parse validation — use current draft as-is
-          validationNotes += `Pass ${pass + 1}: Failed to parse validation response. Using current draft.\n`;
-          break;
-        }
-
-        const scores = validationResult.scores || [];
-        const allAbove3 = scores.every((s: { score: number }) => s.score >= 3);
-
-        validationNotes += `Pass ${pass + 1}: ${scores.map((s: { dimension: string; score: number }) => `${s.dimension}=${s.score}`).join(", ")}`;
-
-        if (validationResult.needsRewrite && validationResult.finalRoast) {
-          validationNotes += ` | Rewrote: ${validationResult.lowestDimension} (${validationResult.rewriteNotes})`;
-          currentDraft = validationResult.finalRoast;
-        }
-
-        validationNotes += "\n";
-
-        if (allAbove3 || !validationResult.needsRewrite) {
-          // All dimensions pass or no rewrite needed — use finalRoast if available
-          if (validationResult.finalRoast) {
-            currentDraft = validationResult.finalRoast;
-          }
-          break;
-        }
+    // ─── Step 2: Generate Roast via Hermes Runner ──────────────────────
+    const rawRoast = await step.run("generate-roast", async () => {
+      if (!ROAST_RUNNER_URL || !ROAST_RUNNER_SECRET) {
+        throw new Error("Roast runner not configured");
       }
 
-      // Save validation notes
+      const res = await fetch(`${ROAST_RUNNER_URL}/roast`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${ROAST_RUNNER_SECRET}`,
+        },
+        body: JSON.stringify({
+          name,
+          chartData: chartData.formatted_output,
+          hasBirthTime,
+        }),
+      });
+
+      const body = (await res.json().catch(() => ({}))) as {
+        roast?: string;
+        error?: string;
+        detail?: string;
+      };
+
+      if (res.status === 503 && body.error === "rate_limited") {
+        const err = new RateLimitError(body.detail || "");
+        err.name = "RateLimitError";
+        throw err;
+      }
+
+      if (!res.ok || !body.roast) {
+        throw new Error(
+          `Roast runner failed (${res.status}): ${body.error || "unknown"} ${body.detail || ""}`,
+        );
+      }
+
       await db
         .update(roasts)
-        .set({ validationNotes })
+        .set({ draft: body.roast })
         .where(eq(roasts.id, roastId));
 
-      return currentDraft;
+      return body.roast;
     });
 
-    // ─── Step 5: Save Final Content + Send Email ─────────────────────
+    // ─── Step 3: Parse + Save + Email ──────────────────────────────────
     await step.run("save-and-email", async () => {
-      const { title, teaser, fullText, callouts } =
-        parseRoastOutput(finalRoast);
+      const { title, teaser, fullText, callouts } = parseRoastOutput(rawRoast);
 
-      // If no separate teaser was extracted, derive from full text
       const finalTeaser =
         teaser ||
         (() => {
@@ -363,7 +203,6 @@ export const generateRoast = inngest.createFunction(
             : paragraphs[0] || "";
         })();
 
-      // Update roast row with final parsed content
       await db
         .update(roasts)
         .set({
@@ -375,7 +214,6 @@ export const generateRoast = inngest.createFunction(
         })
         .where(eq(roasts.id, roastId));
 
-      // Send email if the user provided one
       if (email) {
         try {
           await sendRoastEmail(email, name, fullText, roastId);
@@ -385,7 +223,6 @@ export const generateRoast = inngest.createFunction(
             .where(eq(roasts.id, roastId));
         } catch (emailErr) {
           console.error("Email send failed:", emailErr);
-          // Non-fatal — the roast is still saved and accessible
         }
       }
     });
