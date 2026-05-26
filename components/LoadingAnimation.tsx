@@ -38,30 +38,30 @@ const SIGNS = [
   "Pisces",
 ];
 
-const SIGN_GLYPHS: Record<string, string> = {
-  Aries: "\u2648",
-  Taurus: "\u2649",
-  Gemini: "\u264A",
-  Cancer: "\u264B",
-  Leo: "\u264C",
-  Virgo: "\u264D",
-  Libra: "\u264E",
-  Scorpio: "\u264F",
-  Sagittarius: "\u2650",
-  Capricorn: "\u2651",
-  Aquarius: "\u2652",
-  Pisces: "\u2653",
+const SIGN_LABELS: Record<string, string> = {
+  Aries: "ARI",
+  Taurus: "TAU",
+  Gemini: "GEM",
+  Cancer: "CAN",
+  Leo: "LEO",
+  Virgo: "VIR",
+  Libra: "LIB",
+  Scorpio: "SCO",
+  Sagittarius: "SAG",
+  Capricorn: "CAP",
+  Aquarius: "AQU",
+  Pisces: "PIS",
 };
 
-const PLANET_GLYPHS: Record<string, string> = {
-  Sun: "\u2609",
-  Moon: "\u263D",
-  Asc: "AC",
-  Mercury: "\u263F",
-  Venus: "\u2640",
-  Mars: "\u2642",
-  Jupiter: "\u2643",
-  Saturn: "\u2644",
+const PLANET_LABELS: Record<string, string> = {
+  Sun: "SUN",
+  Moon: "MOO",
+  Asc: "ASC",
+  Mercury: "MER",
+  Venus: "VEN",
+  Mars: "MAR",
+  Jupiter: "JUP",
+  Saturn: "SAT",
 };
 
 interface LoadingAnimationProps {
@@ -130,10 +130,9 @@ export default function LoadingAnimation({
     const graph = root.append("g").attr("class", "placement-graph");
 
     const rings = [
-      { r: 230, stroke: "#E5E5E5", opacity: 0.1 },
-      { r: 205, stroke: "#E5E5E5", opacity: 0.24 },
-      { r: 178, stroke: "#FF2A00", opacity: 0.55 },
-      { r: 76, stroke: "#E5E5E5", opacity: 0.18 },
+      { r: 230, stroke: "#E5E5E5", opacity: 0.08 },
+      { r: 178, stroke: "#E5E5E5", opacity: 0.18 },
+      { r: 76, stroke: "#E5E5E5", opacity: 0.08 },
     ];
 
     wheel
@@ -158,48 +157,57 @@ export default function LoadingAnimation({
       .ease(d3.easeCubicOut)
       .attr("stroke-dashoffset", 0);
 
-    const spokes = d3.range(12).map((index) => {
+    // 12 outer-edge tick marks at sign boundaries (not full spokes)
+    const ticks = d3.range(12).map((index) => {
       const angle = ((index * 30 - 90) * Math.PI) / 180;
       return {
-        inner: pointOnCircle(angle, 76),
-        outer: pointOnCircle(angle, 230),
+        inner: pointOnCircle(angle, 178),
+        outer: pointOnCircle(angle, 192),
       };
     });
 
     wheel
-      .selectAll("line.spoke")
-      .data(spokes)
+      .selectAll("line.tick")
+      .data(ticks)
       .join("line")
-      .attr("class", "spoke")
+      .attr("class", "tick")
       .attr("x1", (d) => d.inner.x)
       .attr("y1", (d) => d.inner.y)
       .attr("x2", (d) => d.outer.x)
       .attr("y2", (d) => d.outer.y)
       .attr("stroke", "#E5E5E5")
-      .attr("stroke-width", 1)
+      .attr("stroke-width", 0.6)
       .attr("opacity", 0)
       .transition()
       .duration(700)
-      .delay((_, index) => 600 + index * 45)
-      .attr("opacity", 0.13);
+      .delay((_, index) => 600 + index * 40)
+      .attr("opacity", 0.25);
 
     wheel
       .selectAll("text.sign")
       .data(SIGNS)
       .join("text")
       .attr("class", "sign")
-      .attr("x", (_, index) => pointOnCircle(placementAngle(SIGNS[index], 0), 215).x)
-      .attr("y", (_, index) => pointOnCircle(placementAngle(SIGNS[index], 0), 215).y)
+      .attr(
+        "x",
+        (_, index) => pointOnCircle(placementAngle(SIGNS[index], 0), 212).x,
+      )
+      .attr(
+        "y",
+        (_, index) => pointOnCircle(placementAngle(SIGNS[index], 0), 212).y,
+      )
       .attr("text-anchor", "middle")
       .attr("dominant-baseline", "middle")
       .attr("fill", "#E5E5E5")
       .attr("opacity", 0)
-      .attr("font-size", 17)
-      .text((sign) => SIGN_GLYPHS[sign])
+      .attr("font-size", 9)
+      .attr("font-family", "monospace")
+      .attr("letter-spacing", "0.1em")
+      .text((sign) => SIGN_LABELS[sign])
       .transition()
       .duration(500)
       .delay((_, index) => 900 + index * 35)
-      .attr("opacity", 0.5);
+      .attr("opacity", 0.4);
 
     const nodes: ChartNode[] = chartPlacements.map((placement, index) => {
       const angle = placementAngle(placement.sign, index);
@@ -229,8 +237,8 @@ export default function LoadingAnimation({
       .attr("y1", 0)
       .attr("x2", 0)
       .attr("y2", 0)
-      .attr("stroke", (d) => (d.hot ? "#FF2A00" : "#E5E5E5"))
-      .attr("stroke-width", 1)
+      .attr("stroke", "#E5E5E5")
+      .attr("stroke-width", 0.6)
       .attr("opacity", 0);
 
     linkSelection
@@ -241,7 +249,7 @@ export default function LoadingAnimation({
       .attr("y1", (d) => d.source.y)
       .attr("x2", (d) => d.target.x)
       .attr("y2", (d) => d.target.y)
-      .attr("opacity", (d) => (d.hot ? 0.62 : 0.28));
+      .attr("opacity", 0.22);
 
     const nodeSelection = graph
       .selectAll("g.placement")
@@ -253,67 +261,55 @@ export default function LoadingAnimation({
 
     nodeSelection
       .append("circle")
-      .attr("r", 18)
-      .attr("fill", "#030303")
-      .attr("stroke", "#FF2A00")
-      .attr("stroke-width", 1.4);
-
-    nodeSelection
-      .append("circle")
-      .attr("r", 5)
-      .attr("fill", "#FF2A00");
+      .attr("r", 3)
+      .attr("fill", "#E5E5E5")
+      .attr("opacity", 0.85);
 
     nodeSelection
       .append("text")
-      .attr("y", -25)
+      .attr("y", -10)
       .attr("text-anchor", "middle")
       .attr("fill", "#E5E5E5")
-      .attr("font-size", 11)
+      .attr("font-size", 9)
       .attr("font-family", "monospace")
-      .attr("letter-spacing", "0.08em")
-      .text((d) => d.planet.toUpperCase());
-
-    nodeSelection
-      .append("text")
-      .attr("y", 4)
-      .attr("text-anchor", "middle")
-      .attr("dominant-baseline", "middle")
-      .attr("fill", "#E5E5E5")
-      .attr("font-size", 14)
-      .attr("font-family", "monospace")
-      .text((d) => PLANET_GLYPHS[d.planet] || d.planet.slice(0, 2));
+      .attr("letter-spacing", "0.1em")
+      .attr("opacity", 0.7)
+      .text(
+        (d) => PLANET_LABELS[d.planet] || d.planet.slice(0, 3).toUpperCase(),
+      );
 
     nodeSelection
       .transition()
-      .duration(950)
-      .delay((_, index) => 1000 + index * 115)
-      .ease(d3.easeBackOut.overshoot(1.8))
+      .duration(800)
+      .delay((_, index) => 1000 + index * 90)
+      .ease(d3.easeCubicOut)
       .attr("transform", (d) => `translate(${d.x},${d.y})`)
       .attr("opacity", 1);
 
+    // Subtle, slow node breathe (no scale jump, just opacity)
     const pulseTimer = d3.interval(() => {
       nodeSelection
         .select("circle")
         .transition()
-        .duration(800)
-        .attr("r", 22)
-        .attr("opacity", 0.42)
+        .duration(1400)
+        .attr("opacity", 0.5)
         .transition()
-        .duration(800)
-        .attr("r", 18)
-        .attr("opacity", 1);
-    }, 1700);
+        .duration(1400)
+        .attr("opacity", 0.85);
+    }, 2800);
 
     wheel
       .transition()
-      .duration(40000)
+      .duration(90000)
       .ease(d3.easeLinear)
-      .attrTween("transform", () => d3.interpolateString("rotate(0)", "rotate(360)"))
+      .attrTween("transform", () =>
+        d3.interpolateString("rotate(0)", "rotate(360)"),
+      )
       .on("end", function repeat() {
         d3.select(this)
           .attr("transform", "rotate(0)")
           .transition()
-          .duration(40000)
+          .duration(90000)
           .ease(d3.easeLinear)
           .attrTween("transform", () =>
             d3.interpolateString("rotate(0)", "rotate(360)"),
@@ -379,7 +375,9 @@ export default function LoadingAnimation({
       <div className="absolute bottom-32 md:bottom-40 flex flex-col items-center z-20 px-6">
         <div className="h-6 overflow-hidden relative w-full text-center flex items-center justify-center">
           <span className="text-xs md:text-sm tracking-[0.15em] text-blood uppercase">
-            {hasActualPlacements ? STATUSES[statusIndex] : "Reading the place you gave us..."}
+            {hasActualPlacements
+              ? STATUSES[statusIndex]
+              : "Reading the place you gave us..."}
           </span>
         </div>
         <div className="w-64 h-[1px] bg-bruise mt-4 relative overflow-hidden">
