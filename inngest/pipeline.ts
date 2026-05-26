@@ -204,7 +204,9 @@ export const generateRoast = inngest.createFunction(
         },
         body: JSON.stringify({
           name,
-          chartData: chartData.formatted_output,
+          date,
+          time,
+          birthPlace: city,
           hasBirthTime,
         }),
       });
