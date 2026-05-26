@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import CityAutocomplete from "./CityAutocomplete";
 
 export default function BirthForm() {
   const router = useRouter();
@@ -10,14 +9,15 @@ export default function BirthForm() {
   const [email, setEmail] = useState("");
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
-  const [city, setCity] = useState("");
+  const [placeName, setPlaceName] = useState("");
+  const [countryName, setCountryName] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!city) {
-      setError("Select a city from the dropdown");
+    if (!placeName.trim() || !countryName.trim()) {
+      setError("Enter your place and country of birth");
       return;
     }
     setError("");
@@ -32,7 +32,8 @@ export default function BirthForm() {
           email: email || undefined,
           date,
           time: time || undefined,
-          city,
+          placeName,
+          countryName,
         }),
       });
 
@@ -122,8 +123,39 @@ export default function BirthForm() {
           </div>
         </div>
 
-        {/* City */}
-        <CityAutocomplete value={city} onChange={setCity} />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-14">
+          <div className="relative group interactive">
+            <label className="block text-xs uppercase tracking-[0.2em] text-ash/50 mb-3 font-mono">
+              Place of Birth
+            </label>
+            <input
+              type="text"
+              required
+              value={placeName}
+              onChange={(e) => setPlaceName(e.target.value)}
+              disabled={loading}
+              className="w-full bg-transparent border-b border-ash/20 text-lg md:text-xl font-syne font-bold text-ash py-3 focus:border-blood focus:outline-none transition-colors placeholder:text-ash/20 disabled:opacity-50 disabled:cursor-not-allowed"
+              placeholder="Town, city, hospital, or region"
+              autoComplete="address-level2"
+            />
+          </div>
+
+          <div className="relative group interactive">
+            <label className="block text-xs uppercase tracking-[0.2em] text-ash/50 mb-3 font-mono">
+              Country of Birth
+            </label>
+            <input
+              type="text"
+              required
+              value={countryName}
+              onChange={(e) => setCountryName(e.target.value)}
+              disabled={loading}
+              className="w-full bg-transparent border-b border-ash/20 text-lg md:text-xl font-syne font-bold text-ash py-3 focus:border-blood focus:outline-none transition-colors placeholder:text-ash/20 disabled:opacity-50 disabled:cursor-not-allowed"
+              placeholder="Country"
+              autoComplete="country-name"
+            />
+          </div>
+        </div>
       </div>
 
       {error && <p className="text-blood text-sm font-mono">{error}</p>}

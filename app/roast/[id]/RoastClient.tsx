@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import LoadingAnimation from "@/components/LoadingAnimation";
 import TeaserView from "@/components/TeaserView";
 import FullRoastView from "@/components/FullRoastView";
-import type { RoastData } from "@/lib/types";
+import type { ChartPlacement, RoastData } from "@/lib/types";
 
 interface RoastClientProps {
   roastId: string;
@@ -18,6 +18,17 @@ export default function RoastClient({
 }: RoastClientProps) {
   const router = useRouter();
   const [data, setData] = useState<RoastData>(initialData);
+
+  const placements: ChartPlacement[] = [
+    { planet: "Sun", sign: data.sunSign },
+    { planet: "Moon", sign: data.moonSign },
+    { planet: "Asc", sign: data.rising },
+    { planet: "Mercury", sign: data.mercurySign || "" },
+    { planet: "Venus", sign: data.venusSign || "" },
+    { planet: "Mars", sign: data.marsSign || "" },
+    { planet: "Jupiter", sign: data.jupiterSign || "" },
+    { planet: "Saturn", sign: data.saturnSign || "" },
+  ].filter((placement) => placement.sign);
 
   // Poll while generating (timeout after 3 minutes)
   useEffect(() => {
@@ -37,11 +48,11 @@ export default function RoastClient({
         const res = await fetch(`/api/roast/${roastId}`);
         const json = await res.json();
 
-        if (json.status === "ready") {
+        if (json.status === "ready" || json.status === "generating") {
           setData({
             id: roastId,
             name: json.name,
-            status: "ready",
+            status: json.status,
             sunSign: json.sunSign || "",
             moonSign: json.moonSign || "",
             rising: json.rising || "",
@@ -96,7 +107,7 @@ export default function RoastClient({
 
   // Generating -> loading animation
   if (data.status === "generating") {
-    return <LoadingAnimation />;
+    return <LoadingAnimation placements={placements} />;
   }
 
   // Error state
@@ -126,13 +137,13 @@ export default function RoastClient({
         sunSign={data.sunSign}
         moonSign={data.moonSign}
         rising={data.rising}
-        mercury={data.mercurySign}
-        venus={data.venusSign}
-        mars={data.marsSign}
-        jupiter={data.jupiterSign}
-        saturn={data.saturnSign}
-        fullText={data.fullText}
-        callouts={data.callouts}
+        mercury={data.mercurySign || ""}
+        venus={data.venusSign || ""}
+        mars={data.marsSign || ""}
+        jupiter={data.jupiterSign || ""}
+        saturn={data.saturnSign || ""}
+        fullText={data.fullText || ""}
+        callouts={data.callouts || []}
         roastId={roastId}
       />
     );

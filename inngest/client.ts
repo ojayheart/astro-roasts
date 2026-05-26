@@ -18,5 +18,6 @@ export type RoastGenerateEvent = {
     lon: number;
     tz: string;
     city: string;
+    knownCoordinates: boolean;
   };
 };

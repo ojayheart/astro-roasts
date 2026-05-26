@@ -1,5 +1,7 @@
 "use client";
 
+import { getPublicEnv } from "@/lib/env";
+
 declare global {
   interface Window {
     Paddle?: {
@@ -15,7 +17,7 @@ interface PaywallCTAProps {
 }
 
 export default function PaywallCTA({ roastId }: PaywallCTAProps) {
-  const priceId = process.env.NEXT_PUBLIC_PADDLE_PRICE_ID;
+  const priceId = getPublicEnv().paddlePriceId;
 
   const handleCheckout = () => {
     if (!window.Paddle || !priceId) return;

@@ -6,7 +6,8 @@ export interface BirthDetails {
   day: number;
   hour?: number;
   minute?: number;
-  city: string;
+  placeName: string;
+  countryName: string;
   lat: number;
   lon: number;
   tz: string;
@@ -20,16 +21,21 @@ export interface RoastData {
   sunSign: string;
   moonSign: string;
   rising: string;
-  mercurySign: string;
-  venusSign: string;
-  marsSign: string;
-  jupiterSign: string;
-  saturnSign: string;
+  mercurySign?: string;
+  venusSign?: string;
+  marsSign?: string;
+  jupiterSign?: string;
+  saturnSign?: string;
   teaser: string;
-  fullText: string;
-  callouts: string[];
+  fullText?: string;
+  callouts?: string[];
   paid: boolean;
-  createdAt: string;
+  createdAt?: string;
+}
+
+export interface ChartPlacement {
+  planet: string;
+  sign: string;
 }
 
 export interface HumorProfile {
@@ -90,5 +96,6 @@ export interface GenerateRequest {
   email?: string;
   date: string; // YYYY-MM-DD
   time?: string; // HH:MM, optional (no birth time mode)
-  city: string;
+  placeName: string;
+  countryName: string;
 }

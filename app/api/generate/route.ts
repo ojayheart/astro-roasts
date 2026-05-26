@@ -1,26 +1,69 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCityData } from "@/lib/cities";
 import { db } from "@/lib/db";
 import { users, roasts } from "@/lib/db/schema";
 import { inngest } from "@/inngest/client";
+import { generateRateLimiter, getClientIp } from "@/lib/rate-limit";
+import { resolveBirthLocation } from "@/lib/location";
 
 export const maxDuration = 60;
+const MAX_BODY_BYTES = 10_000;
 
 export async function POST(req: NextRequest) {
   try {
-    const { name, email, date, time, city } = await req.json();
+    const contentLength = Number(req.headers.get("content-length") || "0");
+    if (contentLength > MAX_BODY_BYTES) {
+      return NextResponse.json({ error: "Request too large" }, { status: 413 });
+    }
 
-    if (!name || !date || !city) {
+    const rateLimit = generateRateLimiter.check(getClientIp(req.headers));
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: "Too many roast requests. Try again later." },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": String(
+              Math.max(Math.ceil((rateLimit.resetAt - Date.now()) / 1000), 1),
+            ),
+          },
+        },
+      );
+    }
+
+    const body = await req.json();
+    const { name, email, date, time } = body;
+    const birthPlace =
+      body.birthPlace ||
+      [body.placeName, body.countryName]
+        .filter((value) => typeof value === "string" && value.trim())
+        .join(", ") ||
+      body.city;
+
+    if (!name || !date || !birthPlace) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 },
       );
     }
 
-    const cityData = getCityData(city);
-    if (!cityData) {
-      return NextResponse.json({ error: "City not found" }, { status: 400 });
+    if (
+      typeof name !== "string" ||
+      name.length > 80 ||
+      (email && (typeof email !== "string" || email.length > 254)) ||
+      typeof date !== "string" ||
+      (time && typeof time !== "string") ||
+      typeof birthPlace !== "string" ||
+      (body.placeName &&
+        (typeof body.placeName !== "string" || body.placeName.length > 120)) ||
+      (body.countryName &&
+        (typeof body.countryName !== "string" ||
+          body.countryName.length > 80)) ||
+      birthPlace.length > 160
+    ) {
+      return NextResponse.json({ error: "Invalid fields" }, { status: 400 });
     }
+
+    const location = resolveBirthLocation(birthPlace);
 
     // Create user
     const referralCode = crypto.randomUUID().slice(0, 8);
@@ -31,10 +74,10 @@ export async function POST(req: NextRequest) {
         email: email || null,
         dob: date,
         birthTime: time || null,
-        birthCity: city,
-        lat: cityData.lat,
-        lon: cityData.lon,
-        tz: cityData.tz,
+        birthCity: location.city,
+        lat: location.lat,
+        lon: location.lon,
+        tz: location.tz,
         referralCode,
       })
       .returning()) as (typeof users.$inferSelect)[];
@@ -62,10 +105,11 @@ export async function POST(req: NextRequest) {
         email: email || null,
         date,
         time: time || null,
-        lat: cityData.lat,
-        lon: cityData.lon,
-        tz: cityData.tz,
-        city,
+        lat: location.lat,
+        lon: location.lon,
+        tz: location.tz,
+        city: location.city,
+        knownCoordinates: location.knownCoordinates,
       },
     });
 

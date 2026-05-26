@@ -11,6 +11,7 @@ import { inngest } from "./client";
 import { db } from "@/lib/db";
 import { roasts } from "@/lib/db/schema";
 import { sendRoastEmail } from "@/lib/email";
+import { buildFreeformChartContext } from "@/lib/location";
 
 const ROAST_RUNNER_URL = process.env.ROAST_RUNNER_URL;
 const ROAST_RUNNER_SECRET = process.env.ROAST_RUNNER_SECRET;
@@ -91,7 +92,18 @@ export const generateRoast = inngest.createFunction(
     },
   },
   async ({ event, step }) => {
-    const { roastId, name, email, date, time, lat, lon, tz } = event.data;
+    const {
+      roastId,
+      name,
+      email,
+      date,
+      time,
+      lat,
+      lon,
+      tz,
+      city,
+      knownCoordinates,
+    } = event.data;
 
     const hasBirthTime = !!time;
     const [year, month, day] = date.split("-").map(Number);
@@ -101,6 +113,35 @@ export const generateRoast = inngest.createFunction(
 
     // ─── Step 1: Calculate Chart ───────────────────────────────────────
     const chartData = await step.run("calculate-chart", async () => {
+      if (!knownCoordinates) {
+        const formattedOutput = buildFreeformChartContext({
+          name,
+          date,
+          time,
+          city,
+        });
+
+        await db
+          .update(roasts)
+          .set({
+            chartData: formattedOutput,
+            rising: null,
+          })
+          .where(eq(roasts.id, roastId));
+
+        return {
+          formatted_output: formattedOutput,
+          sun_sign: "",
+          moon_sign: "",
+          rising_sign: "",
+          mercury_sign: "",
+          venus_sign: "",
+          mars_sign: "",
+          jupiter_sign: "",
+          saturn_sign: "",
+        };
+      }
+
       const baseUrl =
         process.env.NEXT_PUBLIC_APP_URL ||
         (process.env.VERCEL_ENV === "production"
