@@ -188,8 +188,8 @@ export default function TeaserView({
                 <p className="teaser-p" style={blurStyle}>
                   {p}
                 </p>
-                {/* Sentinel after 3rd paragraph triggers paywall */}
-                {i === 2 && <div ref={sentinelRef} className="h-0" />}
+                {/* Sentinel after 4th paragraph triggers paywall */}
+                {i === 3 && <div ref={sentinelRef} className="h-0" />}
               </div>
             );
           })}

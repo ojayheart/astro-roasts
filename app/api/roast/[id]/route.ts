@@ -31,8 +31,17 @@ export async function GET(
   // Extract user from relation
   const user = Array.isArray(roast.user) ? roast.user[0] : roast.user;
 
-  // If not paid, return teaser only
+  // If not paid, return first 5 paragraphs of the full roast as the hook.
+  // Falls back to the stored teaser if fullText is missing.
   if (!roast.paid) {
+    const TEASER_PARAGRAPHS = 5;
+    const sourceText = roast.fullText || roast.teaser || "";
+    const paragraphs = sourceText.split("\n\n").filter((p) => p.trim());
+    const hook =
+      paragraphs.length >= TEASER_PARAGRAPHS
+        ? paragraphs.slice(0, TEASER_PARAGRAPHS).join("\n\n") + " —"
+        : sourceText;
+
     return NextResponse.json({
       status: "ready",
       paid: false,
@@ -40,7 +49,7 @@ export async function GET(
       sunSign: roast.sunSign,
       moonSign: roast.moonSign,
       rising: roast.rising,
-      teaser: roast.teaser,
+      teaser: hook,
     });
   }
 
