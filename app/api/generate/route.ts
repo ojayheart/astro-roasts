@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { users, roasts } from "@/lib/db/schema";
 import { inngest } from "@/inngest/client";
 import { generateRateLimiter, getClientIp } from "@/lib/rate-limit";
-import { resolveBirthLocation } from "@/lib/location";
+import { normalizeBirthLocation } from "@/lib/location";
 
 export const maxDuration = 60;
 const MAX_BODY_BYTES = 10_000;
@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid fields" }, { status: 400 });
     }
 
-    const location = resolveBirthLocation(birthPlace);
+    const normalizedBirthPlace = normalizeBirthLocation(birthPlace);
 
     // Create user
     const referralCode = crypto.randomUUID().slice(0, 8);
@@ -74,10 +74,10 @@ export async function POST(req: NextRequest) {
         email: email || null,
         dob: date,
         birthTime: time || null,
-        birthCity: location.city,
-        lat: location.lat,
-        lon: location.lon,
-        tz: location.tz,
+        birthCity: normalizedBirthPlace,
+        lat: 0,
+        lon: 0,
+        tz: "UTC",
         referralCode,
       })
       .returning()) as (typeof users.$inferSelect)[];
@@ -105,11 +105,7 @@ export async function POST(req: NextRequest) {
         email: email || null,
         date,
         time: time || null,
-        lat: location.lat,
-        lon: location.lon,
-        tz: location.tz,
-        city: location.city,
-        knownCoordinates: location.knownCoordinates,
+        city: normalizedBirthPlace,
       },
     });
 

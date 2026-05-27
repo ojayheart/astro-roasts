@@ -5,6 +5,10 @@ import { getPublicEnv } from "../lib/env.ts";
 import { resolveBirthLocation } from "../lib/location.ts";
 import { createMemoryRateLimiter } from "../lib/rate-limit.ts";
 import { buildRoastPayload } from "../lib/roast-response.ts";
+import {
+  buildRoastRunnerPayload,
+  extractChartPlacements,
+} from "../lib/roast-runner.ts";
 import { verifyPaddleTransaction } from "../lib/paddle.ts";
 
 const baseRoast = {
@@ -133,4 +137,49 @@ test("birth location resolution keeps exact data for known cities", () => {
 
   assert.equal(location.knownCoordinates, true);
   assert.equal(location.tz, "Pacific/Auckland");
+});
+
+test("roast runner payload sends raw birth data instead of calculated chart text", () => {
+  const payload = buildRoastRunnerPayload({
+    name: "Charlotte",
+    date: "1992-08-29",
+    time: "04:10",
+    birthPlace: "Munich, Germany",
+  });
+
+  assert.deepEqual(payload, {
+    name: "Charlotte",
+    date: "1992-08-29",
+    time: "04:10",
+    birthPlace: "Munich, Germany",
+    hasBirthTime: true,
+  });
+  assert.equal("chartData" in payload, false);
+});
+
+test("chart placements are extracted from natal_chart.py formatted output", () => {
+  const placements = extractChartPlacements(`
+PLANET POSITIONS
+────────────────
+  Sun              05°47' Virgo             1st
+  Moon             18°51' Virgo             1st
+  Mercury          24°11' Leo              12th
+  Venus            16°11' Libra             2nd
+  Mars             11°05' Gemini           10th
+  Jupiter          15°54' Cancer           11th
+  Saturn           24°01' Capricorn         5th Rx
+  ──────────────── ────────────────────── ─────
+  Ascendant        11°14' Virgo             1st
+`);
+
+  assert.deepEqual(placements, {
+    sunSign: "Virgo",
+    moonSign: "Virgo",
+    rising: "Virgo",
+    mercurySign: "Leo",
+    venusSign: "Libra",
+    marsSign: "Gemini",
+    jupiterSign: "Cancer",
+    saturnSign: "Capricorn",
+  });
 });

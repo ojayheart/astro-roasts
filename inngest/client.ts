@@ -14,10 +14,6 @@ export type RoastGenerateEvent = {
     email: string | null;
     date: string;
     time: string | null;
-    lat: number;
-    lon: number;
-    tz: string;
     city: string;
-    knownCoordinates: boolean;
   };
 };

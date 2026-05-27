@@ -1,9 +1,8 @@
 /**
  * 3-step Inngest roast generation pipeline.
  *
- * Step 1: Calculate natal chart via /api/chart
- * Step 2: Generate roast via headless `claude -p` on hermes runner
- * Step 3: Parse, save, email
+ * Step 1: Generate chart + roast via headless Claude Code on Hermes.
+ * Step 2: Parse, save, email.
  */
 
 import { eq } from "drizzle-orm";
@@ -11,7 +10,12 @@ import { inngest } from "./client";
 import { db } from "@/lib/db";
 import { roasts } from "@/lib/db/schema";
 import { sendRoastEmail } from "@/lib/email";
-import { buildFreeformChartContext } from "@/lib/location";
+import {
+  buildRoastRunnerPayload,
+  extractChartPlacements,
+  extractMarkedSection,
+  extractRoastBlock,
+} from "@/lib/roast-runner";
 
 const ROAST_RUNNER_URL = process.env.ROAST_RUNNER_URL;
 const ROAST_RUNNER_SECRET = process.env.ROAST_RUNNER_SECRET;
@@ -98,100 +102,13 @@ export const generateRoast = inngest.createFunction(
       email,
       date,
       time,
-      lat,
-      lon,
-      tz,
       city,
-      knownCoordinates,
     } = event.data;
 
     const hasBirthTime = !!time;
-    const [year, month, day] = date.split("-").map(Number);
-    const [hour, minute] = hasBirthTime
-      ? time!.split(":").map(Number)
-      : [12, 0];
 
-    // ─── Step 1: Calculate Chart ───────────────────────────────────────
-    const chartData = await step.run("calculate-chart", async () => {
-      if (!knownCoordinates) {
-        const formattedOutput = buildFreeformChartContext({
-          name,
-          date,
-          time,
-          city,
-        });
-
-        await db
-          .update(roasts)
-          .set({
-            chartData: formattedOutput,
-            rising: null,
-          })
-          .where(eq(roasts.id, roastId));
-
-        return {
-          formatted_output: formattedOutput,
-          sun_sign: "",
-          moon_sign: "",
-          rising_sign: "",
-          mercury_sign: "",
-          venus_sign: "",
-          mars_sign: "",
-          jupiter_sign: "",
-          saturn_sign: "",
-        };
-      }
-
-      const baseUrl =
-        process.env.NEXT_PUBLIC_APP_URL ||
-        (process.env.VERCEL_ENV === "production"
-          ? "https://astroroast.com"
-          : process.env.VERCEL_URL
-            ? `https://${process.env.VERCEL_URL}`
-            : "http://localhost:3000");
-
-      const res = await fetch(`${baseUrl}/api/chart`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name,
-          year,
-          month,
-          day,
-          hour,
-          minute,
-          lat,
-          lon,
-          tz,
-        }),
-      });
-
-      if (!res.ok) {
-        throw new Error(`Chart calculation failed: ${await res.text()}`);
-      }
-
-      const data = await res.json();
-
-      await db
-        .update(roasts)
-        .set({
-          chartData: data.formatted_output,
-          sunSign: data.sun_sign,
-          moonSign: data.moon_sign,
-          rising: data.rising_sign,
-          mercurySign: data.mercury_sign,
-          venusSign: data.venus_sign,
-          marsSign: data.mars_sign,
-          jupiterSign: data.jupiter_sign,
-          saturnSign: data.saturn_sign,
-        })
-        .where(eq(roasts.id, roastId));
-
-      return data;
-    });
-
-    // ─── Step 2: Generate Roast via Hermes Runner ──────────────────────
-    const rawRoast = await step.run("generate-roast", async () => {
+    // ─── Step 1: Generate Chart + Roast via Hermes Runner ──────────────
+    const runnerOutput = await step.run("generate-roast", async () => {
       if (!ROAST_RUNNER_URL || !ROAST_RUNNER_SECRET) {
         throw new Error("Roast runner not configured");
       }
@@ -202,17 +119,20 @@ export const generateRoast = inngest.createFunction(
           "Content-Type": "application/json",
           Authorization: `Bearer ${ROAST_RUNNER_SECRET}`,
         },
-        body: JSON.stringify({
-          name,
-          date,
-          time,
-          birthPlace: city,
-          hasBirthTime,
-        }),
+        body: JSON.stringify(
+          buildRoastRunnerPayload({
+            name,
+            date,
+            time,
+            birthPlace: city,
+          }),
+        ),
       });
 
       const body = (await res.json().catch(() => ({}))) as {
+        output?: string;
         roast?: string;
+        chartData?: string;
         error?: string;
         detail?: string;
       };
@@ -223,23 +143,42 @@ export const generateRoast = inngest.createFunction(
         throw err;
       }
 
-      if (!res.ok || !body.roast) {
+      const output = body.output || body.roast || "";
+
+      if (!res.ok || !output) {
         throw new Error(
           `Roast runner failed (${res.status}): ${body.error || "unknown"} ${body.detail || ""}`,
         );
       }
 
+      const chartData = body.chartData || extractMarkedSection(output, "CHART");
+      const roastOutput = extractRoastBlock(output);
+      if (!chartData) {
+        throw new Error("Roast runner did not return chart data");
+      }
+
+      const placements = extractChartPlacements(chartData);
+
       await db
         .update(roasts)
-        .set({ draft: body.roast })
+        .set({
+          chartData,
+          draft: roastOutput,
+          ...placements,
+        })
         .where(eq(roasts.id, roastId));
 
-      return body.roast;
+      return {
+        chartData,
+        roastOutput,
+      };
     });
 
-    // ─── Step 3: Parse + Save + Email ──────────────────────────────────
+    // ─── Step 2: Parse + Save + Email ──────────────────────────────────
     await step.run("save-and-email", async () => {
-      const { title, teaser, fullText, callouts } = parseRoastOutput(rawRoast);
+      const { title, teaser, fullText, callouts } = parseRoastOutput(
+        runnerOutput.roastOutput,
+      );
 
       const finalTeaser =
         teaser ||
@@ -274,6 +213,6 @@ export const generateRoast = inngest.createFunction(
       }
     });
 
-    return { roastId, status: "ready" };
+    return { roastId, status: "ready", hasBirthTime };
   },
 );
