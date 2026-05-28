@@ -392,7 +392,7 @@ export default function LoadingAnimation({
 
       <footer className="absolute bottom-8 w-full text-center z-20 pointer-events-none px-6">
         <p className="text-[10px] md:text-xs tracking-[0.3em] text-ash/40 uppercase">
-          The stars don&apos;t sugarcoat. Neither do we.
+          Built from chart data. Delivered without padding.
         </p>
       </footer>
 

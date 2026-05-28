@@ -60,13 +60,13 @@ export default function HeroSection() {
         </h1>
 
         <p className="hero-fade mt-8 md:mt-12 text-sm md:text-base max-w-md opacity-0 font-light text-ash/70 leading-relaxed">
-          A radically honest, surgically precise teardown of your exact natal
-          chart. We see your patterns. We know your delusions.
+          A brutally specific roast built from your natal chart: planets,
+          houses, aspects, and the patterns you keep calling personality.
         </p>
 
         <div className="hero-fade mt-16 opacity-0 flex flex-col items-center gap-4">
           <span className="text-[10px] uppercase tracking-[0.3em] opacity-50">
-            Scroll to face it
+            Scroll for the evidence
           </span>
           <div className="w-[1px] h-16 bg-gradient-to-b from-ash to-transparent" />
         </div>

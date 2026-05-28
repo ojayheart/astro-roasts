@@ -29,7 +29,7 @@ export default function ShareButton({ roastId }: { roastId: string }) {
       onClick={handleCopy}
       className="interactive px-6 py-3 border border-ash/20 bg-void text-ash font-mono text-xs uppercase tracking-[0.15em] hover:border-blood hover:text-blood transition-colors duration-300"
     >
-      {copied ? "Link Copied" : "Copy Link"}
+      {copied ? "Link copied" : "Copy roast link"}
     </button>
   );
 }

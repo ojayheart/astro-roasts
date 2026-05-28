@@ -17,7 +17,7 @@ export default function BirthForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!placeName.trim() || !countryName.trim()) {
-      setError("Enter your place and country of birth");
+      setError("Add your birth place and country so we can calculate the chart.");
       return;
     }
     setError("");
@@ -40,14 +40,17 @@ export default function BirthForm() {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || "Something went wrong");
+        setError(
+          data.error ||
+            "We couldn't start your roast. Check your details and try again.",
+        );
         setLoading(false);
         return;
       }
 
       router.push(`/roast/${data.id}`);
     } catch {
-      setError("Connection failed. Please try again.");
+      setError("Connection failed. Check your internet and try again.");
       setLoading(false);
     }
   };
@@ -58,7 +61,7 @@ export default function BirthForm() {
         {/* Name */}
         <div className="relative group interactive">
           <label className="block text-xs uppercase tracking-[0.2em] text-ash/50 mb-3 font-mono">
-            First Name
+            First name
           </label>
           <input
             type="text"
@@ -67,14 +70,14 @@ export default function BirthForm() {
             onChange={(e) => setName(e.target.value)}
             disabled={loading}
             className="w-full bg-transparent border-b border-ash/20 text-lg md:text-xl font-syne font-bold text-ash py-3 focus:border-blood focus:outline-none transition-colors placeholder:text-ash/20 disabled:opacity-50 disabled:cursor-not-allowed"
-            placeholder="Enter your name"
+            placeholder="What should the roast call you?"
           />
         </div>
 
         {/* Email */}
         <div className="relative group interactive">
           <label className="block text-xs uppercase tracking-[0.2em] text-ash/50 mb-3 font-mono">
-            Email (for your roast)
+            Email for your link
           </label>
           <input
             type="email"
@@ -82,7 +85,7 @@ export default function BirthForm() {
             onChange={(e) => setEmail(e.target.value)}
             disabled={loading}
             className="w-full bg-transparent border-b border-ash/20 text-lg md:text-xl font-syne font-bold text-ash py-3 focus:border-blood focus:outline-none transition-colors placeholder:text-ash/20 disabled:opacity-50 disabled:cursor-not-allowed"
-            placeholder="optional@email.com"
+            placeholder="Optional, but useful"
           />
         </div>
 
@@ -91,7 +94,7 @@ export default function BirthForm() {
           {/* Date */}
           <div className="relative group interactive">
             <label className="block text-xs uppercase tracking-[0.2em] text-ash/50 mb-3 font-mono">
-              Date of Birth
+              Date of birth
             </label>
             <input
               type="date"
@@ -107,9 +110,9 @@ export default function BirthForm() {
           {/* Time */}
           <div className="relative group interactive">
             <label className="block text-xs uppercase tracking-[0.2em] text-ash/50 mb-3 font-mono">
-              Exact Time{" "}
+              Birth time{" "}
               <span className="text-ash/30 normal-case tracking-normal">
-                (optional)
+                (optional, sharper if exact)
               </span>
             </label>
             <input
@@ -126,7 +129,7 @@ export default function BirthForm() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-14">
           <div className="relative group interactive">
             <label className="block text-xs uppercase tracking-[0.2em] text-ash/50 mb-3 font-mono">
-              Place of Birth
+              Birth place
             </label>
             <input
               type="text"
@@ -135,14 +138,14 @@ export default function BirthForm() {
               onChange={(e) => setPlaceName(e.target.value)}
               disabled={loading}
               className="w-full bg-transparent border-b border-ash/20 text-lg md:text-xl font-syne font-bold text-ash py-3 focus:border-blood focus:outline-none transition-colors placeholder:text-ash/20 disabled:opacity-50 disabled:cursor-not-allowed"
-              placeholder="Town, city, hospital, or region"
+              placeholder="City, town, or nearest place"
               autoComplete="address-level2"
             />
           </div>
 
           <div className="relative group interactive">
             <label className="block text-xs uppercase tracking-[0.2em] text-ash/50 mb-3 font-mono">
-              Country of Birth
+              Country
             </label>
             <input
               type="text"
@@ -168,7 +171,7 @@ export default function BirthForm() {
           className="interactive w-full bg-ash text-void font-syne font-bold text-lg md:text-2xl uppercase py-5 hover:bg-blood hover:text-ash transition-colors duration-300 relative overflow-hidden group disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <span className="relative z-10">
-            {loading ? "Summoning the stars..." : "Expose Me"}
+            {loading ? "Calculating your chart..." : "Generate my roast"}
           </span>
           <div className="absolute inset-0 bg-blood transform scale-y-0 origin-bottom group-hover:scale-y-100 transition-transform duration-300 ease-in-out z-0" />
         </button>

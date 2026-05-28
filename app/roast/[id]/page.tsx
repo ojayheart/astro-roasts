@@ -21,10 +21,5 @@ export default async function RoastPage({ params }: Props) {
     notFound();
   }
 
-  return (
-    <RoastClient
-      roastId={id}
-      initialData={buildRoastPayload(roast)}
-    />
-  );
+  return <RoastClient roastId={id} initialData={buildRoastPayload(roast)} />;
 }

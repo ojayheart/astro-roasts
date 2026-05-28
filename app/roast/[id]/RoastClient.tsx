@@ -116,13 +116,14 @@ export default function RoastClient({
       <div className="min-h-screen bg-void flex items-center justify-center px-6">
         <div className="text-center">
           <p className="text-blood font-mono text-sm mb-4">
-            Something went wrong generating your roast.
+            We couldn&apos;t finish this roast. The chart data is safe; the writer
+            just lost the thread.
           </p>
           <a
             href="/"
             className="text-ash/60 font-mono text-xs underline hover:text-ash transition-colors"
           >
-            Try again
+            Start a new roast
           </a>
         </div>
       </div>
