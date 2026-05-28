@@ -5,12 +5,16 @@ import * as d3 from "d3";
 import type { ChartPlacement } from "@/lib/types";
 
 const STATUSES = [
-  "Calculating planetary positions...",
-  "Mapping house placements...",
-  "Analyzing aspects...",
-  "Identifying patterns...",
-  "Compiling weaknesses...",
-  "Preparing your reading...",
+  "Locating your planets. Bracing for impact...",
+  "Calculating exactly where it went wrong...",
+  "Cross-referencing your delusions...",
+  "Consulting Saturn. Saturn is disappointed...",
+  "Measuring the gap between you and your potential...",
+  "Asking Mercury why you said that in 2019...",
+  "Tallying the red flags. Running low on ink...",
+  "Translating your trauma into degrees and minutes...",
+  "Finding the part you hoped we'd miss...",
+  "Almost done. You're not going to love this...",
 ];
 
 const FALLBACK_PLACEMENTS: ChartPlacement[] = [
@@ -109,7 +113,6 @@ export default function LoadingAnimation({
     () => normalizePlacements(placements),
     [placements],
   );
-  const hasActualPlacements = (placements || []).length > 0;
 
   useEffect(() => {
     if (!svgRef.current) return;
@@ -326,11 +329,8 @@ export default function LoadingAnimation({
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setStatusIndex((prev) => {
-        if (prev >= STATUSES.length - 1) return prev;
-        return prev + 1;
-      });
-    }, 1200);
+      setStatusIndex((prev) => (prev + 1) % STATUSES.length);
+    }, 1800);
 
     return () => clearInterval(interval);
   }, []);
@@ -374,10 +374,11 @@ export default function LoadingAnimation({
 
       <div className="absolute bottom-32 md:bottom-40 flex flex-col items-center z-20 px-6">
         <div className="h-6 overflow-hidden relative w-full text-center flex items-center justify-center">
-          <span className="text-xs md:text-sm tracking-[0.15em] text-blood uppercase">
-            {hasActualPlacements
-              ? STATUSES[statusIndex]
-              : "Reading the place you gave us..."}
+          <span
+            key={statusIndex}
+            className="status-line text-xs md:text-sm tracking-[0.15em] text-blood uppercase"
+          >
+            {STATUSES[statusIndex]}
           </span>
         </div>
         <div className="w-64 h-[1px] bg-bruise mt-4 relative overflow-hidden">
