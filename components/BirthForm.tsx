@@ -112,7 +112,7 @@ export default function BirthForm() {
             <label className="block text-xs uppercase tracking-[0.2em] text-ash/50 mb-3 font-mono">
               Birth time{" "}
               <span className="text-ash/30 normal-case tracking-normal">
-                (optional, sharper if exact)
+                (optional)
               </span>
             </label>
             <input
@@ -138,7 +138,7 @@ export default function BirthForm() {
               onChange={(e) => setPlaceName(e.target.value)}
               disabled={loading}
               className="w-full bg-transparent border-b border-ash/20 text-lg md:text-xl font-syne font-bold text-ash py-3 focus:border-blood focus:outline-none transition-colors placeholder:text-ash/20 disabled:opacity-50 disabled:cursor-not-allowed"
-              placeholder="City, town, or nearest place"
+              placeholder="City or town"
               autoComplete="address-level2"
             />
           </div>
