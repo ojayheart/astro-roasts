@@ -6,11 +6,11 @@ import type { ChartPlacement } from "@/lib/types";
 
 const STATUSES = [
   "Calculating planetary positions...",
-  "Mapping house placements...",
-  "Analyzing aspects...",
-  "Identifying patterns...",
-  "Compiling weaknesses...",
-  "Preparing your reading...",
+  "Mapping houses and angles...",
+  "Checking the hard aspects...",
+  "Finding the pattern you keep repeating...",
+  "Writing the parts your friends noticed first...",
+  "Preparing your roast...",
 ];
 
 const FALLBACK_PLACEMENTS: ChartPlacement[] = [
@@ -377,7 +377,7 @@ export default function LoadingAnimation({
           <span className="text-xs md:text-sm tracking-[0.15em] text-blood uppercase">
             {hasActualPlacements
               ? STATUSES[statusIndex]
-              : "Reading the place you gave us..."}
+              : "Resolving your birth place..."}
           </span>
         </div>
         <div className="w-64 h-[1px] bg-bruise mt-4 relative overflow-hidden">
@@ -391,7 +391,7 @@ export default function LoadingAnimation({
 
       <footer className="absolute bottom-8 w-full text-center z-20 pointer-events-none px-6">
         <p className="text-[10px] md:text-xs tracking-[0.3em] text-ash/40 uppercase">
-          The stars don&apos;t sugarcoat. Neither do we.
+          Built from chart data. Delivered without padding.
         </p>
       </footer>
 

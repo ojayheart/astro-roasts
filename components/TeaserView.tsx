@@ -168,7 +168,7 @@ export default function TeaserView({
 
         {/* Title */}
         <h1 className="main-title font-syne text-4xl md:text-5xl font-extrabold uppercase tracking-tighter mb-12 text-outline">
-          Analysis Complete
+          The first findings
         </h1>
 
         {/* Free Teaser with Progressive Blur */}

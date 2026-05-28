@@ -123,7 +123,7 @@ export default function FullRoastView({
         <header className="mb-32 gs-reveal">
           <p className="font-mono text-[10px] md:text-xs uppercase tracking-[0.15em] text-blood mb-6 flex items-center gap-4">
             <span className="w-12 h-px bg-blood" />
-            RESTRICTED CLEARANCE // DO NOT DISTRIBUTE
+            FULL ROAST UNLOCKED // PROCEED CAREFULLY
           </p>
           <h1 className="font-syne font-extrabold text-6xl md:text-8xl tracking-tighter uppercase mb-12 text-ash leading-none">
             Subject:
@@ -178,10 +178,10 @@ export default function FullRoastView({
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-8">
             <div>
               <h3 className="font-syne font-extrabold text-2xl uppercase tracking-tight text-ash mb-2">
-                Survive the roast?
+                Still standing?
               </h3>
               <p className="text-ash/50 text-sm">
-                Make someone else suffer. Share your dossier.
+                Share the link, or generate a fresh chart for someone else.
               </p>
             </div>
 
@@ -191,7 +191,7 @@ export default function FullRoastView({
                 href="/"
                 className="interactive px-6 py-3 bg-blood text-white font-mono text-xs uppercase tracking-[0.15em] hover:bg-white hover:text-void transition-colors duration-300"
               >
-                Get Another Roast
+                Roast someone else
               </a>
             </div>
           </div>
