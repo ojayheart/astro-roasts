@@ -1,10 +1,65 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
+const ROAST_LINES = [
+  {
+    quote: "You're a Capricorn in a Hawaiian shirt.",
+    author: "Ollie, Aquarius Stellium",
+  },
+  {
+    quote: "A spreadsheet that has feelings about its own formatting.",
+    author: "Charlotte, Triple Virgo",
+  },
+  {
+    quote: "Your internal editor has an internal editor.",
+    author: "Ollie, Aquarius Stellium",
+  },
+  {
+    quote: "You're a Leo trapped in a Virgo filing cabinet.",
+    author: "Charlotte, Triple Virgo",
+  },
+  {
+    quote:
+      "Two people stacked in a trench coat — and the scary one got the outside.",
+    author: "Sage, Scorpio Rising",
+  },
+  {
+    quote: "You don't fight often. But when you do, you fight like a surgeon.",
+    author: "Charlotte, Triple Virgo",
+  },
+  {
+    quote: "Mercury in Scorpio doesn't make small talk. It makes incisions.",
+    author: "Sage, Scorpio Rising",
+  },
+  {
+    quote:
+      "The emotional equivalent of a nuclear reactor — and the control room is in the basement with the lights off.",
+    author: "Ollie, Aquarius Stellium",
+  },
+  {
+    quote:
+      "The 12th-house Venus is writing poetry. Mars is guarding the notebook with a sword.",
+    author: "Sage, Scorpio Rising",
+  },
+  {
+    quote: "You're not the assistant. You're the whole operation.",
+    author: "Charlotte, Triple Virgo",
+  },
+];
+
 export default function ManifestoSection() {
+  const [active, setActive] = useState(0);
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      setActive((i) => (i + 1) % ROAST_LINES.length);
+    }, 6000);
+    return () => clearInterval(id);
+  }, []);
+
   useEffect(() => {
     gsap.registerPlugin(ScrollTrigger);
 
@@ -81,11 +136,34 @@ export default function ManifestoSection() {
             <br />
             <span className="text-blood">neither.</span>
           </div>
-          <div className="manifesto-text absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full opacity-0 text-2xl md:text-5xl normal-case font-normal font-mono">
-            &ldquo;It told me my fear of intimacy is masked as high standards. I
-            cried, paid $5, and cried again.&rdquo;
-            <div className="mt-6 text-sm uppercase tracking-[0.15em] text-blood font-syne font-bold">
-              — Anonymous, Virgo Sun
+          <div className="manifesto-text absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full opacity-0">
+            <div className="relative min-h-[12rem] md:min-h-[16rem] flex items-center justify-center">
+              {ROAST_LINES.map((t, i) => (
+                <div
+                  key={i}
+                  className={`absolute inset-0 flex flex-col items-center justify-center px-2 text-xl md:text-3xl normal-case font-normal font-mono leading-snug transition-opacity duration-700 ease-in-out ${
+                    i === active
+                      ? "opacity-100"
+                      : "opacity-0 pointer-events-none"
+                  }`}
+                >
+                  &ldquo;{t.quote}&rdquo;
+                  <div className="mt-6 text-sm uppercase tracking-[0.15em] text-blood font-syne font-bold">
+                    — {t.author}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-10 flex items-center justify-center gap-3">
+              {ROAST_LINES.map((_, i) => (
+                <span
+                  key={i}
+                  className={`h-1.5 rounded-full transition-all duration-500 ${
+                    i === active ? "w-8 bg-blood" : "w-1.5 bg-ash/30"
+                  }`}
+                />
+              ))}
             </div>
           </div>
         </div>
