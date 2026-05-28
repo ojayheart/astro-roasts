@@ -211,7 +211,7 @@ export default function TeaserView({
 
       {/* Scroll-triggered paywall */}
       <div
-        className={`transition-all duration-700 ease-out ${
+        className={`relative z-50 pointer-events-none transition-all duration-700 ease-out ${
           showPaywall
             ? "translate-y-0 opacity-100"
             : "translate-y-full opacity-0"

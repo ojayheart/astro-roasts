@@ -1,7 +1,5 @@
 "use client";
 
-import { getPublicEnv } from "@/lib/env";
-
 declare global {
   interface Window {
     Paddle?: {
@@ -17,10 +15,13 @@ interface PaywallCTAProps {
 }
 
 export default function PaywallCTA({ roastId }: PaywallCTAProps) {
-  const priceId = getPublicEnv().paddlePriceId;
+  const priceId = process.env.NEXT_PUBLIC_PADDLE_PRICE_ID?.trim() ?? "";
 
   const handleCheckout = () => {
-    if (!window.Paddle || !priceId) return;
+    if (!window.Paddle || !priceId) {
+      console.error("Paddle checkout is not ready.");
+      return;
+    }
 
     window.Paddle.Checkout.open({
       settings: {
