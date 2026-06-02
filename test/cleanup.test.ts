@@ -10,6 +10,15 @@ import {
   extractChartPlacements,
 } from "../lib/roast-runner.ts";
 import { verifyPaddleTransaction } from "../lib/paddle.ts";
+import {
+  initializePaddleCheckout,
+  isPaddleCheckoutReady,
+  type PaddleInitializeOptions,
+} from "../lib/paddle-client.ts";
+import {
+  buildPaddleCheckoutErrorContext,
+  buildSentryInitOptions,
+} from "../lib/sentry-config.ts";
 
 const baseRoast = {
   id: "roast-1",
@@ -120,6 +129,107 @@ test("public env values are trimmed before client-side script injection", () => 
   assert.equal(env.paddleClientToken, "live_token");
   assert.equal(env.paddlePriceId, "pri_123");
   assert.equal(env.paddleEnvironment, "production");
+});
+
+test("Paddle checkout initialization sets sandbox outside Initialize options", () => {
+  const calls: string[] = [];
+  let initializeOptions: PaddleInitializeOptions | undefined;
+
+  initializePaddleCheckout({
+    paddle: {
+      Environment: {
+        set(environment) {
+          calls.push(`environment:${environment}`);
+        },
+      },
+      Initialize(options) {
+        calls.push("initialize");
+        initializeOptions = options;
+      },
+      Checkout: {
+        open() {},
+      },
+    },
+    token: "test_token",
+    environment: "sandbox\n",
+    eventCallback() {},
+  });
+
+  assert.deepEqual(calls, ["environment:sandbox", "initialize"]);
+  assert.equal(initializeOptions?.token, "test_token");
+  assert.equal("environment" in (initializeOptions ?? {}), false);
+});
+
+test("Paddle checkout readiness requires Initialize to have completed", () => {
+  const paddle = {
+    Initialize() {},
+    Checkout: {
+      open() {},
+    },
+  };
+
+  assert.equal(
+    isPaddleCheckoutReady({
+      paddle,
+      priceId: "pri_123",
+      initialized: false,
+    }),
+    false,
+  );
+  assert.equal(
+    isPaddleCheckoutReady({
+      paddle,
+      priceId: "pri_123",
+      initialized: true,
+    }),
+    true,
+  );
+});
+
+test("Sentry init options trim DSN and keep production sampling conservative", () => {
+  const options = buildSentryInitOptions({
+    dsn: " https://public@example.ingest.sentry.io/123 \n",
+    environment: " production ",
+    release: " astro-roasts@1.0.0 ",
+    nodeEnv: "production",
+  });
+
+  assert.equal(options.dsn, "https://public@example.ingest.sentry.io/123");
+  assert.equal(options.environment, "production");
+  assert.equal(options.release, "astro-roasts@1.0.0");
+  assert.equal(options.sendDefaultPii, false);
+  assert.equal(options.tracesSampleRate, 0.1);
+});
+
+test("Sentry init options sample development traces fully", () => {
+  const options = buildSentryInitOptions({
+    dsn: "https://public@example.ingest.sentry.io/123",
+    nodeEnv: "development",
+  });
+
+  assert.equal(options.tracesSampleRate, 1);
+});
+
+test("Paddle checkout error context redacts customer payload details", () => {
+  const context = buildPaddleCheckoutErrorContext({
+    roastId: "roast-1",
+    priceId: "pri_123",
+    eventName: "checkout.payment.failed",
+    eventData: {
+      status: "failed",
+      transaction_id: "txn_123",
+      customer: { email: "customer@example.com" },
+      payment: { method_details: { card: { last4: "4242" } } },
+    },
+  });
+
+  assert.deepEqual(context, {
+    roastId: "roast-1",
+    priceId: "pri_123",
+    eventName: "checkout.payment.failed",
+    checkoutStatus: "failed",
+    transactionId: "txn_123",
+  });
 });
 
 test("birth location resolution accepts free-form place and country", () => {

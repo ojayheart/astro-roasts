@@ -3,8 +3,7 @@ import { Syne, DM_Mono } from "next/font/google";
 import "./globals.css";
 import NoiseOverlay from "@/components/NoiseOverlay";
 import CustomCursor from "@/components/CustomCursor";
-import Script from "next/script";
-import { getPublicEnv } from "@/lib/env";
+import PaddleScript from "@/components/PaddleScript";
 
 const syne = Syne({
   subsets: ["latin"],
@@ -36,9 +35,6 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { paddleClientToken, paddleEnvironment } = getPublicEnv();
-  const paddleInit = `if (typeof Paddle !== 'undefined') { Paddle.Initialize({ token: ${JSON.stringify(paddleClientToken)}${paddleEnvironment === "sandbox" ? ", environment: 'sandbox'" : ""} }); }`;
-
   return (
     <html lang="en" className="scroll-smooth">
       <body
@@ -47,13 +43,7 @@ export default function RootLayout({
         <NoiseOverlay />
         <CustomCursor />
         {children}
-        <Script
-          src="https://cdn.paddle.com/paddle/v2/paddle.js"
-          strategy="afterInteractive"
-        />
-        <Script id="paddle-init" strategy="afterInteractive">
-          {paddleInit}
-        </Script>
+        <PaddleScript />
       </body>
     </html>
   );

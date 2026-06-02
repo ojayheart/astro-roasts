@@ -1,14 +1,8 @@
 "use client";
 
-declare global {
-  interface Window {
-    Paddle?: {
-      Checkout: {
-        open: (options: Record<string, unknown>) => void;
-      };
-    };
-  }
-}
+import * as Sentry from "@sentry/nextjs";
+import { isPaddleCheckoutReady } from "@/lib/paddle-client";
+import { buildPaddleCheckoutErrorContext } from "@/lib/sentry-config";
 
 interface PaywallCTAProps {
   roastId: string;
@@ -17,21 +11,48 @@ interface PaywallCTAProps {
 export default function PaywallCTA({ roastId }: PaywallCTAProps) {
   const priceId = process.env.NEXT_PUBLIC_PADDLE_PRICE_ID?.trim() ?? "";
 
+  const captureCheckoutError = (error: unknown) => {
+    Sentry.withScope((scope) => {
+      scope.setTag("payment.provider", "paddle");
+      scope.setContext(
+        "paddle_checkout",
+        buildPaddleCheckoutErrorContext({ roastId, priceId }),
+      );
+      Sentry.captureException(error);
+    });
+  };
+
   const handleCheckout = () => {
-    if (!window.Paddle || !priceId) {
-      console.error("Paddle checkout is not ready.");
+    const paddle = window.Paddle;
+
+    if (
+      !paddle ||
+      !isPaddleCheckoutReady({
+        paddle,
+        priceId,
+        initialized: window.__astroRoastsPaddleInitialized,
+      })
+    ) {
+      const error = new Error("Paddle checkout is not ready.");
+      console.error(error.message);
+      captureCheckoutError(error);
       return;
     }
 
-    window.Paddle.Checkout.open({
-      settings: {
-        displayMode: "overlay",
-        variant: "one-page",
-        theme: "dark",
-      },
-      items: [{ priceId, quantity: 1 }],
-      customData: { roastId },
-    });
+    try {
+      paddle.Checkout.open({
+        settings: {
+          displayMode: "overlay",
+          variant: "one-page",
+          theme: "dark",
+        },
+        items: [{ priceId, quantity: 1 }],
+        customData: { roastId },
+      });
+    } catch (error) {
+      console.error("Paddle checkout failed to open:", error);
+      captureCheckoutError(error);
+    }
   };
 
   return (
