@@ -65,6 +65,20 @@ export default function PricingPage() {
               </ul>
             </div>
 
+            <div className="border border-ash/10 p-8">
+              <h2 className="font-syne font-bold text-xl uppercase tracking-tighter mb-4">
+                Entertainment Only
+              </h2>
+              <p>
+                Astro Roast is a one-time comedic digital entertainment product.
+                The roast is generated from user-provided birth details and
+                astronomical chart calculations, then delivered instantly via a
+                unique web URL. It is not predictive guidance, psychic advice,
+                medical advice, legal advice, financial advice, therapy, or any
+                other regulated or professional service.
+              </p>
+            </div>
+
             <p className="text-ash/40 text-xs uppercase tracking-[0.15em]">
               One-time payment. No subscriptions. The cosmos doesn&apos;t do
               recurring billing.

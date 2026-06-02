@@ -30,8 +30,22 @@ export default function PrivacyPage() {
 
           <div className="space-y-8 text-ash/80 text-sm md:text-base font-light leading-relaxed">
             <p className="text-ash/40 text-xs uppercase tracking-[0.15em]">
-              Last updated: March 18, 2026
+              Last updated: June 2, 2026
             </p>
+
+            <section className="space-y-4">
+              <h2 className="font-syne font-bold text-xl uppercase tracking-tighter">
+                Entertainment-Only Product
+              </h2>
+              <p>
+                Astro Roast is a one-time comedic digital entertainment product
+                operated by Nebula Limited. We use birth details only to
+                calculate chart positions and generate a humorous roast. We do
+                not use this data to make decisions about people, provide
+                predictions, provide professional advice, or infer eligibility
+                for any regulated service.
+              </p>
+            </section>
 
             <section className="space-y-4">
               <h2 className="font-syne font-bold text-xl uppercase tracking-tighter">

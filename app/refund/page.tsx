@@ -30,7 +30,7 @@ export default function RefundPage() {
 
           <div className="space-y-8 text-ash/80 text-sm md:text-base font-light leading-relaxed">
             <p className="text-ash/40 text-xs uppercase tracking-[0.15em]">
-              Last updated: March 18, 2026
+              Last updated: June 2, 2026
             </p>
 
             <section className="space-y-4">
@@ -40,6 +40,19 @@ export default function RefundPage() {
               <p>
                 If your roast didn&apos;t generate or something genuinely broke,
                 we&apos;ll fix it or refund you. No questions asked.
+              </p>
+            </section>
+
+            <section className="space-y-4">
+              <h2 className="font-syne font-bold text-xl uppercase tracking-tighter">
+                What You Purchased
+              </h2>
+              <p>
+                Astro Roast is a one-time comedic digital entertainment product
+                delivered through a unique web URL. It is not predictive
+                guidance, psychic advice, medical advice, legal advice,
+                financial advice, therapy, or any other regulated or
+                professional service.
               </p>
             </section>
 

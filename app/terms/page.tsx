@@ -30,7 +30,7 @@ export default function TermsPage() {
 
           <div className="space-y-8 text-ash/80 text-sm md:text-base font-light leading-relaxed">
             <p className="text-ash/40 text-xs uppercase tracking-[0.15em]">
-              Last updated: March 18, 2026
+              Last updated: June 2, 2026
             </p>
 
             <section className="space-y-4">
@@ -38,11 +38,17 @@ export default function TermsPage() {
                 1. What This Is
               </h2>
               <p>
-                Astro Roasts (&quot;the Service&quot;) is an entertainment
-                product operated by Oliver Hart (&quot;we&quot;,
-                &quot;us&quot;). We generate comedic natal chart readings based
-                on your birth data. This is entertainment, not professional
-                astrological, psychological, medical, or financial advice.
+                Astro Roasts (&quot;the Service&quot;) is a one-time comedic
+                digital entertainment product operated by Nebula Limited
+                (&quot;we&quot;, &quot;us&quot;). We use user-provided birth
+                details and astronomical chart calculations to generate an
+                AI-assisted personality roast for entertainment only.
+              </p>
+              <p>
+                The Service does not predict the future, claim supernatural
+                accuracy, provide psychic services, or provide medical, legal,
+                financial, psychological, therapeutic, or other professional
+                advice. You should not use the Service to make decisions.
               </p>
             </section>
 
@@ -62,9 +68,9 @@ export default function TermsPage() {
               </h2>
               <p>
                 When you purchase a roast, we calculate your natal chart using
-                Swiss Ephemeris astronomical data and generate a comedic reading
-                of your chart. You receive a permanent, shareable link to your
-                roast.
+                Swiss Ephemeris astronomical data and generate a humorous,
+                exaggerated reading of the resulting chart positions. You
+                receive a permanent, shareable link to your roast.
               </p>
             </section>
 
@@ -111,10 +117,11 @@ export default function TermsPage() {
                 7. Content Disclaimer
               </h2>
               <p>
-                Roasts are AI-generated comedy based on astrological positions.
-                They are intentionally exaggerated for comedic effect. We are
-                not responsible for hurt feelings, existential crises, or the
-                unsettling accuracy of your reading.
+                Roasts are AI-generated comedy. They are intentionally
+                exaggerated for comedic effect and are not factual assessments,
+                predictions, advice, or professional guidance. We are not
+                responsible for hurt feelings, existential crises, or jokes that
+                land too close to home.
               </p>
             </section>
 

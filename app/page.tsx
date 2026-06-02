@@ -15,7 +15,7 @@ export default function Home() {
         </div>
         <div className="text-xs tracking-[0.15em] uppercase text-right opacity-60">
           * Swiss Ephemeris calculations
-          <br />* No horoscope filler
+          <br />* Comedy, not advice
         </div>
       </nav>
 
@@ -41,9 +41,15 @@ export default function Home() {
                 writing the roast. Exact time gives sharper houses and rising
                 sign. A guess still works; the universe will know.
               </p>
+              <p>
+                Astro Roast is a one-time comedic digital entertainment product.
+                It does not predict the future, claim supernatural accuracy, or
+                provide medical, legal, financial, psychological, or other
+                professional advice.
+              </p>
               <p className="pl-5 border-l-2 border-blood text-ash/90">
-                Don&apos;t know your birth time? Leave it blank or text the person
-                who kept the records. Either answer says something.
+                Don&apos;t know your birth time? Leave it blank or text the
+                person who kept the records. Either answer says something.
               </p>
             </div>
           </div>
