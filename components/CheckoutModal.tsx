@@ -245,5 +245,6 @@ export default function CheckoutModal({
         </div>
       </div>
     </div>,
+    document.body,
   );
 }
