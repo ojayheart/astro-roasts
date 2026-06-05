@@ -134,10 +134,14 @@ export default function LoadingAnimation({
       </div>
 
       <div className="absolute bottom-32 md:bottom-40 flex flex-col items-center z-20 px-6 w-full">
-        <div className="h-6 overflow-hidden relative w-full text-center flex items-center justify-center">
+        <div className="min-h-[3.5rem] md:min-h-[4rem] overflow-hidden relative w-full max-w-2xl text-center flex items-center justify-center">
           <span
             key={statusIndex}
-            className="status-line text-xs md:text-sm tracking-[0.15em] text-blood uppercase"
+            className="status-line font-syne font-extrabold text-xl md:text-3xl tracking-tight text-ash uppercase leading-tight"
+            style={{
+              textShadow:
+                "0 2px 12px rgba(0,0,0,0.85), 0 0 28px rgba(0,0,0,0.6)",
+            }}
           >
             {STATUSES[statusIndex]}
           </span>
