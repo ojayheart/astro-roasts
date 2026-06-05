@@ -17,7 +17,9 @@ export default function BirthForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!placeName.trim() || !countryName.trim()) {
-      setError("Add your birth place and country so we can calculate the chart.");
+      setError(
+        "Add your birth place and country so we can calculate the chart.",
+      );
       return;
     }
     setError("");

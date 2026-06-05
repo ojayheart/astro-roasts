@@ -79,9 +79,16 @@ export default function TermsPage() {
                 4. Payments
               </h2>
               <p>
-                All payments are processed by Paddle, our merchant of record.
-                Paddle handles billing, tax collection, and payment processing.
-                Prices are displayed in your local currency where possible.
+                Payments are processed by Stripe. Stripe handles card processing
+                and, via Stripe Tax, applicable VAT/GST collection. Prices are
+                displayed in your local currency where possible. The merchant of
+                record is Nebula Dev Limited (New Zealand).
+              </p>
+              <p className="text-ash/60 text-sm">
+                AstroRoast is a comedy/entertainment product. The roast is
+                satirical interpretation of astrological tropes — not
+                divination, not personal advice, and not a prediction of future
+                events.
               </p>
             </section>
 

@@ -69,7 +69,7 @@ export default function PrivacyPage() {
                 <li className="flex items-start gap-3">
                   <span className="text-blood mt-1">*</span>
                   <span>
-                    <strong>Payment data:</strong> processed entirely by Paddle
+                    <strong>Payment data:</strong> processed entirely by Stripe
                     — we never see your card details
                   </span>
                 </li>
@@ -125,15 +125,14 @@ export default function PrivacyPage() {
                 <li className="flex items-start gap-3">
                   <span className="text-blood mt-1">*</span>
                   <span>
-                    <strong>Paddle:</strong> payment processing (merchant of
-                    record). See{" "}
+                    <strong>Stripe:</strong> payment processing. See{" "}
                     <a
-                      href="https://www.paddle.com/legal/privacy"
+                      href="https://stripe.com/privacy"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-blood hover:underline"
                     >
-                      Paddle&apos;s Privacy Policy
+                      Stripe&apos;s Privacy Policy
                     </a>
                   </span>
                 </li>

@@ -96,14 +96,7 @@ export const generateRoast = inngest.createFunction(
     },
   },
   async ({ event, step }) => {
-    const {
-      roastId,
-      name,
-      email,
-      date,
-      time,
-      city,
-    } = event.data;
+    const { roastId, name, email, date, time, city } = event.data;
 
     const hasBirthTime = !!time;
 

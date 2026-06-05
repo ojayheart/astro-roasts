@@ -26,7 +26,7 @@ export const users = pgTable(
     tz: text("tz").notNull(),
     referralCode: text("referral_code").unique(),
     referredBy: uuid("referred_by").references((): AnyPgColumn => users.id),
-    paddleCustomerId: text("paddle_customer_id"),
+    stripeCustomerId: text("stripe_customer_id"),
     credits: integer("credits").default(0).notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },

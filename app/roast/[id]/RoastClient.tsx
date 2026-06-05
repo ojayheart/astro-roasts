@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import LoadingAnimation from "@/components/LoadingAnimation";
 import TeaserView from "@/components/TeaserView";
 import FullRoastView from "@/components/FullRoastView";
@@ -16,7 +15,6 @@ export default function RoastClient({
   roastId,
   initialData,
 }: RoastClientProps) {
-  const router = useRouter();
   const [data, setData] = useState<RoastData>(initialData);
 
   const placements: ChartPlacement[] = [
@@ -78,32 +76,42 @@ export default function RoastClient({
     return () => clearInterval(interval);
   }, [data.status, roastId, data.createdAt]);
 
-  // Listen for Paddle checkout success
+  // After Stripe Checkout redirect, success_url lands here with `?paid=1`.
+  // The webhook sets `roasts.paid=true` asynchronously, so poll until it flips
+  // instead of refreshing once and racing the webhook.
   useEffect(() => {
-    const handlePaddleEvent = (e: Event) => {
-      const detail = (e as CustomEvent)?.detail;
-      if (detail?.name === "checkout.completed") {
-        router.refresh();
-      }
-    };
-    document.addEventListener("paddle:checkout:completed", handlePaddleEvent);
+    if (data.paid) return;
+    if (typeof window === "undefined") return;
 
-    // Also listen for postMessage-based events
-    const handleMessage = (event: MessageEvent) => {
-      if (event.data?.type === "Checkout.Success") {
-        router.refresh();
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("paid") !== "1") return;
+
+    let cancelled = false;
+    const startTime = Date.now();
+    const TIMEOUT_MS = 60 * 1000;
+
+    const interval = setInterval(async () => {
+      if (cancelled || Date.now() - startTime > TIMEOUT_MS) {
+        clearInterval(interval);
+        return;
       }
-    };
-    window.addEventListener("message", handleMessage);
+      try {
+        const res = await fetch(`/api/roast/${roastId}`);
+        const json = await res.json();
+        if (json.paid) {
+          clearInterval(interval);
+          if (!cancelled) setData((prev) => ({ ...prev, paid: true }));
+        }
+      } catch {
+        // Network error, keep polling
+      }
+    }, 2000);
 
     return () => {
-      document.removeEventListener(
-        "paddle:checkout:completed",
-        handlePaddleEvent,
-      );
-      window.removeEventListener("message", handleMessage);
+      cancelled = true;
+      clearInterval(interval);
     };
-  }, [router]);
+  }, [data.paid, roastId]);
 
   // Generating -> loading animation
   if (data.status === "generating") {
@@ -116,8 +124,8 @@ export default function RoastClient({
       <div className="min-h-screen bg-void flex items-center justify-center px-6">
         <div className="text-center">
           <p className="text-blood font-mono text-sm mb-4">
-            We couldn&apos;t finish this roast. The chart data is safe; the writer
-            just lost the thread.
+            We couldn&apos;t finish this roast. The chart data is safe; the
+            writer just lost the thread.
           </p>
           <a
             href="/"

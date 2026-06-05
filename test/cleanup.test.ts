@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import crypto from "node:crypto";
 import { test } from "node:test";
+import Stripe from "stripe";
 import { getPublicEnv } from "../lib/env.ts";
 import { resolveBirthLocation } from "../lib/location.ts";
 import { createMemoryRateLimiter } from "../lib/rate-limit.ts";
@@ -9,16 +10,7 @@ import {
   buildRoastRunnerPayload,
   extractChartPlacements,
 } from "../lib/roast-runner.ts";
-import { verifyPaddleTransaction } from "../lib/paddle.ts";
-import {
-  initializePaddleCheckout,
-  isPaddleCheckoutReady,
-  type PaddleInitializeOptions,
-} from "../lib/paddle-client.ts";
-import {
-  buildPaddleCheckoutErrorContext,
-  buildSentryInitOptions,
-} from "../lib/sentry-config.ts";
+import { buildSentryInitOptions } from "../lib/sentry-config.ts";
 
 const baseRoast = {
   id: "roast-1",
@@ -67,123 +59,131 @@ test("memory rate limiter blocks requests over the window limit", () => {
   assert.equal(limiter.check("198.51.100.4", 2101).allowed, true);
 });
 
-test("Paddle transaction verification rejects unexpected prices", () => {
-  const secret = "secret";
-  const rawBody = JSON.stringify({
-    event_type: "transaction.completed",
-    data: {
-      custom_data: { roastId: "roast-1" },
-      items: [{ price: { id: "pri_wrong" } }],
-    },
-  });
-  const ts = "1770000000";
-  const h1 = crypto
+// Stripe webhook signature uses the same scheme as Stripe.webhooks.constructEvent.
+// Compute it the same way Stripe does so we can exercise the verifier without
+// instantiating the SDK against live credentials.
+function stripeSignatureHeader({
+  rawBody,
+  secret,
+  timestamp,
+}: {
+  rawBody: string;
+  secret: string;
+  timestamp: number;
+}) {
+  const signedPayload = `${timestamp}.${rawBody}`;
+  const v1 = crypto
     .createHmac("sha256", secret)
-    .update(`${ts}:${rawBody}`)
+    .update(signedPayload)
     .digest("hex");
+  return `t=${timestamp},v1=${v1}`;
+}
 
-  const result = verifyPaddleTransaction({
+test("Stripe webhook rejects invalid signature", async () => {
+  process.env.STRIPE_SECRET_KEY ||= "sk_test_dummy_for_test_only";
+  const { verifyStripeEvent } = await import("../lib/stripe.ts");
+
+  const rawBody = JSON.stringify({ id: "evt_test", type: "ping" });
+  const result = verifyStripeEvent({
     rawBody,
-    signature: `ts=${ts};h1=${h1}`,
-    secret,
-    expectedPriceId: "pri_expected",
-    nowSeconds: Number(ts),
+    signature: "t=1,v1=deadbeef",
+    secret: "whsec_correct",
   });
 
   assert.equal(result.ok, false);
 });
 
-test("Paddle transaction verification returns roast id for valid payment", () => {
-  const secret = "secret";
+test("Stripe webhook verifies valid signature and extracts roastId", async () => {
+  process.env.STRIPE_SECRET_KEY ||= "sk_test_dummy_for_test_only";
+  const { verifyStripeEvent, extractCompletedRoastId } =
+    await import("../lib/stripe.ts");
+
+  const secret = "whsec_test_local";
+  const timestamp = Math.floor(Date.now() / 1000);
   const rawBody = JSON.stringify({
-    event_type: "transaction.completed",
+    id: "evt_test_1",
+    object: "event",
+    type: "checkout.session.completed",
     data: {
-      custom_data: { roastId: "roast-1" },
-      items: [{ price: { id: "pri_expected" } }],
+      object: {
+        id: "cs_test_1",
+        object: "checkout.session",
+        payment_status: "paid",
+        metadata: { roastId: "roast-1" },
+      },
     },
   });
-  const ts = "1770000000";
-  const h1 = crypto
-    .createHmac("sha256", secret)
-    .update(`${ts}:${rawBody}`)
-    .digest("hex");
 
-  const result = verifyPaddleTransaction({
-    rawBody,
-    signature: `ts=${ts};h1=${h1}`,
-    secret,
-    expectedPriceId: "pri_expected",
-    nowSeconds: Number(ts),
-  });
+  const signature = stripeSignatureHeader({ rawBody, secret, timestamp });
+  const verified = verifyStripeEvent({ rawBody, signature, secret });
 
-  assert.deepEqual(result, { ok: true, roastId: "roast-1" });
+  assert.equal(verified.ok, true);
+  if (!verified.ok) return;
+
+  const extracted = extractCompletedRoastId({ event: verified.event });
+  assert.deepEqual(extracted, { ok: true, roastId: "roast-1" });
+});
+
+test("Stripe webhook ignores non-checkout-completed events", async () => {
+  process.env.STRIPE_SECRET_KEY ||= "sk_test_dummy_for_test_only";
+  const { extractCompletedRoastId } = await import("../lib/stripe.ts");
+
+  const event = {
+    id: "evt_test_2",
+    type: "payment_intent.succeeded",
+    data: { object: { metadata: { roastId: "roast-1" } } },
+  } as unknown as Stripe.Event;
+
+  const result = extractCompletedRoastId({ event });
+  assert.equal(result.ok, false);
+});
+
+test("Stripe webhook rejects checkout.session.completed without paid status", async () => {
+  process.env.STRIPE_SECRET_KEY ||= "sk_test_dummy_for_test_only";
+  const { extractCompletedRoastId } = await import("../lib/stripe.ts");
+
+  const event = {
+    id: "evt_test_3",
+    type: "checkout.session.completed",
+    data: {
+      object: {
+        payment_status: "unpaid",
+        metadata: { roastId: "roast-1" },
+      },
+    },
+  } as unknown as Stripe.Event;
+
+  const result = extractCompletedRoastId({ event });
+  assert.equal(result.ok, false);
+});
+
+test("Stripe webhook rejects checkout.session.completed missing roastId metadata", async () => {
+  process.env.STRIPE_SECRET_KEY ||= "sk_test_dummy_for_test_only";
+  const { extractCompletedRoastId } = await import("../lib/stripe.ts");
+
+  const event = {
+    id: "evt_test_4",
+    type: "checkout.session.completed",
+    data: {
+      object: {
+        payment_status: "paid",
+        metadata: {},
+      },
+    },
+  } as unknown as Stripe.Event;
+
+  const result = extractCompletedRoastId({ event });
+  assert.equal(result.ok, false);
 });
 
 test("public env values are trimmed before client-side script injection", () => {
   const env = getPublicEnv({
-    NEXT_PUBLIC_PADDLE_CLIENT_TOKEN: "live_token\n",
-    NEXT_PUBLIC_PADDLE_PRICE_ID: "pri_123\n",
-    NEXT_PUBLIC_PADDLE_ENVIRONMENT: "production\n",
+    NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: "pk_live_123\n",
+    NEXT_PUBLIC_APP_URL: "https://astroroast.com\n",
   });
 
-  assert.equal(env.paddleClientToken, "live_token");
-  assert.equal(env.paddlePriceId, "pri_123");
-  assert.equal(env.paddleEnvironment, "production");
-});
-
-test("Paddle checkout initialization sets sandbox outside Initialize options", () => {
-  const calls: string[] = [];
-  let initializeOptions: PaddleInitializeOptions | undefined;
-
-  initializePaddleCheckout({
-    paddle: {
-      Environment: {
-        set(environment) {
-          calls.push(`environment:${environment}`);
-        },
-      },
-      Initialize(options) {
-        calls.push("initialize");
-        initializeOptions = options;
-      },
-      Checkout: {
-        open() {},
-      },
-    },
-    token: "test_token",
-    environment: "sandbox\n",
-    eventCallback() {},
-  });
-
-  assert.deepEqual(calls, ["environment:sandbox", "initialize"]);
-  assert.equal(initializeOptions?.token, "test_token");
-  assert.equal("environment" in (initializeOptions ?? {}), false);
-});
-
-test("Paddle checkout readiness requires Initialize to have completed", () => {
-  const paddle = {
-    Initialize() {},
-    Checkout: {
-      open() {},
-    },
-  };
-
-  assert.equal(
-    isPaddleCheckoutReady({
-      paddle,
-      priceId: "pri_123",
-      initialized: false,
-    }),
-    false,
-  );
-  assert.equal(
-    isPaddleCheckoutReady({
-      paddle,
-      priceId: "pri_123",
-      initialized: true,
-    }),
-    true,
-  );
+  assert.equal(env.stripePublishableKey, "pk_live_123");
+  assert.equal(env.appUrl, "https://astroroast.com");
 });
 
 test("Sentry init options trim DSN and keep production sampling conservative", () => {
@@ -208,28 +208,6 @@ test("Sentry init options sample development traces fully", () => {
   });
 
   assert.equal(options.tracesSampleRate, 1);
-});
-
-test("Paddle checkout error context redacts customer payload details", () => {
-  const context = buildPaddleCheckoutErrorContext({
-    roastId: "roast-1",
-    priceId: "pri_123",
-    eventName: "checkout.payment.failed",
-    eventData: {
-      status: "failed",
-      transaction_id: "txn_123",
-      customer: { email: "customer@example.com" },
-      payment: { method_details: { card: { last4: "4242" } } },
-    },
-  });
-
-  assert.deepEqual(context, {
-    roastId: "roast-1",
-    priceId: "pri_123",
-    eventName: "checkout.payment.failed",
-    checkoutStatus: "failed",
-    transactionId: "txn_123",
-  });
 });
 
 test("birth location resolution accepts free-form place and country", () => {

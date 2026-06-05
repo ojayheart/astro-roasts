@@ -1,57 +1,59 @@
 "use client";
 
+import { useState } from "react";
 import * as Sentry from "@sentry/nextjs";
-import { isPaddleCheckoutReady } from "@/lib/paddle-client";
-import { buildPaddleCheckoutErrorContext } from "@/lib/sentry-config";
 
 interface PaywallCTAProps {
   roastId: string;
 }
 
 export default function PaywallCTA({ roastId }: PaywallCTAProps) {
-  const priceId = process.env.NEXT_PUBLIC_PADDLE_PRICE_ID?.trim() ?? "";
+  const [loading, setLoading] = useState(false);
 
   const captureCheckoutError = (error: unknown) => {
     Sentry.withScope((scope) => {
-      scope.setTag("payment.provider", "paddle");
-      scope.setContext(
-        "paddle_checkout",
-        buildPaddleCheckoutErrorContext({ roastId, priceId }),
-      );
+      scope.setTag("payment.provider", "stripe");
+      scope.setContext("stripe_checkout", { roastId });
       Sentry.captureException(error);
     });
   };
 
-  const handleCheckout = () => {
-    const paddle = window.Paddle;
-
-    if (
-      !paddle ||
-      !isPaddleCheckoutReady({
-        paddle,
-        priceId,
-        initialized: window.__astroRoastsPaddleInitialized,
-      })
-    ) {
-      const error = new Error("Paddle checkout is not ready.");
-      console.error(error.message);
-      captureCheckoutError(error);
-      return;
-    }
+  const handleCheckout = async () => {
+    if (loading) return;
+    setLoading(true);
 
     try {
-      paddle.Checkout.open({
-        settings: {
-          displayMode: "overlay",
-          variant: "one-page",
-          theme: "dark",
-        },
-        items: [{ priceId, quantity: 1 }],
-        customData: { roastId },
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ roastId }),
       });
+
+      if (!res.ok) {
+        let message = "Checkout could not start.";
+        try {
+          const data = (await res.json()) as { error?: string };
+          if (data.error) message = data.error;
+        } catch {
+          /* ignore parse errors */
+        }
+        const error = new Error(`Checkout failed: ${message}`);
+        captureCheckoutError(error);
+        setLoading(false);
+        return;
+      }
+
+      const data = (await res.json()) as { url?: string };
+      if (!data.url) {
+        captureCheckoutError(new Error("Checkout response missing url"));
+        setLoading(false);
+        return;
+      }
+
+      window.location.href = data.url;
     } catch (error) {
-      console.error("Paddle checkout failed to open:", error);
       captureCheckoutError(error);
+      setLoading(false);
     }
   };
 
@@ -63,12 +65,16 @@ export default function PaywallCTA({ roastId }: PaywallCTAProps) {
         </span>
         <button
           onClick={handleCheckout}
-          className="interactive w-full bg-ash text-void font-syne font-extrabold uppercase tracking-[0.15em] py-5 px-8 text-center text-lg md:text-xl hover:bg-blood hover:text-ash transition-colors duration-300 relative overflow-hidden group"
+          disabled={loading}
+          className="interactive w-full bg-ash text-void font-syne font-extrabold uppercase tracking-[0.15em] py-5 px-8 text-center text-lg md:text-xl hover:bg-blood hover:text-ash transition-colors duration-300 relative overflow-hidden group disabled:opacity-60 disabled:cursor-not-allowed"
         >
           <span className="relative z-10 block group-hover:scale-[1.02] transition-transform duration-300">
-            Unlock the full roast — $5
+            {loading ? "Opening checkout…" : "Unlock the full roast — $5"}
           </span>
         </button>
+        <span className="text-[10px] font-mono tracking-[0.15em] text-ash/40 mt-3 uppercase text-center">
+          Entertainment only · satire · not advice
+        </span>
       </div>
     </div>
   );

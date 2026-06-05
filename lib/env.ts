@@ -11,19 +11,17 @@ function cleanEnvValue(value: string | undefined): string {
 export function getPublicEnv(env?: PublicEnvSource) {
   if (env) {
     return {
-      paddleClientToken: cleanEnvValue(env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN),
-      paddlePriceId: cleanEnvValue(env.NEXT_PUBLIC_PADDLE_PRICE_ID),
-      paddleEnvironment: cleanEnvValue(env.NEXT_PUBLIC_PADDLE_ENVIRONMENT),
+      stripePublishableKey: cleanEnvValue(
+        env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
+      ),
+      appUrl: cleanEnvValue(env.NEXT_PUBLIC_APP_URL),
     };
   }
 
   return {
-    paddleClientToken: cleanEnvValue(
-      process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN,
+    stripePublishableKey: cleanEnvValue(
+      process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
     ),
-    paddlePriceId: cleanEnvValue(process.env.NEXT_PUBLIC_PADDLE_PRICE_ID),
-    paddleEnvironment: cleanEnvValue(
-      process.env.NEXT_PUBLIC_PADDLE_ENVIRONMENT,
-    ),
+    appUrl: cleanEnvValue(process.env.NEXT_PUBLIC_APP_URL),
   };
 }

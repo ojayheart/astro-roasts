@@ -14,8 +14,10 @@ const TIMEOUT_MS = Number(process.env.ROAST_TIMEOUT_MS || 10 * 60 * 1000);
 const SKILL_PATH =
   process.env.SKILL_PATH ||
   join(homedir(), ".claude/skills/astro-roast/SKILL.md");
-const PYTHON_BIN = process.env.ASTRO_PYTHON || "/opt/roast-runner/venv/bin/python3";
-const NATAL_CHART_PATH = process.env.NATAL_CHART_PATH || join(homedir(), "natal_chart.py");
+const PYTHON_BIN =
+  process.env.ASTRO_PYTHON || "/opt/roast-runner/venv/bin/python3";
+const NATAL_CHART_PATH =
+  process.env.NATAL_CHART_PATH || join(homedir(), "natal_chart.py");
 
 let SKILL_BODY = "";
 try {

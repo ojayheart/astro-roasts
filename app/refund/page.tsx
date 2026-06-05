@@ -125,8 +125,8 @@ export default function RefundPage() {
               </h2>
               <p>
                 Refund requests must be made within 14 days of purchase. Refunds
-                are processed via Paddle and typically appear within 5-10
-                business days.
+                are issued via Stripe and typically appear on the original card
+                within 5-10 business days.
               </p>
             </section>
           </div>

@@ -127,7 +127,7 @@ input:-webkit-autofill:active {
 }
 
 .status-line {
-  animation: statusFadeUp 0.45s ease-out;
+  animation: statusFadeUp 1.4s ease-out;
 }
 
 @keyframes statusFadeUp {

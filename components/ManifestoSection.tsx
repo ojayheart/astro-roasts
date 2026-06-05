@@ -6,20 +6,13 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 const ROAST_LINES = [
   {
-    quote: "You're a Capricorn in a Hawaiian shirt.",
-    author: "Ollie, Aquarius Stellium",
+    quote:
+      "Tea and feelings — but the tea's brewed at the temperature of the earth's core.",
+    author: "Sierra, Cancer Rising",
   },
   {
-    quote: "A spreadsheet that has feelings about its own formatting.",
-    author: "Charlotte, Triple Virgo",
-  },
-  {
-    quote: "Your internal editor has an internal editor.",
-    author: "Ollie, Aquarius Stellium",
-  },
-  {
-    quote: "You're a Leo trapped in a Virgo filing cabinet.",
-    author: "Charlotte, Triple Virgo",
+    quote: "You don't experience feelings. You undergo them.",
+    author: "Wiktor, Scorpio Stellium",
   },
   {
     quote:
@@ -27,8 +20,12 @@ const ROAST_LINES = [
     author: "Sage, Scorpio Rising",
   },
   {
-    quote: "You don't fight often. But when you do, you fight like a surgeon.",
-    author: "Charlotte, Triple Virgo",
+    quote: "You don't communicate. You detonate meaning.",
+    author: "Sierra, Cancer Rising",
+  },
+  {
+    quote: "You don't date — you conduct emotional archaeology.",
+    author: "Wiktor, Scorpio Stellium",
   },
   {
     quote: "Mercury in Scorpio doesn't make small talk. It makes incisions.",
@@ -36,8 +33,12 @@ const ROAST_LINES = [
   },
   {
     quote:
-      "The emotional equivalent of a nuclear reactor — and the control room is in the basement with the lights off.",
-    author: "Ollie, Aquarius Stellium",
+      "You text the emotional bomb, then follow up twenty minutes later with “what I meant was—”.",
+    author: "Sierra, Cancer Rising",
+  },
+  {
+    quote: "You burn like radioactive material, not like a campfire.",
+    author: "Wiktor, Scorpio Stellium",
   },
   {
     quote:
@@ -45,8 +46,30 @@ const ROAST_LINES = [
     author: "Sage, Scorpio Rising",
   },
   {
-    quote: "You're not the assistant. You're the whole operation.",
-    author: "Charlotte, Triple Virgo",
+    quote:
+      "You talk the way satellites transmit — huge range, no idea if anyone's receiving.",
+    author: "Sierra, Cancer Rising",
+  },
+  {
+    quote:
+      "You've rewritten text messages more times than most people rewrite their CVs.",
+    author: "Wiktor, Scorpio Stellium",
+  },
+  {
+    quote: "Joy has a permit system.",
+    author: "Sage, Scorpio Rising",
+  },
+  {
+    quote: "Stop apologising for the weather system and let it rain.",
+    author: "Sierra, Cancer Rising",
+  },
+  {
+    quote: "A sommelier of your own darkness.",
+    author: "Wiktor, Scorpio Stellium",
+  },
+  {
+    quote: "And for the love of God, tell someone about the textiles.",
+    author: "Sage, Scorpio Rising",
   },
 ];
 

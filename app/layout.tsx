@@ -3,7 +3,6 @@ import { Syne, DM_Mono } from "next/font/google";
 import "./globals.css";
 import NoiseOverlay from "@/components/NoiseOverlay";
 import CustomCursor from "@/components/CustomCursor";
-import PaddleScript from "@/components/PaddleScript";
 
 const syne = Syne({
   subsets: ["latin"],
@@ -43,7 +42,6 @@ export default function RootLayout({
         <NoiseOverlay />
         <CustomCursor />
         {children}
-        <PaddleScript />
       </body>
     </html>
   );
