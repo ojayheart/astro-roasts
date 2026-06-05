@@ -162,6 +162,65 @@ test("Stripe webhook rejects checkout.session.completed without paid status", as
   assert.equal(result.ok, false);
 });
 
+test("Stripe webhook extracts roastId from payment_intent.succeeded", async () => {
+  process.env.STRIPE_SECRET_KEY ||= "sk_test_dummy_for_test_only";
+  const { extractCompletedRoastId } = await import("../lib/stripe.ts");
+
+  const event = {
+    id: "evt_pi_1",
+    type: "payment_intent.succeeded",
+    data: {
+      object: {
+        id: "pi_test_1",
+        object: "payment_intent",
+        status: "succeeded",
+        metadata: { roastId: "roast-1" },
+      },
+    },
+  } as unknown as Stripe.Event;
+
+  const result = extractCompletedRoastId({ event });
+  assert.deepEqual(result, { ok: true, roastId: "roast-1" });
+});
+
+test("Stripe webhook rejects payment_intent.succeeded with non-succeeded status", async () => {
+  process.env.STRIPE_SECRET_KEY ||= "sk_test_dummy_for_test_only";
+  const { extractCompletedRoastId } = await import("../lib/stripe.ts");
+
+  const event = {
+    id: "evt_pi_2",
+    type: "payment_intent.succeeded",
+    data: {
+      object: {
+        status: "processing",
+        metadata: { roastId: "roast-1" },
+      },
+    },
+  } as unknown as Stripe.Event;
+
+  const result = extractCompletedRoastId({ event });
+  assert.equal(result.ok, false);
+});
+
+test("Stripe webhook rejects payment_intent.succeeded missing roastId", async () => {
+  process.env.STRIPE_SECRET_KEY ||= "sk_test_dummy_for_test_only";
+  const { extractCompletedRoastId } = await import("../lib/stripe.ts");
+
+  const event = {
+    id: "evt_pi_3",
+    type: "payment_intent.succeeded",
+    data: {
+      object: {
+        status: "succeeded",
+        metadata: {},
+      },
+    },
+  } as unknown as Stripe.Event;
+
+  const result = extractCompletedRoastId({ event });
+  assert.equal(result.ok, false);
+});
+
 test("Stripe webhook rejects checkout.session.completed missing roastId metadata", async () => {
   process.env.STRIPE_SECRET_KEY ||= "sk_test_dummy_for_test_only";
   const { extractCompletedRoastId } = await import("../lib/stripe.ts");

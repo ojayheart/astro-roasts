@@ -15,6 +15,7 @@
     "@anthropic-ai/sdk": "^0.78.0",
     "@neondatabase/serverless": "^1.0.2",
     "@sentry/nextjs": "^10.55.0",
+    "@stripe/react-stripe-js": "^6.6.0",
     "@stripe/stripe-js": "^9.7.0",
     "@tailwindcss/postcss": "^4.2.1",
     "@types/d3": "^7.4.3",

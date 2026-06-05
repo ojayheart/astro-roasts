@@ -57,20 +57,29 @@ type ExtractRoastIdResult =
 export function extractCompletedRoastId({
   event,
 }: ExtractRoastIdInput): ExtractRoastIdResult {
-  if (event.type !== "checkout.session.completed") {
-    return { ok: false, error: "Unsupported event" };
+  if (event.type === "checkout.session.completed") {
+    const session = event.data.object as Stripe.Checkout.Session;
+    if (session.payment_status !== "paid") {
+      return { ok: false, error: "Session not paid" };
+    }
+    const roastId = session.metadata?.roastId;
+    if (typeof roastId !== "string" || !roastId) {
+      return { ok: false, error: "Missing roastId in metadata" };
+    }
+    return { ok: true, roastId };
   }
 
-  const session = event.data.object as Stripe.Checkout.Session;
-
-  if (session.payment_status !== "paid") {
-    return { ok: false, error: "Session not paid" };
+  if (event.type === "payment_intent.succeeded") {
+    const intent = event.data.object as Stripe.PaymentIntent;
+    if (intent.status !== "succeeded") {
+      return { ok: false, error: "PaymentIntent not succeeded" };
+    }
+    const roastId = intent.metadata?.roastId;
+    if (typeof roastId !== "string" || !roastId) {
+      return { ok: false, error: "Missing roastId in metadata" };
+    }
+    return { ok: true, roastId };
   }
 
-  const roastId = session.metadata?.roastId;
-  if (typeof roastId !== "string" || !roastId) {
-    return { ok: false, error: "Missing roastId in metadata" };
-  }
-
-  return { ok: true, roastId };
+  return { ok: false, error: "Unsupported event" };
 }
