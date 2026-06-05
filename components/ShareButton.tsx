@@ -2,34 +2,63 @@
 
 import { useState } from "react";
 
-export default function ShareButton({ roastId }: { roastId: string }) {
-  const [copied, setCopied] = useState(false);
+type ShareState = "idle" | "copied" | "shared";
 
-  const handleCopy = async () => {
+export default function ShareButton({ roastId }: { roastId: string }) {
+  const [state, setState] = useState<ShareState>("idle");
+
+  const handleShare = async () => {
     const url = `${window.location.origin}/roast/${roastId}`;
+    const shareData: ShareData = {
+      title: "Astro Roasts",
+      text: "My natal chart got roasted. Yours next.",
+      url,
+    };
+
+    if (typeof navigator !== "undefined" && navigator.share) {
+      try {
+        await navigator.share(shareData);
+        setState("shared");
+        setTimeout(() => setState("idle"), 2000);
+        return;
+      } catch (err) {
+        // User-cancelled share — silently return; no fallback needed.
+        if (err instanceof Error && err.name === "AbortError") return;
+        // Other share errors fall through to clipboard.
+      }
+    }
+
     try {
       await navigator.clipboard.writeText(url);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      setState("copied");
+      setTimeout(() => setState("idle"), 2000);
     } catch {
-      // Fallback
       const input = document.createElement("input");
       input.value = url;
       document.body.appendChild(input);
       input.select();
       document.execCommand("copy");
       document.body.removeChild(input);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      setState("copied");
+      setTimeout(() => setState("idle"), 2000);
     }
   };
 
+  const label =
+    state === "copied"
+      ? "Link copied"
+      : state === "shared"
+        ? "Shared"
+        : "Share roast";
+
   return (
     <button
-      onClick={handleCopy}
-      className="interactive px-6 py-3 border border-ash/20 bg-void text-ash font-mono text-xs uppercase tracking-[0.15em] hover:border-blood hover:text-blood transition-colors duration-300"
+      type="button"
+      onClick={handleShare}
+      aria-live="polite"
+      className="interactive px-6 py-3 min-h-[44px] border border-ash/20 bg-void text-ash font-mono text-xs uppercase tracking-[0.15em] hover:border-blood hover:text-blood active:border-blood active:text-blood focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blood focus-visible:ring-offset-2 focus-visible:ring-offset-void transition-colors duration-300"
     >
-      {copied ? "Link copied" : "Copy roast link"}
+      {label}
     </button>
   );
 }

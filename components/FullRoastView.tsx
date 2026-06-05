@@ -56,38 +56,47 @@ export default function FullRoastView({
   useEffect(() => {
     gsap.registerPlugin(ScrollTrigger);
 
-    // Section reveal animations
-    gsap.utils.toArray<HTMLElement>(".gs-reveal").forEach((elem) => {
-      gsap.fromTo(
-        elem,
-        { y: 60, autoAlpha: 0 },
-        {
-          duration: 1.2,
-          y: 0,
-          autoAlpha: 1,
-          ease: "power3.out",
-          scrollTrigger: {
-            trigger: elem,
-            start: "top 85%",
-            toggleActions: "play none none reverse",
+    const mm = gsap.matchMedia();
+
+    mm.add("(prefers-reduced-motion: no-preference)", () => {
+      gsap.utils.toArray<HTMLElement>(".gs-reveal").forEach((elem) => {
+        gsap.fromTo(
+          elem,
+          { y: 60, autoAlpha: 0 },
+          {
+            duration: 1.2,
+            y: 0,
+            autoAlpha: 1,
+            ease: "power3.out",
+            scrollTrigger: {
+              trigger: elem,
+              start: "top 85%",
+              toggleActions: "play none none reverse",
+            },
           },
+        );
+      });
+
+      gsap.to("#progress-fill", {
+        scaleY: 1,
+        ease: "none",
+        scrollTrigger: {
+          trigger: document.body,
+          start: "top top",
+          end: "bottom bottom",
+          scrub: 0.2,
         },
-      );
+      });
     });
 
-    // Progress bar
-    gsap.to("#progress-fill", {
-      scaleY: 1,
-      ease: "none",
-      scrollTrigger: {
-        trigger: document.body,
-        start: "top top",
-        end: "bottom bottom",
-        scrub: 0.2,
-      },
+    mm.add("(prefers-reduced-motion: reduce)", () => {
+      gsap.utils.toArray<HTMLElement>(".gs-reveal").forEach((elem) => {
+        gsap.set(elem, { autoAlpha: 1, y: 0 });
+      });
     });
 
     return () => {
+      mm.revert();
       ScrollTrigger.getAll().forEach((t) => t.kill());
     };
   }, []);
@@ -125,12 +134,13 @@ export default function FullRoastView({
             <span className="w-12 h-px bg-blood" />
             FULL ROAST UNLOCKED // PROCEED CAREFULLY
           </p>
-          <h1 className="font-syne font-extrabold text-6xl md:text-8xl tracking-tighter uppercase mb-12 text-ash leading-none">
+          <h1 className="font-syne font-extrabold text-5xl sm:text-6xl md:text-8xl tracking-tighter uppercase mb-12 text-ash leading-none break-words">
             Subject:
             <br />
             {name}
           </h1>
 
+          <h2 className="sr-only">Dossier</h2>
           <div className="border-y border-ash/10 py-8 relative bg-void">
             <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-bruise/30 to-transparent pointer-events-none" />
             <div className="grid grid-cols-2 md:grid-cols-4 gap-y-8 gap-x-4 font-mono text-sm uppercase tracking-[0.15em] text-ash/80 relative z-10">
@@ -154,7 +164,13 @@ export default function FullRoastView({
         </header>
 
         {/* Continuous Prose */}
-        <section className="border-t border-ash/10 pt-20 mt-20 gs-reveal relative">
+        <section
+          aria-labelledby="reading-heading"
+          className="border-t border-ash/10 pt-20 mt-20 gs-reveal relative"
+        >
+          <h2 id="reading-heading" className="sr-only">
+            The reading
+          </h2>
           <div className="space-y-8 text-ash/70">
             {paragraphs.map((p, i) => {
               // Check if a callout should appear before this paragraph
@@ -189,7 +205,7 @@ export default function FullRoastView({
               <ShareButton roastId={roastId} />
               <a
                 href="/"
-                className="interactive px-6 py-3 bg-blood text-white font-mono text-xs uppercase tracking-[0.15em] hover:bg-white hover:text-void transition-colors duration-300"
+                className="interactive inline-flex items-center justify-center px-6 py-3 min-h-[44px] bg-blood text-white font-mono text-xs uppercase tracking-[0.15em] hover:bg-white hover:text-void active:bg-white active:text-void focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ash focus-visible:ring-offset-2 focus-visible:ring-offset-void transition-colors duration-300"
               >
                 Roast someone else
               </a>

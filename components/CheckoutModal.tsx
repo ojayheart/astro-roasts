@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Elements } from "@stripe/react-stripe-js";
 import type { StripeElementsOptions, Appearance } from "@stripe/stripe-js";
@@ -31,7 +31,7 @@ const APPEARANCE: Appearance = {
     colorDanger: "#ff2a00",
     colorSuccess: "#e5e5e5",
     fontFamily: '"DM Mono", ui-monospace, SFMono-Regular, monospace',
-    fontSizeBase: "14px",
+    fontSizeBase: "16px",
     fontWeightNormal: "400",
     fontWeightBold: "600",
     borderRadius: "0px",
@@ -42,6 +42,7 @@ const APPEARANCE: Appearance = {
       backgroundColor: "#030303",
       border: "1px solid rgba(229,229,229,0.15)",
       padding: "14px 12px",
+      fontSize: "16px",
       transition: "border-color 0.2s",
     },
     ".Input:focus": {
@@ -146,15 +147,34 @@ export default function CheckoutModal({
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
-  // Lock body scroll while open
+  // Lock body scroll while open. iOS ignores `overflow: hidden`, so pin body
+  // with `position: fixed` and restore scroll on close.
   useEffect(() => {
     if (!open) return;
-    const original = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    const scrollY = window.scrollY;
+    const body = document.body;
+    const prev = {
+      position: body.style.position,
+      top: body.style.top,
+      width: body.style.width,
+      overflow: body.style.overflow,
+    };
+    body.style.position = "fixed";
+    body.style.top = `-${scrollY}px`;
+    body.style.width = "100%";
+    body.style.overflow = "hidden";
     return () => {
-      document.body.style.overflow = original;
+      body.style.position = prev.position;
+      body.style.top = prev.top;
+      body.style.width = prev.width;
+      body.style.overflow = prev.overflow;
+      window.scrollTo(0, scrollY);
     };
   }, [open]);
+
+  // Backdrop close: require pointerdown AND pointerup on the backdrop itself,
+  // so a drag that started inside the panel doesn't dismiss + reset intent.
+  const pointerDownTarget = useRef<EventTarget | null>(null);
 
   if (!open) return null;
   if (typeof document === "undefined") return null;
@@ -174,24 +194,39 @@ export default function CheckoutModal({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-void/85 backdrop-blur-sm overflow-y-auto"
-      style={{ height: "100vh", width: "100vw" }}
-      onClick={onClose}
+      className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-void/85 backdrop-blur-sm overflow-y-auto overscroll-contain"
+      style={{ height: "100dvh", width: "100vw" }}
+      onPointerDown={(e) => {
+        pointerDownTarget.current = e.target;
+      }}
+      onPointerUp={(e) => {
+        if (
+          pointerDownTarget.current === e.currentTarget &&
+          e.target === e.currentTarget
+        ) {
+          onClose();
+        }
+        pointerDownTarget.current = null;
+      }}
       role="dialog"
       aria-modal="true"
       aria-label="Checkout"
     >
       <div
-        className="relative w-full max-w-md bg-void border border-ash/15 max-h-[95vh] overflow-y-auto"
-        onClick={(e) => e.stopPropagation()}
+        className="relative w-full max-w-md bg-void border border-ash/15 max-h-[95dvh] overflow-y-auto overscroll-contain"
+        onPointerDown={(e) => e.stopPropagation()}
+        onPointerUp={(e) => e.stopPropagation()}
       >
         <button
           type="button"
           onClick={onClose}
           aria-label="Close checkout"
-          className="interactive absolute top-4 right-4 text-ash/60 hover:text-blood transition-colors font-mono text-xs uppercase tracking-[0.2em] z-10"
+          className="interactive absolute top-2 right-2 p-3 min-h-[44px] min-w-[44px] flex items-center justify-center text-ash/60 hover:text-blood transition-colors font-mono text-xs uppercase tracking-[0.2em] z-10"
         >
-          [esc] close
+          <span aria-hidden="true" className="hidden sm:inline">
+            [esc]&nbsp;
+          </span>
+          close
         </button>
 
         <div className="px-6 pt-8 pb-6 border-b border-ash/10">

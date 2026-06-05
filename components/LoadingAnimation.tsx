@@ -29,7 +29,28 @@ export default function LoadingAnimation({
   const [progress, setProgress] = useState(0);
   const [statusIndex, setStatusIndex] = useState(0);
   const [flash, setFlash] = useState(false);
+  const [showVideo, setShowVideo] = useState(false);
   const completedRef = useRef(false);
+
+  // Gate the 10MB looping background video on prefers-reduced-motion and the
+  // Save-Data client hint, so low-end / cellular / accessibility users don't
+  // pay the bandwidth or compositor cost.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const reduce = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+    const connection = (
+      navigator as Navigator & {
+        connection?: { saveData?: boolean; effectiveType?: string };
+      }
+    ).connection;
+    const saveData = connection?.saveData === true;
+    const slow =
+      connection?.effectiveType === "slow-2g" ||
+      connection?.effectiveType === "2g";
+    setShowVideo(!reduce && !saveData && !slow);
+  }, []);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -53,26 +74,39 @@ export default function LoadingAnimation({
     }
   }, [progress, onComplete]);
 
-  return (
-    <div className="h-screen w-screen flex flex-col items-center justify-center relative overflow-hidden">
-      <video
-        className="absolute inset-0 w-full h-full object-cover z-0"
-        src="/loading-loop.mp4"
-        autoPlay
-        loop
-        muted
-        playsInline
-        preload="auto"
-      />
-      <div className="absolute inset-0 bg-void/40 z-[1]" />
+  const clampedProgress = Math.min(Math.round(progress), 99);
 
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-[2]">
+  return (
+    <div
+      className="h-[100dvh] w-screen flex flex-col items-center justify-center relative overflow-hidden"
+      role="status"
+      aria-live="polite"
+      aria-busy="true"
+    >
+      {showVideo ? (
+        <video
+          className="absolute inset-0 w-full h-full object-cover z-0"
+          src="/loading-loop.mp4"
+          autoPlay
+          loop
+          muted
+          playsInline
+          preload="metadata"
+          aria-hidden="true"
+        />
+      ) : null}
+      <div className="absolute inset-0 bg-void/40 z-[1]" aria-hidden="true" />
+
+      <div
+        className="absolute inset-0 flex items-center justify-center pointer-events-none z-[2]"
+        aria-hidden="true"
+      >
         <span className="font-syne font-extrabold text-[25vw] leading-none text-ash opacity-5 tracking-tighter">
-          {String(Math.min(Math.round(progress), 99)).padStart(2, "0")}
+          {String(clampedProgress).padStart(2, "0")}
         </span>
       </div>
 
-      <div className="absolute bottom-32 md:bottom-40 flex flex-col items-center z-20 px-6">
+      <div className="absolute bottom-32 md:bottom-40 flex flex-col items-center z-20 px-6 w-full">
         <div className="h-6 overflow-hidden relative w-full text-center flex items-center justify-center">
           <span
             key={statusIndex}
@@ -81,7 +115,14 @@ export default function LoadingAnimation({
             {STATUSES[statusIndex]}
           </span>
         </div>
-        <div className="w-64 h-[1px] bg-bruise mt-4 relative overflow-hidden">
+        <div
+          role="progressbar"
+          aria-label="Calculating chart"
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={clampedProgress}
+          className="w-64 h-[1px] bg-bruise mt-4 relative overflow-hidden"
+        >
           <div
             className="absolute top-0 left-0 h-full bg-blood transition-all duration-300"
             style={{ width: `${Math.min(progress, 100)}%` }}
@@ -89,7 +130,11 @@ export default function LoadingAnimation({
         </div>
       </div>
 
-      <footer className="absolute bottom-8 w-full text-center z-20 pointer-events-none px-6">
+      <footer
+        className="absolute bottom-0 left-0 w-full text-center z-20 pointer-events-none px-6"
+        style={{ paddingBottom: "max(2rem, env(safe-area-inset-bottom))" }}
+        aria-hidden="true"
+      >
         <p className="text-[10px] md:text-xs tracking-[0.3em] text-ash/40 uppercase">
           Built from chart data. Delivered without padding.
         </p>
@@ -98,6 +143,7 @@ export default function LoadingAnimation({
       <div
         className="fixed inset-0 bg-blood pointer-events-none z-[100] transition-opacity duration-150"
         style={{ opacity: flash ? 1 : 0 }}
+        aria-hidden="true"
       />
     </div>
   );

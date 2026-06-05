@@ -12,7 +12,12 @@ export default function PaywallCTA({ roastId }: PaywallCTAProps) {
 
   return (
     <>
-      <div className="paywall-ui fixed bottom-0 left-0 w-full pt-32 pb-8 px-6 paywall-gradient z-50 flex flex-col items-center justify-end pointer-events-none">
+      <div
+        className="paywall-ui fixed bottom-0 left-0 w-full pt-40 px-6 paywall-gradient z-50 flex flex-col items-center justify-end pointer-events-none"
+        style={{
+          paddingBottom: "max(7rem, calc(env(safe-area-inset-bottom) + 6rem))",
+        }}
+      >
         <div className="pointer-events-auto w-full max-w-md flex flex-col items-center">
           <span className="text-[10px] md:text-xs font-mono tracking-[0.15em] text-ash/60 mb-4 uppercase text-center">
             Full dossier: every planet, house, aspect, and callback.
@@ -20,7 +25,7 @@ export default function PaywallCTA({ roastId }: PaywallCTAProps) {
           <button
             type="button"
             onClick={() => setOpen(true)}
-            className="interactive w-full bg-ash text-void font-syne font-extrabold uppercase tracking-[0.15em] py-5 px-8 text-center text-lg md:text-xl hover:bg-blood hover:text-ash transition-colors duration-300 relative overflow-hidden group"
+            className="interactive w-full bg-ash text-void font-syne font-extrabold uppercase tracking-[0.15em] py-5 px-8 min-h-[44px] text-center text-lg md:text-xl hover:bg-blood hover:text-ash active:bg-blood active:text-ash focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blood focus-visible:ring-offset-2 focus-visible:ring-offset-void transition-colors duration-300 relative overflow-hidden group"
           >
             <span className="relative z-10 block group-hover:scale-[1.02] transition-transform duration-300">
               Unlock the full roast — $5

@@ -151,8 +151,36 @@ input:-webkit-autofill:active {
   }
 }
 
-/* Cursor styling */
-a,
-button {
-  cursor: none;
+/* Cursor styling — hide native cursor only on devices that have one. */
+@media (hover: hover) and (pointer: fine) {
+  :root {
+    cursor: none;
+  }
+  a,
+  button {
+    cursor: none;
+  }
+}
+
+/* Avoid horizontal pull-to-refresh inside long-scroll roast pages. */
+html,
+body {
+  overscroll-behavior-y: contain;
+}
+
+/* Respect OS-level Reduce Motion. Disables CSS animations, transitions, and
+   smooth scrolling. GSAP timelines are guarded per-component via
+   `gsap.matchMedia` since CSS cannot kill JS animations. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+  html {
+    scroll-behavior: auto !important;
+  }
 }

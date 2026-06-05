@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 export default function BirthForm() {
@@ -14,12 +14,36 @@ export default function BirthForm() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const nameRef = useRef<HTMLInputElement>(null);
+  const dateRef = useRef<HTMLInputElement>(null);
+  const placeRef = useRef<HTMLInputElement>(null);
+  const countryRef = useRef<HTMLInputElement>(null);
+
+  const inputClass =
+    "w-full bg-transparent border-b border-ash/20 text-lg md:text-xl font-syne font-bold text-ash py-3 focus:border-blood focus-visible:outline-none focus-visible:border-blood transition-colors placeholder:text-ash/20 disabled:opacity-50 disabled:cursor-not-allowed";
+  const labelClass =
+    "block text-xs uppercase tracking-[0.2em] text-ash/50 mb-3 font-mono";
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!placeName.trim() || !countryName.trim()) {
-      setError(
-        "Add your birth place and country so we can calculate the chart.",
-      );
+    if (!name.trim()) {
+      setError("Add your first name so the roast can address you.");
+      nameRef.current?.focus();
+      return;
+    }
+    if (!date) {
+      setError("Add your date of birth so we can calculate the chart.");
+      dateRef.current?.focus();
+      return;
+    }
+    if (!placeName.trim()) {
+      setError("Add your birth place so we can calculate the chart.");
+      placeRef.current?.focus();
+      return;
+    }
+    if (!countryName.trim()) {
+      setError("Add your birth country so we can calculate the chart.");
+      countryRef.current?.focus();
       return;
     }
     setError("");
@@ -58,119 +82,175 @@ export default function BirthForm() {
   };
 
   return (
-    <form className="space-y-10" onSubmit={handleSubmit}>
+    <form
+      className="space-y-10"
+      onSubmit={handleSubmit}
+      aria-busy={loading}
+      noValidate
+    >
       <div className="space-y-10">
         {/* Name */}
         <div className="relative group interactive">
-          <label className="block text-xs uppercase tracking-[0.2em] text-ash/50 mb-3 font-mono">
+          <label htmlFor="birth-name" className={labelClass}>
             First name
           </label>
           <input
+            ref={nameRef}
+            id="birth-name"
+            name="given-name"
             type="text"
             required
             value={name}
             onChange={(e) => setName(e.target.value)}
             disabled={loading}
-            className="w-full bg-transparent border-b border-ash/20 text-lg md:text-xl font-syne font-bold text-ash py-3 focus:border-blood focus:outline-none transition-colors placeholder:text-ash/20 disabled:opacity-50 disabled:cursor-not-allowed"
+            autoComplete="given-name"
+            autoCapitalize="words"
+            autoCorrect="off"
+            spellCheck={false}
+            enterKeyHint="next"
+            aria-invalid={!!error && !name.trim()}
+            aria-describedby={error ? "birth-form-error" : undefined}
+            className={inputClass}
             placeholder="What should the roast call you?"
           />
         </div>
 
         {/* Email */}
         <div className="relative group interactive">
-          <label className="block text-xs uppercase tracking-[0.2em] text-ash/50 mb-3 font-mono">
+          <label htmlFor="birth-email" className={labelClass}>
             Email for your link
           </label>
           <input
+            id="birth-email"
+            name="email"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             disabled={loading}
-            className="w-full bg-transparent border-b border-ash/20 text-lg md:text-xl font-syne font-bold text-ash py-3 focus:border-blood focus:outline-none transition-colors placeholder:text-ash/20 disabled:opacity-50 disabled:cursor-not-allowed"
+            autoComplete="email"
+            autoCapitalize="off"
+            autoCorrect="off"
+            spellCheck={false}
+            inputMode="email"
+            enterKeyHint="next"
+            className={inputClass}
             placeholder="Optional, but useful"
           />
         </div>
 
         {/* Date + Time row */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-14">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-10">
           {/* Date */}
           <div className="relative group interactive">
-            <label className="block text-xs uppercase tracking-[0.2em] text-ash/50 mb-3 font-mono">
+            <label htmlFor="birth-date" className={labelClass}>
               Date of birth
             </label>
             <input
+              ref={dateRef}
+              id="birth-date"
+              name="bday"
               type="date"
               required
               value={date}
               onChange={(e) => setDate(e.target.value)}
               disabled={loading}
-              className="w-full bg-transparent border-b border-ash/20 text-lg md:text-xl font-syne font-bold text-ash py-3 focus:border-blood focus:outline-none transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              autoComplete="bday"
+              aria-invalid={!!error && !date}
+              aria-describedby={error ? "birth-form-error" : undefined}
+              className={inputClass}
               style={{ colorScheme: "dark" }}
             />
           </div>
 
           {/* Time */}
           <div className="relative group interactive">
-            <label className="block text-xs uppercase tracking-[0.2em] text-ash/50 mb-3 font-mono">
+            <label htmlFor="birth-time" className={labelClass}>
               Birth time{" "}
               <span className="text-ash/30 normal-case tracking-normal">
                 (optional)
               </span>
             </label>
             <input
+              id="birth-time"
+              name="bday-time"
               type="time"
               value={time}
               onChange={(e) => setTime(e.target.value)}
               disabled={loading}
-              className="w-full bg-transparent border-b border-ash/20 text-lg md:text-xl font-syne font-bold text-ash py-3 focus:border-blood focus:outline-none transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className={inputClass}
               style={{ colorScheme: "dark" }}
             />
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-14">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-10">
           <div className="relative group interactive">
-            <label className="block text-xs uppercase tracking-[0.2em] text-ash/50 mb-3 font-mono">
+            <label htmlFor="birth-place" className={labelClass}>
               Birth place
             </label>
             <input
+              ref={placeRef}
+              id="birth-place"
+              name="birth-place"
               type="text"
               required
               value={placeName}
               onChange={(e) => setPlaceName(e.target.value)}
               disabled={loading}
-              className="w-full bg-transparent border-b border-ash/20 text-lg md:text-xl font-syne font-bold text-ash py-3 focus:border-blood focus:outline-none transition-colors placeholder:text-ash/20 disabled:opacity-50 disabled:cursor-not-allowed"
-              placeholder="City or town"
               autoComplete="address-level2"
+              autoCapitalize="words"
+              autoCorrect="off"
+              enterKeyHint="next"
+              aria-invalid={!!error && !placeName.trim()}
+              aria-describedby={error ? "birth-form-error" : undefined}
+              className={inputClass}
+              placeholder="City or town"
             />
           </div>
 
           <div className="relative group interactive">
-            <label className="block text-xs uppercase tracking-[0.2em] text-ash/50 mb-3 font-mono">
+            <label htmlFor="birth-country" className={labelClass}>
               Country
             </label>
             <input
+              ref={countryRef}
+              id="birth-country"
+              name="country-name"
               type="text"
               required
               value={countryName}
               onChange={(e) => setCountryName(e.target.value)}
               disabled={loading}
-              className="w-full bg-transparent border-b border-ash/20 text-lg md:text-xl font-syne font-bold text-ash py-3 focus:border-blood focus:outline-none transition-colors placeholder:text-ash/20 disabled:opacity-50 disabled:cursor-not-allowed"
-              placeholder="Country"
               autoComplete="country-name"
+              autoCapitalize="words"
+              autoCorrect="off"
+              enterKeyHint="done"
+              aria-invalid={!!error && !countryName.trim()}
+              aria-describedby={error ? "birth-form-error" : undefined}
+              className={inputClass}
+              placeholder="Country"
             />
           </div>
         </div>
       </div>
 
-      {error && <p className="text-blood text-sm font-mono">{error}</p>}
+      {error && (
+        <p
+          id="birth-form-error"
+          role="alert"
+          aria-live="assertive"
+          className="text-blood text-sm font-mono"
+        >
+          {error}
+        </p>
+      )}
 
       {/* CTA */}
       <div className="pt-4">
         <button
           type="submit"
           disabled={loading}
-          className="interactive w-full bg-ash text-void font-syne font-bold text-lg md:text-2xl uppercase py-5 hover:bg-blood hover:text-ash transition-colors duration-300 relative overflow-hidden group disabled:opacity-50 disabled:cursor-not-allowed"
+          className="interactive w-full bg-ash text-void font-syne font-bold text-lg md:text-2xl uppercase py-5 min-h-[44px] hover:bg-blood hover:text-ash active:bg-blood active:text-ash focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blood focus-visible:ring-offset-2 focus-visible:ring-offset-void transition-colors duration-300 relative overflow-hidden group disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <span className="relative z-10">
             {loading ? "Calculating your chart..." : "Generate my roast"}

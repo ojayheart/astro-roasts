@@ -10,6 +10,21 @@ export default function CustomCursor() {
     const cursor = cursorRef.current;
     if (!cursor) return;
 
+    // Touch / coarse-pointer devices have no cursor to replace — skip mount.
+    // Also skip when the user has Reduce Motion on; chasing the mouse with a
+    // GSAP tween counts as motion they opted out of.
+    if (typeof window !== "undefined") {
+      const coarse = window.matchMedia("(pointer: coarse)").matches;
+      const noHover = !window.matchMedia("(hover: hover)").matches;
+      const reduce = window.matchMedia(
+        "(prefers-reduced-motion: reduce)",
+      ).matches;
+      if (coarse || noHover || reduce) {
+        cursor.style.display = "none";
+        return;
+      }
+    }
+
     const onMouseMove = (e: MouseEvent) => {
       gsap.to(cursor, {
         x: e.clientX,

@@ -144,7 +144,8 @@ export default function CheckoutForm({
       <button
         type="submit"
         disabled={!stripe || submitting}
-        className="interactive w-full bg-ash text-void font-syne font-extrabold uppercase tracking-[0.15em] py-5 px-8 text-center text-lg md:text-xl hover:bg-blood hover:text-ash transition-colors duration-300 disabled:opacity-60 disabled:cursor-not-allowed"
+        aria-busy={submitting}
+        className="interactive w-full bg-ash text-void font-syne font-extrabold uppercase tracking-[0.15em] py-5 px-8 min-h-[44px] text-center text-lg md:text-xl hover:bg-blood hover:text-ash active:bg-blood active:text-ash focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blood focus-visible:ring-offset-2 focus-visible:ring-offset-void transition-colors duration-300 disabled:opacity-60 disabled:cursor-not-allowed"
       >
         {submitting ? "Processing…" : `Pay ${priceLabel} — Unlock`}
       </button>

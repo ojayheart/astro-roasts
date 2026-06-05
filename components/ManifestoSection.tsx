@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
@@ -73,74 +73,120 @@ const ROAST_LINES = [
   },
 ];
 
+const ROTATION_MS = 6000;
+
 export default function ManifestoSection() {
   const [active, setActive] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const sectionRef = useRef<HTMLElement>(null);
+  const carouselRef = useRef<HTMLDivElement>(null);
+  const visibleRef = useRef(true);
 
+  // Auto-rotate carousel — paused when off-screen, when user opts out via the
+  // pause button, or under prefers-reduced-motion.
   useEffect(() => {
+    const reduce =
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduce || paused) return;
+
+    const el = carouselRef.current;
+    if (!el) return;
+
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        visibleRef.current = entry.isIntersecting;
+      },
+      { threshold: 0.1 },
+    );
+    io.observe(el);
+
     const id = setInterval(() => {
+      if (!visibleRef.current) return;
+      if (typeof document !== "undefined" && document.hidden) return;
       setActive((i) => (i + 1) % ROAST_LINES.length);
-    }, 6000);
-    return () => clearInterval(id);
-  }, []);
+    }, ROTATION_MS);
+
+    return () => {
+      clearInterval(id);
+      io.disconnect();
+    };
+  }, [paused]);
 
   useEffect(() => {
     gsap.registerPlugin(ScrollTrigger);
 
-    const manifestoTexts = gsap.utils.toArray<HTMLElement>(".manifesto-text");
+    const mm = gsap.matchMedia();
 
-    const tl = gsap.timeline({
-      scrollTrigger: {
-        trigger: "#manifesto",
-        start: "top top",
-        end: "bottom bottom",
-        scrub: 1,
-      },
+    // Scroll-scrub manifesto text only when reduce-motion is off.
+    mm.add("(prefers-reduced-motion: no-preference)", () => {
+      const manifestoTexts = gsap.utils.toArray<HTMLElement>(".manifesto-text");
+      const tl = gsap.timeline({
+        scrollTrigger: {
+          trigger: "#manifesto",
+          start: "top top",
+          end: "bottom bottom",
+          scrub: 1,
+        },
+      });
+      manifestoTexts.forEach((text, i) => {
+        if (i !== 0) {
+          tl.to(text, { opacity: 1, duration: 1 }, "+=0.5");
+        }
+        if (i !== manifestoTexts.length - 1) {
+          tl.to(text, { opacity: 0, duration: 1 }, "+=1");
+        }
+      });
+
+      gsap.from("#confessional h2", {
+        scrollTrigger: { trigger: "#confessional", start: "top 70%" },
+        y: 50,
+        opacity: 0,
+        duration: 1,
+        ease: "power3.out",
+      });
+
+      gsap.from("#confessional p", {
+        scrollTrigger: { trigger: "#confessional", start: "top 60%" },
+        y: 30,
+        opacity: 0,
+        duration: 1,
+        stagger: 0.2,
+        ease: "power3.out",
+      });
+
+      gsap.from("#confessional form > div", {
+        scrollTrigger: { trigger: "#confessional form", start: "top 70%" },
+        y: 40,
+        opacity: 0,
+        duration: 1,
+        stagger: 0.2,
+        ease: "power3.out",
+      });
     });
 
-    manifestoTexts.forEach((text, i) => {
-      if (i !== 0) {
-        tl.to(text, { opacity: 1, duration: 1 }, "+=0.5");
-      }
-      if (i !== manifestoTexts.length - 1) {
-        tl.to(text, { opacity: 0, duration: 1 }, "+=1");
-      }
-    });
-
-    // Form section reveal
-    gsap.from("#confessional h2", {
-      scrollTrigger: { trigger: "#confessional", start: "top 70%" },
-      y: 50,
-      opacity: 0,
-      duration: 1,
-      ease: "power3.out",
-    });
-
-    gsap.from("#confessional p", {
-      scrollTrigger: { trigger: "#confessional", start: "top 60%" },
-      y: 30,
-      opacity: 0,
-      duration: 1,
-      stagger: 0.2,
-      ease: "power3.out",
-    });
-
-    gsap.from("#confessional form > div", {
-      scrollTrigger: { trigger: "#confessional form", start: "top 70%" },
-      y: 40,
-      opacity: 0,
-      duration: 1,
-      stagger: 0.2,
-      ease: "power3.out",
+    // Under reduce-motion: skip the scroll-scrub and just show all manifesto
+    // text statically. Leave only the final text visible.
+    mm.add("(prefers-reduced-motion: reduce)", () => {
+      const manifestoTexts = gsap.utils.toArray<HTMLElement>(".manifesto-text");
+      manifestoTexts.forEach((text, i) => {
+        gsap.set(text, { opacity: i === manifestoTexts.length - 1 ? 1 : 0 });
+      });
     });
 
     return () => {
+      mm.revert();
       ScrollTrigger.getAll().forEach((t) => t.kill());
     };
   }, []);
 
   return (
-    <section id="manifesto" className="relative h-[300vh] w-full bg-void">
-      <div className="sticky top-0 h-screen w-full flex items-center justify-center overflow-hidden px-4">
+    <section
+      id="manifesto"
+      ref={sectionRef}
+      className="relative h-[200vh] md:h-[300vh] w-full bg-void"
+    >
+      <div className="sticky top-0 h-[100dvh] w-full flex items-center justify-center overflow-hidden px-4">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(26,5,0,0.8)_0%,rgba(3,3,3,1)_70%)] opacity-50" />
 
         <div className="relative z-10 w-full max-w-5xl mx-auto text-center font-syne font-bold text-4xl md:text-7xl uppercase tracking-tight leading-[1.1]">
@@ -160,10 +206,17 @@ export default function ManifestoSection() {
             <span className="text-blood">neither.</span>
           </div>
           <div className="manifesto-text absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full opacity-0">
-            <div className="relative min-h-[12rem] md:min-h-[16rem] flex items-center justify-center">
+            <div
+              ref={carouselRef}
+              role="region"
+              aria-label="Sample roast lines"
+              aria-roledescription="carousel"
+              className="relative min-h-[12rem] md:min-h-[16rem] flex items-center justify-center"
+            >
               {ROAST_LINES.map((t, i) => (
                 <div
                   key={i}
+                  aria-hidden={i !== active}
                   className={`absolute inset-0 flex flex-col items-center justify-center px-2 text-xl md:text-3xl normal-case font-normal font-mono leading-snug transition-opacity duration-700 ease-in-out ${
                     i === active
                       ? "opacity-100"
@@ -178,15 +231,35 @@ export default function ManifestoSection() {
               ))}
             </div>
 
-            <div className="mt-10 flex items-center justify-center gap-3">
+            <div
+              role="tablist"
+              aria-label="Roast line"
+              className="mt-10 flex items-center justify-center gap-3"
+            >
               {ROAST_LINES.map((_, i) => (
-                <span
+                <button
                   key={i}
-                  className={`h-1.5 rounded-full transition-all duration-500 ${
+                  type="button"
+                  role="tab"
+                  aria-selected={i === active}
+                  aria-label={`Show roast line ${i + 1} of ${ROAST_LINES.length}`}
+                  onClick={() => setActive(i)}
+                  className={`interactive h-1.5 rounded-full transition-all duration-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blood focus-visible:ring-offset-2 focus-visible:ring-offset-void ${
                     i === active ? "w-8 bg-blood" : "w-1.5 bg-ash/30"
                   }`}
                 />
               ))}
+            </div>
+
+            <div className="mt-6 flex items-center justify-center">
+              <button
+                type="button"
+                onClick={() => setPaused((p) => !p)}
+                aria-pressed={paused}
+                className="interactive font-mono text-[10px] tracking-[0.25em] uppercase text-ash/50 hover:text-blood focus-visible:outline-none focus-visible:text-blood transition-colors min-h-[44px] px-3"
+              >
+                {paused ? "Play roast lines" : "Pause roast lines"}
+              </button>
             </div>
           </div>
         </div>

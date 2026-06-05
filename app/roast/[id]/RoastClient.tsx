@@ -28,17 +28,66 @@ export default function RoastClient({
     { planet: "Saturn", sign: data.saturnSign || "" },
   ].filter((placement) => placement.sign);
 
-  // Poll while generating (timeout after 3 minutes)
+  // Poll while generating (3 minutes of *foreground* time). Backgrounded tabs
+  // don't accrue toward the timeout — otherwise a 4-minute coffee break with
+  // the tab hidden would flip a finished roast into a permanent error state.
   useEffect(() => {
     if (data.status !== "generating") return;
 
-    const startTime = Date.now();
     const TIMEOUT_MS = 3 * 60 * 1000;
+    let foregroundMs = 0;
+    let lastVisible = Date.now();
+    let cancelled = false;
+
+    const onVisibility = () => {
+      const now = Date.now();
+      if (document.visibilityState === "visible") {
+        lastVisible = now;
+      } else {
+        foregroundMs += now - lastVisible;
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+
+    const finalCheck = async () => {
+      try {
+        const res = await fetch(`/api/roast/${roastId}`);
+        const json = await res.json();
+        if (json.status === "ready") {
+          if (!cancelled) {
+            setData({
+              id: roastId,
+              name: json.name,
+              status: "ready",
+              sunSign: json.sunSign || "",
+              moonSign: json.moonSign || "",
+              rising: json.rising || "",
+              mercurySign: json.mercurySign || "",
+              venusSign: json.venusSign || "",
+              marsSign: json.marsSign || "",
+              jupiterSign: json.jupiterSign || "",
+              saturnSign: json.saturnSign || "",
+              teaser: json.teaser || "",
+              fullText: json.fullText || "",
+              callouts: json.callouts || [],
+              paid: json.paid || false,
+              createdAt: data.createdAt,
+            });
+            return;
+          }
+        }
+      } catch {
+        // Swallow; we're about to flip to error anyway.
+      }
+      if (!cancelled) setData((prev) => ({ ...prev, status: "error" }));
+    };
 
     const interval = setInterval(async () => {
-      // Timeout — pipeline likely not running
-      if (Date.now() - startTime > TIMEOUT_MS) {
-        setData((prev) => ({ ...prev, status: "error" }));
+      if (document.visibilityState !== "visible") return;
+      const elapsed = foregroundMs + (Date.now() - lastVisible);
+      if (elapsed > TIMEOUT_MS) {
+        clearInterval(interval);
+        await finalCheck();
         return;
       }
 
@@ -73,7 +122,11 @@ export default function RoastClient({
       }
     }, 2000);
 
-    return () => clearInterval(interval);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
   }, [data.status, roastId, data.createdAt]);
 
   // After Stripe Checkout redirect, success_url lands here with `?paid=1`.

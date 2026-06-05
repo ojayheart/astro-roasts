@@ -5,26 +5,37 @@ import gsap from "gsap";
 
 export default function HeroSection() {
   useEffect(() => {
-    const heroLines = document.querySelectorAll(".hero-line span");
-    gsap.to(heroLines, {
-      y: "0%",
-      duration: 1.2,
-      stagger: 0.2,
-      ease: "power4.out",
-      delay: 0.5,
+    const mm = gsap.matchMedia();
+
+    mm.add("(prefers-reduced-motion: no-preference)", () => {
+      const heroLines = document.querySelectorAll(".hero-line span");
+      gsap.to(heroLines, {
+        y: "0%",
+        duration: 1.2,
+        stagger: 0.2,
+        ease: "power4.out",
+        delay: 0.5,
+      });
+
+      gsap.to(".hero-fade", {
+        opacity: 1,
+        duration: 1,
+        stagger: 0.3,
+        ease: "power2.out",
+        delay: 1.5,
+      });
     });
 
-    gsap.to(".hero-fade", {
-      opacity: 1,
-      duration: 1,
-      stagger: 0.3,
-      ease: "power2.out",
-      delay: 1.5,
+    mm.add("(prefers-reduced-motion: reduce)", () => {
+      gsap.set(".hero-line span", { y: "0%" });
+      gsap.set(".hero-fade", { opacity: 1 });
     });
+
+    return () => mm.revert();
   }, []);
 
   return (
-    <section className="relative h-screen w-full flex flex-col justify-center items-center overflow-hidden px-4">
+    <section className="relative h-[100dvh] w-full flex flex-col justify-center items-center overflow-hidden px-4">
       {/* Background SVG */}
       <svg
         className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[150vw] md:w-[80vw] h-auto opacity-10 animate-spin-slow pointer-events-none"
