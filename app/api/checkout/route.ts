@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { roasts, users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { getStripe } from "@/lib/stripe";
+import { pickCurrencyForCountry, readCountryFromHeaders } from "@/lib/currency";
 
 export const runtime = "nodejs";
 
@@ -59,10 +60,14 @@ export async function POST(req: NextRequest) {
   const appUrl =
     process.env.NEXT_PUBLIC_APP_URL?.trim() || "https://astroroast.com";
 
+  const country = readCountryFromHeaders(req.headers);
+  const currency = pickCurrencyForCountry(country);
+
   try {
     const stripe = getStripe();
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
+      currency,
       line_items: [{ price: priceId, quantity: 1 }],
       success_url: `${appUrl}/roast/${roastId}?paid=1&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${appUrl}/roast/${roastId}`,
@@ -70,7 +75,7 @@ export async function POST(req: NextRequest) {
         statement_descriptor_suffix: "ASTROROAST",
         description: "Astroroast — personalized comedic essay (entertainment)",
       },
-      metadata: { roastId },
+      metadata: { roastId, country: country ?? "" },
       ...(customerEmail ? { customer_email: customerEmail } : {}),
       automatic_tax: { enabled: true },
       allow_promotion_codes: true,

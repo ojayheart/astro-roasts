@@ -11,6 +11,11 @@ import {
   extractChartPlacements,
 } from "../lib/roast-runner.ts";
 import { buildSentryInitOptions } from "../lib/sentry-config.ts";
+import {
+  pickCurrencyForCountry,
+  readCountryFromHeaders,
+  isSupportedCurrency,
+} from "../lib/currency.ts";
 
 const baseRoast = {
   id: "roast-1",
@@ -174,6 +179,81 @@ test("Stripe webhook rejects checkout.session.completed missing roastId metadata
 
   const result = extractCompletedRoastId({ event });
   assert.equal(result.ok, false);
+});
+
+test("currency picks AUD for AU, NZD for NZ, GBP for GB, CAD for CA", () => {
+  assert.equal(pickCurrencyForCountry("AU"), "aud");
+  assert.equal(pickCurrencyForCountry("NZ"), "nzd");
+  assert.equal(pickCurrencyForCountry("GB"), "gbp");
+  assert.equal(pickCurrencyForCountry("CA"), "cad");
+});
+
+test("currency picks EUR for Eurozone members", () => {
+  for (const c of [
+    "DE",
+    "FR",
+    "ES",
+    "IT",
+    "NL",
+    "IE",
+    "FI",
+    "AT",
+    "PT",
+    "HR",
+  ]) {
+    assert.equal(pickCurrencyForCountry(c), "eur", `${c} should map to EUR`);
+  }
+});
+
+test("currency falls back to USD for non-Eurozone EU outliers and rest of world", () => {
+  // SE/DK/NO/PL/CH not in Eurozone — should fall back to USD (we don't price in their local currency)
+  for (const c of [
+    "SE",
+    "DK",
+    "NO",
+    "PL",
+    "CH",
+    "US",
+    "JP",
+    "IN",
+    "BR",
+    "ZA",
+  ]) {
+    assert.equal(
+      pickCurrencyForCountry(c),
+      "usd",
+      `${c} should fall back to USD`,
+    );
+  }
+});
+
+test("currency normalises case and trims whitespace", () => {
+  assert.equal(pickCurrencyForCountry("au"), "aud");
+  assert.equal(pickCurrencyForCountry(" NZ "), "nzd");
+  assert.equal(pickCurrencyForCountry(""), "usd");
+  assert.equal(pickCurrencyForCountry(undefined), "usd");
+  assert.equal(pickCurrencyForCountry(null), "usd");
+});
+
+test("country is read from x-vercel-ip-country header", () => {
+  const headers = new Headers({ "x-vercel-ip-country": "NZ" });
+  assert.equal(readCountryFromHeaders(headers), "NZ");
+
+  const empty = new Headers();
+  assert.equal(readCountryFromHeaders(empty), undefined);
+
+  const whitespace = new Headers({ "x-vercel-ip-country": "   " });
+  assert.equal(readCountryFromHeaders(whitespace), undefined);
+});
+
+test("isSupportedCurrency matches Price object currency_options", () => {
+  for (const c of ["usd", "aud", "nzd", "eur", "gbp", "cad"]) {
+    assert.equal(isSupportedCurrency(c), true);
+    assert.equal(isSupportedCurrency(c.toUpperCase()), true);
+  }
+  for (const c of ["sek", "dkk", "jpy", "inr"]) {
+    assert.equal(isSupportedCurrency(c), false);
+  }
 });
 
 test("public env values are trimmed before client-side script injection", () => {
