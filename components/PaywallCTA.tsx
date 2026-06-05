@@ -12,13 +12,8 @@ export default function PaywallCTA({ roastId }: PaywallCTAProps) {
 
   return (
     <>
-      <div
-        className="paywall-ui fixed bottom-0 left-0 w-full pt-40 px-6 paywall-gradient z-50 flex flex-col items-center justify-end pointer-events-none"
-        style={{
-          paddingBottom: "max(7rem, calc(env(safe-area-inset-bottom) + 6rem))",
-        }}
-      >
-        <div className="pointer-events-auto w-full max-w-md flex flex-col items-center">
+      <div className="paywall-ui w-full flex flex-col items-center my-10 md:my-12 px-6">
+        <div className="w-full max-w-md flex flex-col items-center">
           <span className="text-[10px] md:text-xs font-mono tracking-[0.15em] text-ash/60 mb-4 uppercase text-center">
             Full dossier: every planet, house, aspect, and callback.
           </span>

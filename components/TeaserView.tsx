@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import ShareButton from "./ShareButton";
@@ -42,28 +42,6 @@ export default function TeaserView({
   teaser,
   roastId,
 }: TeaserViewProps) {
-  const [showPaywall, setShowPaywall] = useState(false);
-  const sentinelRef = useRef<HTMLDivElement>(null);
-
-  // Scroll-triggered paywall: appears after user scrolls past 3rd paragraph
-  useEffect(() => {
-    const sentinel = sentinelRef.current;
-    if (!sentinel) return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setShowPaywall(true);
-          observer.disconnect();
-        }
-      },
-      { threshold: 0.5 },
-    );
-
-    observer.observe(sentinel);
-    return () => observer.disconnect();
-  }, []);
-
   useEffect(() => {
     gsap.registerPlugin(ScrollTrigger);
 
@@ -108,12 +86,13 @@ export default function TeaserView({
     };
   }, []);
 
-  // Split teaser into paragraphs
-  const teaserParagraphs = teaser.split("\n\n").filter((p) => p.trim());
+  // Split teaser into paragraphs — show first 2 clear + 1 short blurred tease
+  const allParagraphs = teaser.split("\n\n").filter((p) => p.trim());
+  const teaserParagraphs = allParagraphs.slice(0, 3);
 
   return (
     <>
-      <main className="max-w-2xl mx-auto px-6 pt-16 pb-80 relative z-10">
+      <main className="max-w-2xl mx-auto px-6 pt-16 pb-24 relative z-10">
         {/* Dossier Header */}
         <header className="dossier border border-bruise bg-void p-5 mb-16 relative overflow-hidden">
           <div className="absolute top-0 left-0 w-2 h-2 bg-blood" />
@@ -171,54 +150,31 @@ export default function TeaserView({
           The first findings
         </h1>
 
-        {/* Free Teaser with Progressive Blur */}
-        <div className="teaser-block pl-6 md:pl-8 py-2 mb-8 space-y-8 text-lg md:text-xl text-ash/90 font-light leading-relaxed relative">
+        {/* Free Teaser: 2 clear paragraphs + 1 short blurred tease, then inline paywall */}
+        <div className="teaser-block pl-6 md:pl-8 py-2 mb-4 space-y-8 text-lg md:text-xl text-ash/90 font-light leading-relaxed relative">
           {teaserParagraphs.map((p, i) => {
-            // Apply progressive blur to later paragraphs
-            const isLast = i === teaserParagraphs.length - 1;
-            const isSecondLast = i === teaserParagraphs.length - 2;
-            const blurStyle = isLast
-              ? { filter: "blur(2px)", opacity: 0.5 }
-              : isSecondLast
-                ? { filter: "blur(0.5px)", opacity: 0.75 }
-                : undefined;
+            // Clamp the 3rd paragraph to ~110 chars so the blur tease stays short
+            const display =
+              i === 2 && p.length > 110 ? p.slice(0, 110).trimEnd() + "…" : p;
+            const blurStyle =
+              i === 2 ? { filter: "blur(3px)", opacity: 0.55 } : undefined;
 
             return (
-              <div key={i}>
-                <p className="teaser-p" style={blurStyle}>
-                  {p}
-                </p>
-                {/* Sentinel after 4th paragraph triggers paywall */}
-                {i === 3 && <div ref={sentinelRef} className="h-0" />}
-              </div>
+              <p key={i} className="teaser-p" style={blurStyle}>
+                {display}
+              </p>
             );
           })}
-          {/* Gradient fade overlay at the bottom */}
-          <div
-            className="absolute bottom-0 left-0 right-0 h-32 pointer-events-none"
-            style={{
-              background:
-                "linear-gradient(to bottom, transparent, var(--color-void, #0a0a0a))",
-            }}
-          />
         </div>
 
+        {/* Inline paywall — sits right under the teaser, no scroll trigger */}
+        <PaywallCTA roastId={roastId} />
+
         {/* Share */}
-        <div className="share-wrapper mb-20 pl-6 md:pl-8">
+        <div className="share-wrapper pl-6 md:pl-8">
           <ShareButton roastId={roastId} />
         </div>
       </main>
-
-      {/* Scroll-triggered paywall */}
-      <div
-        className={`relative z-50 pointer-events-none transition-all duration-700 ease-out ${
-          showPaywall
-            ? "translate-y-0 opacity-100"
-            : "translate-y-full opacity-0"
-        }`}
-      >
-        <PaywallCTA roastId={roastId} />
-      </div>
     </>
   );
 }
