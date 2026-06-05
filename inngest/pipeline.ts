@@ -9,7 +9,7 @@ import { eq } from "drizzle-orm";
 import { inngest } from "./client";
 import { db } from "@/lib/db";
 import { roasts } from "@/lib/db/schema";
-import { sendRoastEmail } from "@/lib/email";
+import { sendRoastEmailIfReady } from "@/lib/send-roast-email-if-ready";
 import {
   buildRoastRunnerPayload,
   extractChartPlacements,
@@ -193,16 +193,13 @@ export const generateRoast = inngest.createFunction(
         })
         .where(eq(roasts.id, roastId));
 
-      if (email) {
-        try {
-          await sendRoastEmail(email, name, fullText, roastId);
-          await db
-            .update(roasts)
-            .set({ emailSent: true })
-            .where(eq(roasts.id, roastId));
-        } catch (emailErr) {
-          console.error("Email send failed:", emailErr);
-        }
+      // Gated on paid=true via shared helper. If payment landed first, the
+      // webhook already sent and emailSent is true (no-op). If payment lands
+      // later, the webhook will send.
+      try {
+        await sendRoastEmailIfReady(roastId);
+      } catch (emailErr) {
+        console.error("Email send failed (pipeline):", emailErr);
       }
     });
 
