@@ -21,16 +21,24 @@ const STATUS_ROTATION_MS = 6500;
 interface LoadingAnimationProps {
   placements?: ChartPlacement[];
   onComplete?: () => void;
+  /**
+   * 0-100 target reported from the server. Bar smooth-tweens toward this
+   * each frame so big jumps don't snap. Defaults to a 0→90 background creep
+   * over ~90s so the bar never appears stalled when callbacks haven't fired.
+   */
+  targetPct?: number;
 }
 
 export default function LoadingAnimation({
   onComplete,
+  targetPct = 0,
 }: LoadingAnimationProps) {
   const [progress, setProgress] = useState(0);
   const [statusIndex, setStatusIndex] = useState(0);
   const [flash, setFlash] = useState(false);
   const [showVideo, setShowVideo] = useState(false);
   const completedRef = useRef(false);
+  const startedAtRef = useRef<number>(0);
 
   // Gate the 10MB looping background video on prefers-reduced-motion and the
   // Save-Data client hint, so low-end / cellular / accessibility users don't
@@ -59,12 +67,29 @@ export default function LoadingAnimation({
     return () => clearInterval(interval);
   }, []);
 
+  // Smooth-tween toward the server-reported target. Also tick a slow
+  // background creep so the bar never appears stuck when callbacks haven't
+  // fired yet — caps at ~90% so we don't lie about being done.
   useEffect(() => {
+    startedAtRef.current = performance.now();
+    const EXPECTED_MS = 90_000; // matches p50 generation time
+    const CREEP_CAP = 88;
+
     const timer = setInterval(() => {
-      setProgress((prev) => (prev >= 95 ? prev : prev + Math.random() * 3));
-    }, 200);
+      setProgress((prev) => {
+        const elapsed = performance.now() - startedAtRef.current;
+        const creep = Math.min(CREEP_CAP, (elapsed / EXPECTED_MS) * CREEP_CAP);
+        const target = Math.max(targetPct, creep);
+        if (prev >= target) return prev;
+        // Ease ~20% of the gap per tick — feels like real work landing
+        // rather than a sudden snap when callbacks arrive.
+        const next = prev + Math.max(0.4, (target - prev) * 0.2);
+        return Math.min(target, next);
+      });
+    }, 120);
+
     return () => clearInterval(timer);
-  }, []);
+  }, [targetPct]);
 
   useEffect(() => {
     if (progress >= 100 && !completedRef.current) {
@@ -74,7 +99,9 @@ export default function LoadingAnimation({
     }
   }, [progress, onComplete]);
 
-  const clampedProgress = Math.min(Math.round(progress), 99);
+  // Allow 100 only when targetPct hit 100 (status flipped to "ready").
+  const ceiling = targetPct >= 100 ? 100 : 99;
+  const clampedProgress = Math.min(Math.round(progress), ceiling);
 
   return (
     <div

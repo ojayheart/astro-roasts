@@ -72,6 +72,7 @@ export default function RoastClient({
               callouts: json.callouts || [],
               paid: json.paid || false,
               createdAt: data.createdAt,
+              stagePct: 100,
             });
             return;
           }
@@ -113,6 +114,8 @@ export default function RoastClient({
             callouts: json.callouts || [],
             paid: json.paid || false,
             createdAt: data.createdAt,
+            stagePct:
+              json.status === "ready" ? 100 : Number(json.stagePct ?? 0),
           });
         } else if (json.status === "error") {
           setData((prev) => ({ ...prev, status: "error" }));
@@ -168,7 +171,12 @@ export default function RoastClient({
 
   // Generating -> loading animation
   if (data.status === "generating") {
-    return <LoadingAnimation placements={placements} />;
+    return (
+      <LoadingAnimation
+        placements={placements}
+        targetPct={data.stagePct ?? 0}
+      />
+    );
   }
 
   // Error state

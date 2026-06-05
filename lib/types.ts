@@ -31,6 +31,7 @@ export interface RoastData {
   callouts?: string[];
   paid: boolean;
   createdAt?: string;
+  stagePct?: number;
 }
 
 export interface ChartPlacement {

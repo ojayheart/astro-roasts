@@ -56,6 +56,7 @@ export const roasts = pgTable(
     saturnSign: text("saturn_sign"),
     chartData: text("chart_data"), // raw formatted output from natal_chart.py
     status: text("status").default("generating").notNull(), // generating | ready | error
+    stagePct: integer("stage_pct").default(0).notNull(), // 0-100, runner-reported progress
     title: text("title"), // devastating one-line title
     analysis: jsonb("analysis"), // humor profile + metaphor palette + voice preset JSON
     draft: text("draft"), // first draft text (before validation)

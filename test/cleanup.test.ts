@@ -368,6 +368,7 @@ test("birth location resolution keeps exact data for known cities", () => {
 
 test("roast runner payload sends raw birth data instead of calculated chart text", () => {
   const payload = buildRoastRunnerPayload({
+    roastId: "test-roast-id",
     name: "Charlotte",
     date: "1992-08-29",
     time: "04:10",
@@ -375,6 +376,7 @@ test("roast runner payload sends raw birth data instead of calculated chart text
   });
 
   assert.deepEqual(payload, {
+    roastId: "test-roast-id",
     name: "Charlotte",
     date: "1992-08-29",
     time: "04:10",

@@ -114,6 +114,7 @@ export const generateRoast = inngest.createFunction(
         },
         body: JSON.stringify(
           buildRoastRunnerPayload({
+            roastId,
             name,
             date,
             time,

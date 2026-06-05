@@ -21,6 +21,7 @@ type RoastRecord = {
   fullText: string | null;
   callouts: string | null;
   createdAt?: Date;
+  stagePct?: number | null;
 };
 
 function splitCallouts(callouts: string | null): string[] {
@@ -60,6 +61,7 @@ export function buildRoastPayload(roast: RoastRecord): RoastData {
     rising: roast.rising || "",
     teaser: roast.paid ? roast.teaser || "" : buildUnpaidTeaser(roast),
     createdAt: roast.createdAt?.toISOString(),
+    stagePct: roast.stagePct ?? 0,
   };
 
   if (!roast.paid) {

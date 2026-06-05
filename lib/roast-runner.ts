@@ -1,4 +1,5 @@
 export interface RoastRunnerPayload {
+  roastId: string;
   name: string;
   date: string;
   time: string | null;
@@ -32,12 +33,14 @@ const SIGN_PATTERN =
   "Aries|Taurus|Gemini|Cancer|Leo|Virgo|Libra|Scorpio|Sagittarius|Capricorn|Aquarius|Pisces";
 
 export function buildRoastRunnerPayload(input: {
+  roastId: string;
   name: string;
   date: string;
   time: string | null;
   birthPlace: string;
 }): RoastRunnerPayload {
   return {
+    roastId: input.roastId,
     name: input.name,
     date: input.date,
     time: input.time,
