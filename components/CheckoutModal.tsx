@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { Elements } from "@stripe/react-stripe-js";
 import type { StripeElementsOptions, Appearance } from "@stripe/stripe-js";
 import * as Sentry from "@sentry/nextjs";
@@ -156,6 +157,7 @@ export default function CheckoutModal({
   }, [open]);
 
   if (!open) return null;
+  if (typeof document === "undefined") return null;
 
   const elementsOptions: StripeElementsOptions | null = intent
     ? {
@@ -170,7 +172,7 @@ export default function CheckoutModal({
       ? `${window.location.origin}/roast/${roastId}?paid=1`
       : `/roast/${roastId}?paid=1`;
 
-  return (
+  return createPortal(
     <div
       className="fixed inset-0 z-[100] flex items-center justify-center bg-void/85 backdrop-blur-sm overflow-y-auto"
       style={{ height: "100vh", width: "100vw" }}
@@ -242,6 +244,6 @@ export default function CheckoutModal({
           )}
         </div>
       </div>
-    </div>
+    </div>,
   );
 }
