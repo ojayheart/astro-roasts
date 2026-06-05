@@ -172,7 +172,7 @@ export default function CheckoutModal({
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-end md:items-center justify-center bg-void/85 backdrop-blur-sm"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-void/85 backdrop-blur-sm overflow-y-auto"
       style={{ height: "100vh", width: "100vw" }}
       onClick={onClose}
       role="dialog"
