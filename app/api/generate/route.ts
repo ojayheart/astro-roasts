@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import * as Sentry from "@sentry/nextjs";
 import { db } from "@/lib/db";
 import { users, roasts } from "@/lib/db/schema";
 import { inngest } from "@/inngest/client";
@@ -112,6 +113,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ id: roast.id });
   } catch (error) {
     console.error("Generate error:", error);
+    Sentry.withScope((scope) => {
+      scope.setTag("route", "/api/generate");
+      Sentry.captureException(error);
+    });
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 },

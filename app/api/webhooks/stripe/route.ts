@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import * as Sentry from "@sentry/nextjs";
 import { db } from "@/lib/db";
 import { roasts } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
@@ -19,6 +20,12 @@ export async function POST(req: NextRequest) {
   const verified = verifyStripeEvent({ rawBody, signature, secret });
   if (!verified.ok) {
     console.warn("Stripe webhook rejected:", verified.error);
+    Sentry.withScope((scope) => {
+      scope.setTag("route", "/api/webhooks/stripe");
+      scope.setTag("stripe.signature_valid", "false");
+      scope.setContext("stripe_webhook", { error: verified.error });
+      Sentry.captureMessage("Stripe webhook signature invalid", "warning");
+    });
     return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
   }
 
@@ -35,6 +42,14 @@ export async function POST(req: NextRequest) {
       .where(eq(roasts.id, extracted.roastId));
   } catch (err) {
     console.error("Webhook DB update failed:", err);
+    Sentry.withScope((scope) => {
+      scope.setTag("route", "/api/webhooks/stripe");
+      scope.setContext("stripe_webhook", {
+        roastId: extracted.roastId,
+        eventType: verified.event.type,
+      });
+      Sentry.captureException(err);
+    });
     return NextResponse.json({ error: "DB update failed" }, { status: 500 });
   }
 
@@ -46,6 +61,12 @@ export async function POST(req: NextRequest) {
     await sendRoastEmailIfReady(extracted.roastId);
   } catch (emailErr) {
     console.error("Email send failed (webhook):", emailErr);
+    Sentry.withScope((scope) => {
+      scope.setTag("route", "/api/webhooks/stripe");
+      scope.setTag("subsystem", "email");
+      scope.setContext("email", { roastId: extracted.roastId });
+      Sentry.captureException(emailErr);
+    });
   }
 
   return NextResponse.json({ received: true });

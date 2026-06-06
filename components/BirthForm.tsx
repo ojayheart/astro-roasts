@@ -1,7 +1,8 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { identifyByEmail, track } from "@/lib/track";
 
 export default function BirthForm() {
   const router = useRouter();
@@ -18,6 +19,10 @@ export default function BirthForm() {
   const dateRef = useRef<HTMLInputElement>(null);
   const placeRef = useRef<HTMLInputElement>(null);
   const countryRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    track("birth_form_opened", {});
+  }, []);
 
   const inputClass =
     "w-full bg-transparent border-b border-ash/20 text-lg md:text-xl font-syne font-bold text-ash py-3 focus:border-blood focus-visible:outline-none focus-visible:border-blood transition-colors placeholder:text-ash/20 disabled:opacity-50 disabled:cursor-not-allowed";
@@ -49,6 +54,12 @@ export default function BirthForm() {
     setError("");
     setLoading(true);
 
+    track("birth_form_submitted", {
+      hasEmail: !!email,
+      hasBirthTime: !!time,
+    });
+    if (email) identifyByEmail(email, { name });
+
     try {
       const res = await fetch("/api/generate", {
         method: "POST",
@@ -74,6 +85,7 @@ export default function BirthForm() {
         return;
       }
 
+      track("roast_generation_started", { roastId: data.id });
       router.push(`/roast/${data.id}`);
     } catch {
       setError("Connection failed. Check your internet and try again.");

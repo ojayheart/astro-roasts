@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import * as Sentry from "@sentry/nextjs";
 import { eq, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { roasts } from "@/lib/db/schema";
@@ -38,10 +39,19 @@ export async function POST(req: NextRequest) {
   const pct = Math.max(0, Math.min(99, Math.round(rawPct)));
 
   // GREATEST guards against a late callback dragging the bar backwards.
-  await db
-    .update(roasts)
-    .set({ stagePct: sql`GREATEST(${roasts.stagePct}, ${pct})` })
-    .where(eq(roasts.id, roastId));
+  try {
+    await db
+      .update(roasts)
+      .set({ stagePct: sql`GREATEST(${roasts.stagePct}, ${pct})` })
+      .where(eq(roasts.id, roastId));
+  } catch (err) {
+    Sentry.withScope((scope) => {
+      scope.setTag("route", "/api/roast-progress");
+      scope.setContext("progress", { roastId, pct });
+      Sentry.captureException(err);
+    });
+    return NextResponse.json({ error: "db_update_failed" }, { status: 500 });
+  }
 
   return NextResponse.json({ ok: true, pct });
 }

@@ -6,6 +6,7 @@ import { Elements } from "@stripe/react-stripe-js";
 import type { StripeElementsOptions, Appearance } from "@stripe/stripe-js";
 import * as Sentry from "@sentry/nextjs";
 import { getStripeJs } from "@/lib/stripe-client";
+import { track } from "@/lib/track";
 import CheckoutForm from "./CheckoutForm";
 
 interface CheckoutModalProps {
@@ -93,6 +94,7 @@ export default function CheckoutModal({
     if (!open || intent || loading) return;
     setLoading(true);
     setLoadError(null);
+    track("checkout_modal_opened", { roastId });
 
     fetch("/api/payment-intent", {
       method: "POST",
@@ -114,11 +116,17 @@ export default function CheckoutModal({
           amount: data.amount ?? 500,
           currency: data.currency ?? "usd",
         });
+        track("checkout_intent_loaded", {
+          roastId,
+          amount: data.amount ?? 500,
+          currency: data.currency ?? "usd",
+        });
       })
       .catch((err: unknown) => {
         const message =
           err instanceof Error ? err.message : "Could not start checkout.";
         setLoadError(message);
+        track("checkout_intent_failed", { roastId, error: message });
         Sentry.withScope((scope) => {
           scope.setTag("payment.provider", "stripe");
           scope.setContext("payment_intent_load", { roastId });

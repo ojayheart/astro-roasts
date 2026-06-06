@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import CheckoutModal from "./CheckoutModal";
+import { track } from "@/lib/track";
 
 interface PaywallCTAProps {
   roastId: string;
@@ -19,7 +20,10 @@ export default function PaywallCTA({ roastId }: PaywallCTAProps) {
           </span>
           <button
             type="button"
-            onClick={() => setOpen(true)}
+            onClick={() => {
+              track("paywall_button_clicked", { roastId });
+              setOpen(true);
+            }}
             className="interactive w-full bg-ash text-void font-syne font-extrabold uppercase tracking-[0.15em] py-5 px-8 min-h-[44px] text-center text-lg md:text-xl hover:bg-blood hover:text-ash active:bg-blood active:text-ash focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blood focus-visible:ring-offset-2 focus-visible:ring-offset-void transition-colors duration-300 relative overflow-hidden group"
           >
             <span className="relative z-10 block group-hover:scale-[1.02] transition-transform duration-300">

@@ -13,6 +13,7 @@ import type {
   StripePaymentElementOptions,
 } from "@stripe/stripe-js";
 import * as Sentry from "@sentry/nextjs";
+import { track } from "@/lib/track";
 
 interface CheckoutFormProps {
   roastId: string;
@@ -78,6 +79,10 @@ export default function CheckoutForm({
     event: StripeExpressCheckoutElementConfirmEvent,
   ) => {
     if (!stripe || !elements) return;
+    track("express_checkout_clicked", {
+      roastId,
+      method: event.expressPaymentType,
+    });
     setSubmitting(true);
     setErrorMessage(null);
 
@@ -89,15 +94,22 @@ export default function CheckoutForm({
     if (error) {
       setErrorMessage(error.message ?? "Payment could not be completed.");
       captureCheckoutError(error, "express");
+      track("payment_failed", {
+        roastId,
+        error: error.message ?? error.code ?? "unknown",
+      });
       setSubmitting(false);
     }
-    // On success, Stripe redirects to return_url. No further client work.
+    // On success, Stripe redirects to return_url. The /roast/[id]?paid=1
+    // landing fires payment_succeeded server-confirmed via webhook + the
+    // poll in RoastClient.
   };
 
   const handleCardSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!stripe || !elements || submitting) return;
 
+    track("card_checkout_submitted", { roastId });
     setSubmitting(true);
     setErrorMessage(null);
 
@@ -109,6 +121,10 @@ export default function CheckoutForm({
     if (error) {
       setErrorMessage(error.message ?? "Payment could not be completed.");
       captureCheckoutError(error, "card");
+      track("payment_failed", {
+        roastId,
+        error: error.message ?? error.code ?? "unknown",
+      });
       setSubmitting(false);
     }
   };

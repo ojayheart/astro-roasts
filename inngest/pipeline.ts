@@ -6,6 +6,7 @@
  */
 
 import { eq } from "drizzle-orm";
+import * as Sentry from "@sentry/nextjs";
 import { inngest } from "./client";
 import { db } from "@/lib/db";
 import { roasts } from "@/lib/db/schema";
@@ -93,6 +94,13 @@ export const generateRoast = inngest.createFunction(
       const status =
         error?.name === "RateLimitError" ? "rate_limited" : "error";
       await db.update(roasts).set({ status }).where(eq(roasts.id, roastId));
+
+      Sentry.withScope((scope) => {
+        scope.setTag("subsystem", "inngest");
+        scope.setTag("inngest.event", "roast/generate");
+        scope.setContext("roast", { roastId, status });
+        Sentry.captureException(error);
+      });
     },
   },
   async ({ event, step }) => {
@@ -140,6 +148,16 @@ export const generateRoast = inngest.createFunction(
       const output = body.output || body.roast || "";
 
       if (!res.ok || !output) {
+        Sentry.withScope((scope) => {
+          scope.setTag("subsystem", "hermes-runner");
+          scope.setContext("hermes_runner", {
+            roastId,
+            status: res.status,
+            error: body.error,
+            detail: body.detail?.slice(0, 500),
+          });
+          Sentry.captureMessage(`Roast runner non-ok (${res.status})`, "error");
+        });
         throw new Error(
           `Roast runner failed (${res.status}): ${body.error || "unknown"} ${body.detail || ""}`,
         );
@@ -148,6 +166,14 @@ export const generateRoast = inngest.createFunction(
       const chartData = body.chartData || extractMarkedSection(output, "CHART");
       const roastOutput = extractRoastBlock(output);
       if (!chartData) {
+        Sentry.withScope((scope) => {
+          scope.setTag("subsystem", "hermes-runner");
+          scope.setContext("hermes_runner", {
+            roastId,
+            outputPreview: output.slice(0, 500),
+          });
+          Sentry.captureMessage("Roast runner returned no chart data", "error");
+        });
         throw new Error("Roast runner did not return chart data");
       }
 
@@ -201,6 +227,12 @@ export const generateRoast = inngest.createFunction(
         await sendRoastEmailIfReady(roastId);
       } catch (emailErr) {
         console.error("Email send failed (pipeline):", emailErr);
+        Sentry.withScope((scope) => {
+          scope.setTag("subsystem", "email");
+          scope.setTag("source", "pipeline");
+          scope.setContext("email", { roastId });
+          Sentry.captureException(emailErr);
+        });
       }
     });
 

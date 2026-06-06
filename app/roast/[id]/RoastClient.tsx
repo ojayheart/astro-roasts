@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import LoadingAnimation from "@/components/LoadingAnimation";
 import TeaserView from "@/components/TeaserView";
 import FullRoastView from "@/components/FullRoastView";
 import type { ChartPlacement, RoastData } from "@/lib/types";
+import { track } from "@/lib/track";
 
 interface RoastClientProps {
   roastId: string;
@@ -16,6 +17,50 @@ export default function RoastClient({
   initialData,
 }: RoastClientProps) {
   const [data, setData] = useState<RoastData>(initialData);
+  const loadingStartedAt = useRef<number>(0);
+  const finishedFiredRef = useRef(false);
+  const teaserFiredRef = useRef(false);
+
+  // Track abandonment: if the tab unloads while still in `generating`, fire
+  // a beacon so we can see the drop-off shape in PostHog. We can't use a
+  // promise-based capture here — the page is gone — so rely on PostHog's
+  // built-in pageleave + a snapshot event from a beforeunload listener.
+  useEffect(() => {
+    if (data.status !== "generating") return;
+    if (loadingStartedAt.current === 0) {
+      loadingStartedAt.current = Date.now();
+    }
+    const handler = () => {
+      track("loading_abandoned", {
+        roastId,
+        lastPct: data.stagePct ?? 0,
+        elapsedMs: Date.now() - loadingStartedAt.current,
+      });
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [data.status, data.stagePct, roastId]);
+
+  // Fire generation_finished exactly once when status flips to "ready".
+  useEffect(() => {
+    if (data.status === "ready" && !finishedFiredRef.current) {
+      finishedFiredRef.current = true;
+      track("roast_generation_finished", {
+        roastId,
+        durationMs: loadingStartedAt.current
+          ? Date.now() - loadingStartedAt.current
+          : undefined,
+      });
+    }
+  }, [data.status, roastId]);
+
+  // Fire teaser_viewed exactly once when the unpaid teaser becomes visible.
+  useEffect(() => {
+    if (data.status === "ready" && !data.paid && !teaserFiredRef.current) {
+      teaserFiredRef.current = true;
+      track("teaser_viewed", { roastId });
+    }
+  }, [data.status, data.paid, roastId]);
 
   const placements: ChartPlacement[] = [
     { planet: "Sun", sign: data.sunSign },
@@ -156,7 +201,10 @@ export default function RoastClient({
         const json = await res.json();
         if (json.paid) {
           clearInterval(interval);
-          if (!cancelled) setData((prev) => ({ ...prev, paid: true }));
+          if (!cancelled) {
+            setData((prev) => ({ ...prev, paid: true }));
+            track("payment_succeeded", { roastId });
+          }
         }
       } catch {
         // Network error, keep polling

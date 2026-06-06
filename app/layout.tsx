@@ -3,6 +3,7 @@ import { Syne, DM_Mono } from "next/font/google";
 import "./globals.css";
 import NoiseOverlay from "@/components/NoiseOverlay";
 import CustomCursor from "@/components/CustomCursor";
+import PostHogProvider from "@/components/PostHogProvider";
 
 const syne = Syne({
   subsets: ["latin"],
@@ -53,6 +54,7 @@ export default function RootLayout({
         >
           Skip to content
         </a>
+        <PostHogProvider />
         <NoiseOverlay />
         <CustomCursor />
         {children}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { track } from "@/lib/track";
 
 type ShareState = "idle" | "copied" | "shared";
 
@@ -18,6 +19,7 @@ export default function ShareButton({ roastId }: { roastId: string }) {
     if (typeof navigator !== "undefined" && navigator.share) {
       try {
         await navigator.share(shareData);
+        track("share_clicked", { roastId, method: "native" });
         setState("shared");
         setTimeout(() => setState("idle"), 2000);
         return;
@@ -30,6 +32,7 @@ export default function ShareButton({ roastId }: { roastId: string }) {
 
     try {
       await navigator.clipboard.writeText(url);
+      track("share_clicked", { roastId, method: "clipboard" });
       setState("copied");
       setTimeout(() => setState("idle"), 2000);
     } catch {
@@ -39,6 +42,7 @@ export default function ShareButton({ roastId }: { roastId: string }) {
       input.select();
       document.execCommand("copy");
       document.body.removeChild(input);
+      track("share_clicked", { roastId, method: "execCommand" });
       setState("copied");
       setTimeout(() => setState("idle"), 2000);
     }
