@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import LoadingAnimation from "@/components/LoadingAnimation";
 import TeaserView from "@/components/TeaserView";
 import FullRoastView from "@/components/FullRoastView";
-import type { ChartPlacement, RoastData } from "@/lib/types";
+import type { ChartPlacement, NatalChart, RoastData } from "@/lib/types";
 import { track } from "@/lib/track";
 
 interface RoastClientProps {
@@ -17,9 +17,33 @@ export default function RoastClient({
   initialData,
 }: RoastClientProps) {
   const [data, setData] = useState<RoastData>(initialData);
+  const [chart, setChart] = useState<NatalChart | null>(null);
   const loadingStartedAt = useRef<number>(0);
   const finishedFiredRef = useRef(false);
   const teaserFiredRef = useRef(false);
+  const chartFetchedRef = useRef(false);
+
+  // Fast second call: fetch the deterministic natal chart so the loading
+  // screen can draw the d3 wheel while the slow roast generates. Fire-and-
+  // forget — {chart:null} just means the chart-less fallback layout.
+  useEffect(() => {
+    if (data.status !== "generating") return;
+    if (chartFetchedRef.current) return;
+    chartFetchedRef.current = true;
+
+    fetch("/api/chart", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ roastId }),
+    })
+      .then((res) => res.json())
+      .then((json: { chart?: NatalChart | null }) => {
+        if (json.chart) setChart(json.chart);
+      })
+      .catch(() => {
+        // Fallback layout handles it.
+      });
+  }, [data.status, roastId]);
 
   // Track abandonment: if the tab unloads while still in `generating`, fire
   // a beacon so we can see the drop-off shape in PostHog. We can't use a
@@ -223,6 +247,7 @@ export default function RoastClient({
       <LoadingAnimation
         placements={placements}
         targetPct={data.stagePct ?? 0}
+        chart={chart}
       />
     );
   }

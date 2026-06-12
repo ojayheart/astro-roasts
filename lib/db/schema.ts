@@ -55,6 +55,7 @@ export const roasts = pgTable(
     jupiterSign: text("jupiter_sign"),
     saturnSign: text("saturn_sign"),
     chartData: text("chart_data"), // raw formatted output from natal_chart.py
+    chartJson: jsonb("chart_json"), // fast natal chart JSON for the d3 loading wheel
     status: text("status").default("generating").notNull(), // generating | ready | error
     stagePct: integer("stage_pct").default(0).notNull(), // 0-100, runner-reported progress
     title: text("title"), // devastating one-line title
