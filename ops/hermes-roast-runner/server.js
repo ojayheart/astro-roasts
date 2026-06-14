@@ -12,7 +12,7 @@ import { join } from "node:path";
 
 const PORT = Number(process.env.PORT || 8787);
 const SECRET = process.env.ROAST_RUNNER_SECRET;
-const MODEL = process.env.ROAST_MODEL || "claude-opus-4-6";
+const MODEL = process.env.ROAST_MODEL || "claude-opus-4-8";
 const TIMEOUT_MS = Number(process.env.ROAST_TIMEOUT_MS || 10 * 60 * 1000);
 const PROGRESS_URL = process.env.PROGRESS_CALLBACK_URL || "";
 const PYTHON_BIN =
@@ -165,7 +165,7 @@ const server = createServer(async (req, res) => {
   };
 
   if (req.method === "GET" && req.url === "/health") {
-    return send(200, { ok: true, model: MODEL, packageModel: PACKAGE_MODEL });
+    return send(200, { ok: true, model: MODEL });
   }
   if (req.method !== "POST" || req.url !== "/roast") {
     return send(404, { error: "not_found" });
@@ -219,10 +219,22 @@ const server = createServer(async (req, res) => {
     const durationMs = Date.now() - startedAt;
     if (isRateLimit(write.stderr, write.stdout)) {
       console.error("rate_limited", { stderr: write.stderr.slice(0, 500) });
-      return send(503, { error: "rate_limited", detail: write.stderr.slice(0, 1000), durationMs });
+      return send(503, {
+        error: "rate_limited",
+        detail: write.stderr.slice(0, 1000),
+        durationMs,
+      });
     }
-    console.error("write_failed", { code: write.code, stderr: write.stderr.slice(0, 500) });
-    return send(500, { error: "claude_failed", code: write.code, detail: write.stderr.slice(0, 1000), durationMs });
+    console.error("write_failed", {
+      code: write.code,
+      stderr: write.stderr.slice(0, 500),
+    });
+    return send(500, {
+      error: "claude_failed",
+      code: write.code,
+      detail: write.stderr.slice(0, 1000),
+      durationMs,
+    });
   }
 
   const chartData = extractMarkedSection(write.stdout, "CHART");
