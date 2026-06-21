@@ -75,7 +75,16 @@ export default function HeroSection() {
           houses, aspects, and the patterns you keep calling personality.
         </p>
 
-        <div className="hero-fade mt-16 opacity-0 flex flex-col items-center gap-4">
+        <div className="hero-fade mt-12 opacity-0">
+          <a
+            href="#confessional"
+            className="interactive inline-flex items-center justify-center px-10 py-4 min-h-[44px] border-2 border-blood text-blood font-syne font-extrabold text-base md:text-lg uppercase tracking-[0.1em] -rotate-2 hover:rotate-0 hover:bg-blood hover:text-void active:bg-blood active:text-void focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ash focus-visible:ring-offset-2 focus-visible:ring-offset-void transition-all duration-300"
+          >
+            Get roasted
+          </a>
+        </div>
+
+        <div className="hero-fade mt-12 opacity-0 flex flex-col items-center gap-4">
           <span className="text-[10px] uppercase tracking-[0.3em] opacity-50">
             Scroll for the evidence
           </span>

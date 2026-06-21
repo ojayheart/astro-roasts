@@ -5,6 +5,10 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import ShareButton from "./ShareButton";
 import PaywallCTA from "./PaywallCTA";
+import SignGlyph from "./SignGlyph";
+import Redacted from "./Redacted";
+import RoastWheel from "./RoastWheel";
+import { renderEmphasis, stripEmphasis } from "./Emphasis";
 
 interface TeaserViewProps {
   name: string;
@@ -13,25 +17,6 @@ interface TeaserViewProps {
   rising: string;
   teaser: string;
   roastId: string;
-}
-
-const ZODIAC_GLYPHS: Record<string, string> = {
-  Aries: "\u2648",
-  Taurus: "\u2649",
-  Gemini: "\u264A",
-  Cancer: "\u264B",
-  Leo: "\u264C",
-  Virgo: "\u264D",
-  Libra: "\u264E",
-  Scorpio: "\u264F",
-  Sagittarius: "\u2650",
-  Capricorn: "\u2651",
-  Aquarius: "\u2652",
-  Pisces: "\u2653",
-};
-
-function glyph(sign: string): string {
-  return ZODIAC_GLYPHS[sign] || "";
 }
 
 export default function TeaserView({
@@ -107,43 +92,31 @@ export default function TeaserView({
               <span className="block text-blood mb-1.5 text-[10px] font-bold">
                 Sun
               </span>
-              <span
-                className="text-ash font-medium"
-                style={{
-                  fontFamily: "'Segoe UI Symbol', 'Apple Symbols', sans-serif",
-                }}
-              >
-                {sunSign} {glyph(sunSign)}
+              <span className="text-ash font-medium">
+                {sunSign} <SignGlyph sign={sunSign} />
               </span>
             </div>
             <div>
               <span className="block text-blood mb-1.5 text-[10px] font-bold">
                 Moon
               </span>
-              <span
-                className="text-ash font-medium"
-                style={{
-                  fontFamily: "'Segoe UI Symbol', 'Apple Symbols', sans-serif",
-                }}
-              >
-                {moonSign} {glyph(moonSign)}
+              <span className="text-ash font-medium">
+                {moonSign} <SignGlyph sign={moonSign} />
               </span>
             </div>
             <div>
               <span className="block text-blood mb-1.5 text-[10px] font-bold">
                 Rising
               </span>
-              <span
-                className="text-ash font-medium"
-                style={{
-                  fontFamily: "'Segoe UI Symbol', 'Apple Symbols', sans-serif",
-                }}
-              >
-                {rising} {glyph(rising)}
+              <span className="text-ash font-medium">
+                {rising} <SignGlyph sign={rising} />
               </span>
             </div>
           </div>
         </header>
+
+        {/* The subject's actual wheel — exhibit before testimony */}
+        <RoastWheel roastId={roastId} caption="Exhibit A — the chart itself" />
 
         {/* Title */}
         <h1 className="main-title font-syne text-4xl md:text-5xl font-extrabold uppercase tracking-tighter mb-12 text-outline">
@@ -153,15 +126,18 @@ export default function TeaserView({
         {/* Free Teaser: 2 clear paragraphs + 1 short blurred tease, then inline paywall */}
         <div className="teaser-block pl-6 md:pl-8 py-2 mb-4 space-y-8 text-lg md:text-xl text-ash/90 font-light leading-relaxed relative">
           {teaserParagraphs.map((p, i) => {
-            // Clamp the 3rd paragraph to ~110 chars so the blur tease stays short
+            // Clamp the 3rd paragraph to ~160 chars; it renders FOIA-redacted
+            // as the tease — bars read as "locked", unlike a blur.
             const display =
-              i === 2 && p.length > 110 ? p.slice(0, 110).trimEnd() + "…" : p;
-            const blurStyle =
-              i === 2 ? { filter: "blur(3px)", opacity: 0.55 } : undefined;
+              i === 2 && p.length > 160 ? p.slice(0, 160).trimEnd() + "…" : p;
 
             return (
-              <p key={i} className="teaser-p" style={blurStyle}>
-                {display}
+              <p key={i} className="teaser-p">
+                {i === 2 ? (
+                  <Redacted text={stripEmphasis(display)} />
+                ) : (
+                  renderEmphasis(display)
+                )}
               </p>
             );
           })}

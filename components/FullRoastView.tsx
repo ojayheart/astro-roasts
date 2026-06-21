@@ -4,6 +4,9 @@ import { useEffect } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import ShareButton from "./ShareButton";
+import SignGlyph from "./SignGlyph";
+import RoastWheel from "./RoastWheel";
+import { renderEmphasis } from "./Emphasis";
 
 interface FullRoastViewProps {
   name: string;
@@ -18,25 +21,6 @@ interface FullRoastViewProps {
   fullText: string;
   callouts: string[];
   roastId: string;
-}
-
-const ZODIAC_GLYPHS: Record<string, string> = {
-  Aries: "\u2648",
-  Taurus: "\u2649",
-  Gemini: "\u264A",
-  Cancer: "\u264B",
-  Leo: "\u264C",
-  Virgo: "\u264D",
-  Libra: "\u264E",
-  Scorpio: "\u264F",
-  Sagittarius: "\u2650",
-  Capricorn: "\u2651",
-  Aquarius: "\u2652",
-  Pisces: "\u2653",
-};
-
-function glyph(sign: string): string {
-  return ZODIAC_GLYPHS[sign] || "";
 }
 
 export default function FullRoastView({
@@ -132,13 +116,19 @@ export default function FullRoastView({
         <header className="mb-32 gs-reveal">
           <p className="font-mono text-[10px] md:text-xs uppercase tracking-[0.15em] text-blood mb-6 flex items-center gap-4">
             <span className="w-12 h-px bg-blood" />
-            FULL ROAST UNLOCKED // PROCEED CAREFULLY
+            Full roast unlocked — proceed carefully
           </p>
-          <h1 className="font-syne font-extrabold text-5xl sm:text-6xl md:text-8xl tracking-tighter uppercase mb-12 text-ash leading-none break-words">
+          <h1 className="font-syne font-extrabold text-5xl sm:text-6xl md:text-7xl tracking-tighter uppercase mb-12 text-ash leading-none">
             Subject:
             <br />
-            {name}
+            <span className="[overflow-wrap:anywhere]">{name}</span>
           </h1>
+
+          {/* The wheel — the evidence everything below cites */}
+          <RoastWheel
+            roastId={roastId}
+            caption="Exhibit A — the chart itself"
+          />
 
           <h2 className="sr-only">Dossier</h2>
           <div className="border-y border-ash/10 py-8 relative bg-void">
@@ -149,13 +139,8 @@ export default function FullRoastView({
                   <span className="block text-ash/40 text-[10px] mb-2 font-medium">
                     {p.label}
                   </span>
-                  <span
-                    style={{
-                      fontFamily:
-                        "'Segoe UI Symbol', 'Apple Symbols', sans-serif",
-                    }}
-                  >
-                    {p.value} {glyph(p.value)}
+                  <span>
+                    {p.value} <SignGlyph sign={p.value} />
                   </span>
                 </div>
               ))}
@@ -171,7 +156,7 @@ export default function FullRoastView({
           <h2 id="reading-heading" className="sr-only">
             The reading
           </h2>
-          <div className="space-y-8 text-ash/70">
+          <div className="space-y-8 text-ash/85 text-lg leading-[1.8]">
             {paragraphs.map((p, i) => {
               // Check if a callout should appear before this paragraph
               const calloutIndex = calloutPositions.indexOf(i);
@@ -179,10 +164,18 @@ export default function FullRoastView({
                 <div key={i}>
                   {calloutIndex !== -1 && callouts[calloutIndex] && (
                     <div className="callout border-l-2 border-blood pl-6 py-6 my-12 text-ash font-medium text-xl md:text-2xl leading-relaxed italic">
-                      &ldquo;{callouts[calloutIndex]}&rdquo;
+                      &ldquo;{renderEmphasis(callouts[calloutIndex])}&rdquo;
                     </div>
                   )}
-                  <p>{p}</p>
+                  <p
+                    className={
+                      i === 0
+                        ? "first-letter:font-syne first-letter:font-extrabold first-letter:text-blood first-letter:text-6xl md:first-letter:text-7xl first-letter:leading-[0.8] first-letter:float-left first-letter:mr-3 first-letter:mt-1"
+                        : undefined
+                    }
+                  >
+                    {renderEmphasis(p)}
+                  </p>
                 </div>
               );
             })}

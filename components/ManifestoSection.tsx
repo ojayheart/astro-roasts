@@ -7,73 +7,47 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 const ROAST_LINES = [
   {
     quote:
-      "Tea and feelings — but the tea's brewed at the temperature of the earth's core.",
-    author: "Sierra, Cancer Rising",
-  },
-  {
-    quote: "You don't experience feelings. You undergo them.",
-    author: "Wiktor, Scorpio Stellium",
-  },
-  {
-    quote:
-      "Two people stacked in a trench coat — and the scary one got the outside.",
-    author: "Sage, Scorpio Rising",
-  },
-  {
-    quote: "You don't communicate. You detonate meaning.",
-    author: "Sierra, Cancer Rising",
-  },
-  {
-    quote: "You don't date — you conduct emotional archaeology.",
-    author: "Wiktor, Scorpio Stellium",
-  },
-  {
-    quote: "Mercury in Scorpio doesn't make small talk. It makes incisions.",
-    author: "Sage, Scorpio Rising",
-  },
-  {
-    quote:
-      "You text the emotional bomb, then follow up twenty minutes later with “what I meant was—”.",
-    author: "Sierra, Cancer Rising",
-  },
-  {
-    quote: "You burn like radioactive material, not like a campfire.",
-    author: "Wiktor, Scorpio Stellium",
-  },
-  {
-    quote:
-      "The 12th-house Venus is writing poetry. Mars is guarding the notebook with a sword.",
-    author: "Sage, Scorpio Rising",
-  },
-  {
-    quote:
-      "You talk the way satellites transmit — huge range, no idea if anyone's receiving.",
+      "Tea and feelings — but the tea's brewed at the temperature of the earth's core. You serve it smiling, then act surprised when someone mentions the burns. Hospitality as siege warfare. The doilies are load-bearing.",
     author: "Sierra, Cancer Rising",
   },
   {
     quote:
-      "You've rewritten text messages more times than most people rewrite their CVs.",
+      "You don't experience feelings. You undergo them, the way buildings undergo demolition. Afterwards you sweep the rubble behind the couch and call it processing.",
     author: "Wiktor, Scorpio Stellium",
   },
   {
-    quote: "Joy has a permit system.",
+    quote:
+      "Two people stacked in a trench coat — and the scary one got the outside. Visitors knock and the soft one answers through the letterbox. Nobody's been past the hallway since 2019. You call this boundaries; the chart calls it a moat.",
     author: "Sage, Scorpio Rising",
   },
   {
-    quote: "Stop apologising for the weather system and let it rain.",
+    quote:
+      "You text the emotional bomb, then follow up twenty minutes later with “what I meant was—”. The clarification is always longer than the detonation. Forensics could reconstruct your relationships from the edit history alone.",
     author: "Sierra, Cancer Rising",
   },
   {
-    quote: "A sommelier of your own darkness.",
+    quote:
+      "You've rewritten text messages more times than most people rewrite their CVs. Every draft gets colder, and you call that maturity. Somewhere there's a museum of the warm versions you never sent.",
     author: "Wiktor, Scorpio Stellium",
   },
   {
-    quote: "And for the love of God, tell someone about the textiles.",
+    quote:
+      "The 12th-house Venus is writing poetry. Mars is guarding the notebook with a sword. Nobody has read a single stanza in eleven years, and you wonder why people describe you as hard to know. The poems are good — that's the tragedy.",
     author: "Sage, Scorpio Rising",
+  },
+  {
+    quote:
+      "Joy has a permit system. Applications are reviewed quarterly by a committee of your worst memories. Approved fun must be completed quietly and is subject to inspection. Saturn signed off on this, and you framed the signature.",
+    author: "Sierra, Cancer Rising",
+  },
+  {
+    quote:
+      "A sommelier of your own darkness. You swirl the mood, sniff it, announce the vintage — ah yes, 2014, abandonment with oak notes. Connoisseurship is not the same as healing. But God, the cellar is impressive.",
+    author: "Wiktor, Scorpio Stellium",
   },
 ];
 
-const ROTATION_MS = 6000;
+const ROTATION_MS = 9000;
 
 export default function ManifestoSection() {
   const [active, setActive] = useState(0);
@@ -211,13 +185,13 @@ export default function ManifestoSection() {
               role="region"
               aria-label="Sample roast lines"
               aria-roledescription="carousel"
-              className="relative min-h-[12rem] md:min-h-[16rem] flex items-center justify-center"
+              className="relative min-h-[18rem] md:min-h-[20rem] flex items-center justify-center"
             >
               {ROAST_LINES.map((t, i) => (
                 <div
                   key={i}
                   aria-hidden={i !== active}
-                  className={`absolute inset-0 flex flex-col items-center justify-center px-2 text-xl md:text-3xl normal-case font-normal font-mono leading-snug transition-opacity duration-700 ease-in-out ${
+                  className={`absolute inset-0 flex flex-col items-center justify-center px-2 max-w-3xl mx-auto text-base md:text-xl lg:text-2xl normal-case font-normal font-mono leading-relaxed transition-opacity duration-700 ease-in-out ${
                     i === active
                       ? "opacity-100"
                       : "opacity-0 pointer-events-none"

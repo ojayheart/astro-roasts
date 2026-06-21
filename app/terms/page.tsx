@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import SiteNav from "@/components/SiteNav";
+import SiteFooter from "@/components/SiteFooter";
 
 export const metadata: Metadata = {
   title: "Terms of Service | Astro Roasts",
@@ -9,16 +11,7 @@ export const metadata: Metadata = {
 export default function TermsPage() {
   return (
     <>
-      <nav className="fixed top-0 left-0 w-full p-6 md:p-8 flex justify-between items-start z-40 mix-blend-difference pointer-events-none">
-        <Link
-          href="/"
-          className="font-syne font-bold text-xl tracking-tighter uppercase leading-none pointer-events-auto"
-        >
-          Astro
-          <br />
-          Roasts
-        </Link>
-      </nav>
+      <SiteNav />
 
       <main className="min-h-screen bg-void text-ash pt-32 pb-24 px-4 md:px-12 lg:px-16">
         <div className="max-w-3xl mx-auto">
@@ -183,36 +176,7 @@ export default function TermsPage() {
         </div>
       </main>
 
-      <footer className="w-full border-t border-ash/10 py-12 px-4 md:px-8 bg-void">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
-          <Link
-            href="/"
-            className="font-syne font-bold text-2xl tracking-tighter uppercase"
-          >
-            Astro Roasts
-          </Link>
-          <div className="flex gap-6 text-xs uppercase tracking-[0.15em] text-ash/40">
-            <Link
-              href="/pricing"
-              className="hover:text-ash/60 transition-colors"
-            >
-              Pricing
-            </Link>
-            <Link
-              href="/privacy"
-              className="hover:text-ash/60 transition-colors"
-            >
-              Privacy
-            </Link>
-            <Link
-              href="/refund"
-              className="hover:text-ash/60 transition-colors"
-            >
-              Refund
-            </Link>
-          </div>
-        </div>
-      </footer>
+      <SiteFooter />
     </>
   );
 }

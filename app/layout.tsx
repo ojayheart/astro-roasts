@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Syne, DM_Mono } from "next/font/google";
+import { Syne, DM_Mono, Noto_Sans_Symbols_2 } from "next/font/google";
 import "./globals.css";
 import NoiseOverlay from "@/components/NoiseOverlay";
 import CustomCursor from "@/components/CustomCursor";
@@ -19,7 +19,19 @@ const dmMono = DM_Mono({
   display: "swap",
 });
 
+// Zodiac glyphs (♈–♓) — self-hosted so every platform draws the same mark
+// instead of falling back to OS symbol fonts (tofu on Android/Windows).
+const notoSymbols = Noto_Sans_Symbols_2({
+  subsets: ["symbols"],
+  variable: "--font-symbols",
+  weight: "400",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_APP_URL?.trim() || "https://astroroast.com",
+  ),
   title: "Astro Roasts | Radical Cosmic Honesty",
   description:
     "A radically honest, surgically precise teardown of your exact natal chart. Swiss Ephemeris. Zero sugar coating.",
@@ -46,7 +58,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="scroll-smooth">
       <body
-        className={`${syne.variable} ${dmMono.variable} font-mono text-ash bg-void selection:bg-blood selection:text-void antialiased`}
+        className={`${syne.variable} ${dmMono.variable} ${notoSymbols.variable} font-mono text-ash bg-void selection:bg-blood selection:text-void antialiased`}
       >
         <a
           href="#main"
