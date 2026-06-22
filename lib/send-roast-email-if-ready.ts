@@ -40,7 +40,16 @@ export async function sendRoastEmailIfReady(roastId: string): Promise<boolean> {
   if (!row.userEmail) return false;
   if (!row.fullText) return false;
 
-  await sendRoastEmail(row.userEmail, row.userName, row.fullText, roastId);
+  const sent = await sendRoastEmail(
+    row.userEmail,
+    row.userName,
+    row.fullText,
+    roastId,
+  );
+  // Resend not configured (no API key) → no-op. Don't mark emailSent, so the
+  // email can still go out later if a key is added. The on-page route delivers
+  // the roast in the meantime.
+  if (!sent) return false;
   await db
     .update(roasts)
     .set({ emailSent: true })

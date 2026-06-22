@@ -1,10 +1,25 @@
 import { Resend } from "resend";
 
 let _resend: Resend | null = null;
+let _warnedMissingKey = false;
 
-function getResend(): Resend {
+// Returns null when RESEND_API_KEY is not configured. Constructing
+// `new Resend(undefined)` throws "Missing API key", which previously crashed
+// the paid flow. Email is best-effort delivery; the on-page /roast/[id] route
+// is the source of truth, so a missing key must degrade to a no-op, not throw.
+function getResend(): Resend | null {
+  const key = process.env.RESEND_API_KEY?.trim();
+  if (!key) {
+    if (!_warnedMissingKey) {
+      console.warn(
+        "RESEND_API_KEY not set — skipping roast email (roast still available on-page).",
+      );
+      _warnedMissingKey = true;
+    }
+    return null;
+  }
   if (!_resend) {
-    _resend = new Resend(process.env.RESEND_API_KEY);
+    _resend = new Resend(key);
   }
   return _resend;
 }
@@ -23,7 +38,10 @@ export async function sendRoastEmail(
   name: string,
   roastText: string,
   roastId: string,
-) {
+): Promise<boolean> {
+  const resend = getResend();
+  if (!resend) return false;
+
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://astroroast.com";
 
   const paragraphs = roastText
@@ -34,7 +52,7 @@ export async function sendRoastEmail(
     )
     .join("");
 
-  await getResend().emails.send({
+  await resend.emails.send({
     from: "Astro Roast <roast@astroroast.com>",
     to,
     subject: `${escapeHtml(name)}, the stars have spoken.`,
@@ -50,4 +68,5 @@ export async function sendRoastEmail(
       </div>
     `,
   });
+  return true;
 }

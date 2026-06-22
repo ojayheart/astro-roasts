@@ -201,9 +201,11 @@ export default function RoastClient({
     };
   }, [data.status, roastId, data.createdAt]);
 
-  // After Stripe Checkout redirect, success_url lands here with `?paid=1`.
-  // The webhook sets `roasts.paid=true` asynchronously, so poll until it flips
-  // instead of refreshing once and racing the webhook.
+  // After Stripe payment the buyer lands here with `?paid=1`. Stripe also
+  // appends `session_id` (hosted Checkout) or `payment_intent` (embedded flow).
+  // We confirm that id SERVER-SIDE and flip `paid` immediately — this is the
+  // delivery path for buyers who left no email and don't depend on the async
+  // webhook. The poll is a fallback when neither id is present.
   useEffect(() => {
     if (data.paid) return;
     if (typeof window === "undefined") return;
@@ -211,9 +213,34 @@ export default function RoastClient({
     const params = new URLSearchParams(window.location.search);
     if (params.get("paid") !== "1") return;
 
+    const sessionId = params.get("session_id");
+    const paymentIntentId = params.get("payment_intent");
+
     let cancelled = false;
     const startTime = Date.now();
     const TIMEOUT_MS = 60 * 1000;
+
+    const reveal = () => {
+      if (cancelled) return;
+      setData((prev) => ({ ...prev, paid: true }));
+      track("payment_succeeded", { roastId });
+    };
+
+    // Webhook-independent confirmation via the Stripe id in the URL.
+    (async () => {
+      if (!sessionId && !paymentIntentId) return;
+      try {
+        const res = await fetch("/api/verify-checkout", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ roastId, sessionId, paymentIntentId }),
+        });
+        const json = await res.json();
+        if (json.paid) reveal();
+      } catch {
+        // Fall back to the poll below.
+      }
+    })();
 
     const interval = setInterval(async () => {
       if (cancelled || Date.now() - startTime > TIMEOUT_MS) {
@@ -225,10 +252,7 @@ export default function RoastClient({
         const json = await res.json();
         if (json.paid) {
           clearInterval(interval);
-          if (!cancelled) {
-            setData((prev) => ({ ...prev, paid: true }));
-            track("payment_succeeded", { roastId });
-          }
+          reveal();
         }
       } catch {
         // Network error, keep polling
