@@ -61,7 +61,20 @@ export async function POST(req: NextRequest) {
       const [cityPartRaw, ...rest] = birthCity.split(",");
       const cityPart = cityPartRaw?.trim();
       if (!cityPart) return nullResponse;
-      const countryPart = rest.join(",").trim().toLowerCase();
+      // Normalise common country abbreviations to the full names Open-Meteo
+      // returns, so "Wellington, NZ" / "London, UK" / "New York, USA" still
+      // match instead of silently failing.
+      const countryRaw = rest.join(",").trim().toLowerCase();
+      const COUNTRY_ABBR: Record<string, string> = {
+        nz: "new zealand",
+        us: "united states",
+        usa: "united states",
+        uk: "united kingdom",
+        uae: "united arab emirates",
+        cz: "czechia",
+        au: "australia",
+      };
+      const countryPart = COUNTRY_ABBR[countryRaw] ?? countryRaw;
       const geoRes = await fetch(
         `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cityPart)}&count=5&language=en&format=json`,
         { signal: AbortSignal.timeout(4000) },
@@ -81,14 +94,17 @@ export async function POST(req: NextRequest) {
           typeof r.longitude === "number" &&
           typeof r.timezone === "string",
       );
-      // A misspelled city can fuzzy-match a same-named village on the wrong
-      // continent ("Taipai, Taiwan" → Indonesia). If the user gave a country,
-      // require it — a wrong chart is worse than the chart-less fallback.
-      const hit = countryPart
+      // Prefer a country match for disambiguation (a misspelled city can
+      // fuzzy-match a same-named village on the wrong continent), but never
+      // fail outright on a messy or abbreviated country string — fall back to
+      // the top-ranked hit. The wheel is decorative; a best-effort chart beats
+      // no chart at all.
+      const matched = countryPart
         ? candidates.find((r) =>
             (r.country ?? "").toLowerCase().includes(countryPart),
           )
-        : candidates[0];
+        : undefined;
+      const hit = matched ?? candidates[0];
       if (!hit) return nullResponse;
       lat = hit.latitude!;
       lon = hit.longitude!;
