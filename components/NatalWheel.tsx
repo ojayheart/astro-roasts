@@ -3,6 +3,16 @@
 import { useEffect, useRef } from "react";
 import * as d3 from "d3";
 import type { NatalChart } from "@/lib/types";
+import {
+  enumerateElements,
+  drawableAspects,
+  planetId,
+  angleId,
+  houseId,
+  aspectId,
+  signId,
+  type WheelSelection,
+} from "@/lib/chart-annotations";
 
 /**
  * The person's actual natal chart, drawn live on the loading screen.
@@ -12,6 +22,10 @@ import type { NatalChart } from "@/lib/types";
  * Orientation: Ascendant on the left (9 o'clock), longitudes increase
  * counterclockwise — standard chart convention. Unknown birth time → no
  * houses/angles; wheel orients 0° Aries left instead.
+ *
+ * Interactivity (opt-in via onSelect/onHover): planets, aspect lines, sign
+ * glyphs, houses, and ASC/MC become hoverable + clickable. Transparent
+ * oversized hit-targets sit on top so small glyphs are tappable on mobile.
  */
 
 const ASH = "#e5e5e5";
@@ -36,6 +50,21 @@ const SIGN_GLYPHS = [
   "♒",
   "♓",
 ].map((g) => g + VS15);
+
+const SIGN_NAMES = [
+  "Aries",
+  "Taurus",
+  "Gemini",
+  "Cancer",
+  "Leo",
+  "Virgo",
+  "Libra",
+  "Scorpio",
+  "Sagittarius",
+  "Capricorn",
+  "Aquarius",
+  "Pisces",
+];
 
 const PLANET_GLYPHS: Record<string, string> = Object.fromEntries(
   Object.entries({
@@ -74,12 +103,49 @@ function fmtDeg(degInSign: number): string {
   return `${String(d).padStart(2, "0")}°${String(m).padStart(2, "0")}′`;
 }
 
-export default function NatalWheel({ chart }: { chart: NatalChart }) {
+export interface HoverInfo {
+  title: string;
+  x: number;
+  y: number;
+}
+
+type Hit =
+  | { kind: "circle"; x: number; y: number; r: number; spec: WheelSelection }
+  | {
+      kind: "line";
+      x1: number;
+      y1: number;
+      x2: number;
+      y2: number;
+      spec: WheelSelection;
+    };
+
+export default function NatalWheel({
+  chart,
+  onSelect,
+  onHover,
+  selectedId,
+}: {
+  chart: NatalChart;
+  onSelect?: (sel: WheelSelection | null) => void;
+  onHover?: (info: HoverInfo | null) => void;
+  selectedId?: string | null;
+}) {
   const svgRef = useRef<SVGSVGElement>(null);
+
+  // Keep latest callbacks reachable from d3 handlers without re-running the draw.
+  const onSelectRef = useRef(onSelect);
+  const onHoverRef = useRef(onHover);
+  useEffect(() => {
+    onSelectRef.current = onSelect;
+    onHoverRef.current = onHover;
+  });
 
   useEffect(() => {
     const svgEl = svgRef.current;
     if (!svgEl) return;
+
+    const interactive = onSelect !== undefined;
 
     const reduceMotion = window.matchMedia(
       "(prefers-reduced-motion: reduce)",
@@ -96,6 +162,15 @@ export default function NatalWheel({ chart }: { chart: NatalChart }) {
     const svg = d3.select(svgEl);
     svg.selectAll("*").remove();
     const root = svg.append("g");
+
+    // id → selection payload, for wiring click/hover targets.
+    const specById = new Map<string, WheelSelection>(
+      enumerateElements(chart).map((e) => [
+        e.id,
+        { id: e.id, kind: e.kind, title: e.title },
+      ]),
+    );
+    const hits: Hit[] = [];
 
     // ── 1. Zodiac ring ──────────────────────────────────────────────────
     const ring = root.append("g").attr("opacity", 0);
@@ -133,7 +208,7 @@ export default function NatalWheel({ chart }: { chart: NatalChart }) {
         .attr("stroke-opacity", 0.14);
 
       const [gx, gy] = toXY(i * 30 + 15, R_GLYPH);
-      ring
+      const glyph = ring
         .append("text")
         .attr("x", gx)
         .attr("y", gy)
@@ -142,11 +217,18 @@ export default function NatalWheel({ chart }: { chart: NatalChart }) {
         .attr("fill", ASH)
         .attr("font-size", 15)
         .attr("opacity", 0)
-        .text(SIGN_GLYPHS[i])
+        .text(SIGN_GLYPHS[i]);
+      glyph
         .transition()
         .delay(T(400 + i * 50))
         .duration(T(450))
         .attr("opacity", 0.4);
+
+      const sSpec = specById.get(signId(SIGN_NAMES[i]));
+      if (sSpec) {
+        glyph.attr("data-el-id", sSpec.id);
+        hits.push({ kind: "circle", x: gx, y: gy, r: 16, spec: sSpec });
+      }
     }
 
     // ── 2. Degree ticks (rotating group — symmetric, so rotation is pure
@@ -199,7 +281,7 @@ export default function NatalWheel({ chart }: { chart: NatalChart }) {
         const next = chart.houses![(i + 1) % 12];
         const span = (next - cusp + 360) % 360;
         const [nx, ny] = toXY(cusp + span / 2, R_HOUSE_NUM);
-        housesG
+        const numeral = housesG
           .append("text")
           .attr("x", nx)
           .attr("y", ny)
@@ -209,21 +291,28 @@ export default function NatalWheel({ chart }: { chart: NatalChart }) {
           .attr("font-family", MONO)
           .attr("font-size", 9)
           .attr("opacity", 0)
-          .text(i + 1)
+          .text(i + 1);
+        numeral
           .transition()
           .delay(T(1700 + i * 60))
           .duration(T(450))
           .attr("opacity", 0.3);
+
+        const hSpec = specById.get(houseId(i + 1));
+        if (hSpec) {
+          numeral.attr("data-el-id", hSpec.id);
+          hits.push({ kind: "circle", x: nx, y: ny, r: 14, spec: hSpec });
+        }
       });
 
       // ASC / MC labels just outside the ring
       const angles = [
-        { label: "ASC", lon: chart.angles!.ascendant.lon },
-        { label: "MC", lon: chart.angles!.mc.lon },
+        { label: "ASC" as const, lon: chart.angles!.ascendant.lon },
+        { label: "MC" as const, lon: chart.angles!.mc.lon },
       ];
       for (const { label, lon } of angles) {
         const [lx, ly] = toXY(lon, R_RING_OUT + 14);
-        housesG
+        const angleText = housesG
           .append("text")
           .attr("x", lx)
           .attr("y", ly)
@@ -234,11 +323,18 @@ export default function NatalWheel({ chart }: { chart: NatalChart }) {
           .attr("font-size", 10)
           .attr("letter-spacing", "0.1em")
           .attr("opacity", 0)
-          .text(label)
+          .text(label);
+        angleText
           .transition()
           .delay(T(2100))
           .duration(T(450))
           .attr("opacity", 0.85);
+
+        const aSpec = specById.get(angleId(label));
+        if (aSpec) {
+          angleText.attr("data-el-id", aSpec.id);
+          hits.push({ kind: "circle", x: lx, y: ly, r: 16, spec: aSpec });
+        }
       }
     }
 
@@ -317,6 +413,12 @@ export default function NatalWheel({ chart }: { chart: NatalChart }) {
         .duration(T(450))
         .attr("opacity", 1)
         .attr("transform", `translate(${px},${py}) scale(1)`);
+
+      const pSpec = specById.get(planetId(p.name));
+      if (pSpec) {
+        g.attr("data-el-id", pSpec.id);
+        hits.push({ kind: "circle", x: px, y: py, r: 22, spec: pSpec });
+      }
 
       // Degree label, one step further in
       const [dx, dy] = toXY(dLon, R_DEG_LABEL);
@@ -409,12 +511,121 @@ export default function NatalWheel({ chart }: { chart: NatalChart }) {
             `${(ASPECT_START + i * 220 + 800) / 1000}s`,
           );
       }
+
+      const aspSpec = specById.get(aspectId(a));
+      if (aspSpec) {
+        line.attr("data-el-id", aspSpec.id);
+        hits.push({ kind: "line", x1, y1, x2, y2, spec: aspSpec });
+      }
     });
 
+    // ── 7. Interaction layer — transparent oversized hit-targets on top ─
+    if (interactive) {
+      svg.on("click", () => onSelectRef.current?.(null));
+
+      const hitsG = root.append("g").attr("class", "wheel-hits");
+      const wire = (
+        sel: d3.Selection<d3.BaseType, unknown, null, undefined>,
+        spec: WheelSelection,
+      ) => {
+        sel
+          .attr("data-el-id", spec.id)
+          .style("cursor", "pointer")
+          .on("mouseenter", (event: MouseEvent) => {
+            svg
+              .selectAll(`[data-el-id="${spec.id}"]`)
+              .classed("is-hover", true);
+            onHoverRef.current?.({
+              title: spec.title,
+              x: event.clientX,
+              y: event.clientY,
+            });
+          })
+          .on("mousemove", (event: MouseEvent) => {
+            onHoverRef.current?.({
+              title: spec.title,
+              x: event.clientX,
+              y: event.clientY,
+            });
+          })
+          .on("mouseleave", () => {
+            svg
+              .selectAll(`[data-el-id="${spec.id}"]`)
+              .classed("is-hover", false);
+            onHoverRef.current?.(null);
+          })
+          .on("click", (event: MouseEvent) => {
+            event.stopPropagation();
+            onSelectRef.current?.(spec);
+          });
+      };
+
+      for (const h of hits) {
+        if (h.kind === "circle") {
+          const c = hitsG
+            .append("circle")
+            .attr("cx", h.x)
+            .attr("cy", h.y)
+            .attr("r", h.r)
+            .attr("fill", "transparent")
+            .style("pointer-events", "all");
+          wire(
+            c as unknown as d3.Selection<d3.BaseType, unknown, null, undefined>,
+            h.spec,
+          );
+        } else {
+          const l = hitsG
+            .append("line")
+            .attr("x1", h.x1)
+            .attr("y1", h.y1)
+            .attr("x2", h.x2)
+            .attr("y2", h.y2)
+            .attr("stroke", "transparent")
+            .attr("stroke-width", 14)
+            .attr("stroke-linecap", "round")
+            .style("pointer-events", "stroke");
+          wire(
+            l as unknown as d3.Selection<d3.BaseType, unknown, null, undefined>,
+            h.spec,
+          );
+        }
+      }
+    }
+
     return () => {
+      svg.on("click", null);
       svg.selectAll("*").interrupt().remove();
     };
-  }, [chart]);
+  }, [chart, onSelect]);
+
+  // Selection highlight — dim the wheel, light the selected element (and, for
+  // an aspect, the two planets it joins). Independent of the heavy draw effect.
+  useEffect(() => {
+    const svgEl = svgRef.current;
+    if (!svgEl) return;
+    const svg = d3.select(svgEl);
+    svg.selectAll("[data-el-id]").classed("is-selected", false);
+
+    if (!selectedId) {
+      svgEl.classList.remove("has-selection");
+      return;
+    }
+    svgEl.classList.add("has-selection");
+
+    const ids = new Set<string>([selectedId]);
+    if (selectedId.startsWith("aspect:")) {
+      const asp = drawableAspects(chart).find(
+        (a) => aspectId(a) === selectedId,
+      );
+      if (asp) {
+        ids.add(planetId(asp.a));
+        ids.add(planetId(asp.b));
+      }
+    }
+    ids.forEach((id) =>
+      svg.selectAll(`[data-el-id="${id}"]`).classed("is-selected", true),
+    );
+  }, [selectedId, chart]);
 
   return (
     <svg
