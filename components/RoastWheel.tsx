@@ -83,10 +83,10 @@ export default function RoastWheel({
             wheel on selection, light the chosen element + hovered element. */}
         <style>{`
           .natal-wheel-scope svg text:not([font-family]) { font-family: var(--font-symbols), system-ui, sans-serif; }
-          .natal-wheel-scope svg [data-el-id] { transition: opacity .15s ease; }
+          .natal-wheel-scope svg [data-el-id] { transition: opacity .15s ease, filter .15s ease; }
           .natal-wheel-scope svg.has-selection [data-el-id] { opacity: .26; }
-          .natal-wheel-scope svg.has-selection [data-el-id].is-selected { opacity: 1; }
-          .natal-wheel-scope svg [data-el-id].is-hover { opacity: 1; }
+          .natal-wheel-scope svg.has-selection [data-el-id].is-selected { opacity: 1; filter: drop-shadow(0 0 5px rgba(255,42,0,.55)); }
+          .natal-wheel-scope svg [data-el-id].is-hover { opacity: 1; filter: drop-shadow(0 0 6px rgba(255,42,0,.85)); }
         `}</style>
         <div className="absolute top-0 left-0 w-2 h-2 bg-blood" />
         <div className="max-w-[480px] mx-auto aspect-square">
@@ -97,6 +97,16 @@ export default function RoastWheel({
             selectedId={selected?.id ?? null}
           />
         </div>
+
+        {/* First-run affordance — make it unmistakable the wheel is alive.
+            Retires the moment they pin a read. */}
+        {!selected && (
+          <div className="mt-4 flex items-center justify-center gap-3 font-mono text-[10px] uppercase tracking-[0.25em] text-ash/45 select-none">
+            <span className="w-6 h-px bg-blood/70 shrink-0" />
+            <span>tap any mark to read it</span>
+            <span className="inline-block w-1.5 h-3 bg-blood animate-pulse" />
+          </div>
+        )}
 
         {/* Detail card — pinned read of the clicked element. */}
         {selected && (

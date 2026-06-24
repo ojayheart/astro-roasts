@@ -365,11 +365,13 @@ export default function NatalWheel({
     // pile-up that doesn't happen in real charts — accept the overlap.
 
     const planetsG = root.append("g");
+    const planetPos = new Map<string, [number, number]>();
     const PLANET_START = 2600;
     const PLANET_STEP = 320;
     sorted.forEach((p, i) => {
       const dLon = display.get(p.name)!;
       const [px, py] = toXY(dLon, R_PLANET);
+      planetPos.set(p.name, [px, py]);
       const delay = T(PLANET_START + i * PLANET_STEP);
 
       // True-degree tick on the ring's inner edge
@@ -532,6 +534,8 @@ export default function NatalWheel({
           .attr("data-el-id", spec.id)
           .style("cursor", "pointer")
           .on("mouseenter", (event: MouseEvent) => {
+            // First engagement — retire the "poke me" invite cue.
+            svg.selectAll(".wheel-invite").interrupt().remove();
             svg
               .selectAll(`[data-el-id="${spec.id}"]`)
               .classed("is-hover", true);
@@ -590,6 +594,41 @@ export default function NatalWheel({
           );
         }
       }
+
+      // "Poke me" invite — a slow blood reticle breathing on a planet until the
+      // first hover/tap, so it's obvious the wheel is alive. Motion-safe.
+      if (!reduceMotion) {
+        const invitePos =
+          planetPos.get("Sun") ?? planetPos.get(sorted[0]?.name ?? "");
+        if (invitePos) {
+          const [ix, iy] = invitePos;
+          const ring = root
+            .append("circle")
+            .attr("class", "wheel-invite")
+            .attr("cx", ix)
+            .attr("cy", iy)
+            .attr("fill", "none")
+            .attr("stroke", BLOOD)
+            .attr("stroke-width", 1.5)
+            .attr("opacity", 0)
+            .style("pointer-events", "none");
+          const loop = () => {
+            ring
+              .attr("r", 9)
+              .attr("opacity", 0.75)
+              .transition()
+              .duration(1700)
+              .ease(d3.easeCubicOut)
+              .attr("r", 30)
+              .attr("opacity", 0)
+              .on("end", loop);
+          };
+          ring
+            .transition()
+            .delay(T(PLANET_START + sorted.length * PLANET_STEP + 700))
+            .on("end", loop);
+        }
+      }
     }
 
     return () => {
@@ -611,6 +650,7 @@ export default function NatalWheel({
       return;
     }
     svgEl.classList.add("has-selection");
+    svg.selectAll(".wheel-invite").interrupt().remove();
 
     const ids = new Set<string>([selectedId]);
     if (selectedId.startsWith("aspect:")) {
