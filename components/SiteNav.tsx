@@ -19,8 +19,8 @@ export default function SiteNav({
       </Link>
       {disclaimers && (
         <div className="text-xs tracking-[0.15em] uppercase text-right opacity-60">
-          * Swiss Ephemeris calculations
-          <br />* Comedy, not advice
+          * Swiss Ephemeris Data
+          <br />* Zero Sugar Coating
         </div>
       )}
     </nav>

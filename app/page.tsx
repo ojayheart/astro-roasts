@@ -30,9 +30,10 @@ export default function Home() {
               </h2>
               <div className="space-y-8 text-ash/80 text-base font-light leading-relaxed max-w-md">
                 <p>
-                  Add your birth details and we&apos;ll calculate the chart
-                  before writing the roast. Exact time gives sharper houses and
-                  rising sign. A guess still works; the universe will know.
+                  Input your exact birth details. Don&apos;t round to the
+                  nearest hour to seem more interesting. The Swiss Ephemeris
+                  algorithm calculates planets, houses, and aspects to the exact
+                  degree.
                 </p>
                 <p>
                   Astro Roast is a one-time comedic digital entertainment
@@ -41,8 +42,9 @@ export default function Home() {
                   or other professional advice.
                 </p>
                 <p className="pl-5 border-l-2 border-blood text-ash/90">
-                  Don&apos;t know your birth time? Leave it blank or text the
-                  person who kept the records. Either answer says something.
+                  If you don&apos;t know your exact birth time, text your
+                  mother. If you&apos;re not speaking to her, that&apos;s your
+                  first roast right there.
                 </p>
               </div>
             </div>
