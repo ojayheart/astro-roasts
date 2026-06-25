@@ -33,12 +33,6 @@ export default function Home() {
                   algorithm calculates planets, houses, and aspects to the exact
                   degree.
                 </p>
-                <p>
-                  Astro Roast is a one-time comedic digital entertainment
-                  product. It does not predict the future, claim supernatural
-                  accuracy, or provide medical, legal, financial, psychological,
-                  or other professional advice.
-                </p>
                 <p className="pl-5 border-l-2 border-blood text-ash/90">
                   If you don&apos;t know your exact birth time, text your
                   mother. If you&apos;re not speaking to her, that&apos;s your
