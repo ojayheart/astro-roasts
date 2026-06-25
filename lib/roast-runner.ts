@@ -1,6 +1,7 @@
 export interface RoastRunnerPayload {
   roastId: string;
   name: string;
+  gender: string;
   date: string;
   time: string | null;
   birthPlace: string;
@@ -35,6 +36,7 @@ const SIGN_PATTERN =
 export function buildRoastRunnerPayload(input: {
   roastId: string;
   name: string;
+  gender: string;
   date: string;
   time: string | null;
   birthPlace: string;
@@ -42,6 +44,7 @@ export function buildRoastRunnerPayload(input: {
   return {
     roastId: input.roastId,
     name: input.name,
+    gender: input.gender,
     date: input.date,
     time: input.time,
     birthPlace: input.birthPlace,

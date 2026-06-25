@@ -370,6 +370,7 @@ test("roast runner payload sends raw birth data instead of calculated chart text
   const payload = buildRoastRunnerPayload({
     roastId: "test-roast-id",
     name: "Charlotte",
+    gender: "woman",
     date: "1992-08-29",
     time: "04:10",
     birthPlace: "Munich, Germany",
@@ -378,6 +379,7 @@ test("roast runner payload sends raw birth data instead of calculated chart text
   assert.deepEqual(payload, {
     roastId: "test-roast-id",
     name: "Charlotte",
+    gender: "woman",
     date: "1992-08-29",
     time: "04:10",
     birthPlace: "Munich, Germany",

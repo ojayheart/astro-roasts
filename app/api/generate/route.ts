@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { name, email, date, time } = body;
+    const { name, gender, email, date, time } = body;
     const birthPlace =
       body.birthPlace ||
       [body.placeName, body.countryName]
@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
         .join(", ") ||
       body.city;
 
-    if (!name || !date || !birthPlace) {
+    if (!name || !gender || !date || !birthPlace) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 },
@@ -50,6 +50,8 @@ export async function POST(req: NextRequest) {
     if (
       typeof name !== "string" ||
       name.length > 80 ||
+      typeof gender !== "string" ||
+      gender.length > 60 ||
       (email && (typeof email !== "string" || email.length > 254)) ||
       typeof date !== "string" ||
       (time && typeof time !== "string") ||
@@ -72,6 +74,7 @@ export async function POST(req: NextRequest) {
       .insert(users)
       .values({
         name,
+        gender,
         email: email || null,
         dob: date,
         birthTime: time || null,
@@ -103,6 +106,7 @@ export async function POST(req: NextRequest) {
         roastId: roast.id,
         userId: user.id,
         name,
+        gender,
         email: email || null,
         date,
         time: time || null,

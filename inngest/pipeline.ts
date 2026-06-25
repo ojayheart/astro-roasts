@@ -104,7 +104,7 @@ export const generateRoast = inngest.createFunction(
     },
   },
   async ({ event, step }) => {
-    const { roastId, name, email, date, time, city } = event.data;
+    const { roastId, name, gender, email, date, time, city } = event.data;
 
     const hasBirthTime = !!time;
 
@@ -124,6 +124,7 @@ export const generateRoast = inngest.createFunction(
           buildRoastRunnerPayload({
             roastId,
             name,
+            gender,
             date,
             time,
             birthPlace: city,

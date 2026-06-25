@@ -11,6 +11,7 @@ export type RoastGenerateEvent = {
     roastId: string;
     userId: string;
     name: string;
+    gender: string;
     email: string | null;
     date: string;
     time: string | null;

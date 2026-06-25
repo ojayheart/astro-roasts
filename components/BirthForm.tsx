@@ -7,6 +7,7 @@ import { identifyByEmail, track } from "@/lib/track";
 export default function BirthForm() {
   const router = useRouter();
   const [name, setName] = useState("");
+  const [gender, setGender] = useState("");
   const [email, setEmail] = useState("");
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
@@ -16,6 +17,7 @@ export default function BirthForm() {
   const [loading, setLoading] = useState(false);
 
   const nameRef = useRef<HTMLInputElement>(null);
+  const genderRef = useRef<HTMLInputElement>(null);
   const dateRef = useRef<HTMLInputElement>(null);
   const placeRef = useRef<HTMLInputElement>(null);
   const countryRef = useRef<HTMLInputElement>(null);
@@ -34,6 +36,11 @@ export default function BirthForm() {
     if (!name.trim()) {
       setError("Add your first name so the roast can address you.");
       nameRef.current?.focus();
+      return;
+    }
+    if (!gender.trim()) {
+      setError("Add your gender so the roast uses the right voice.");
+      genderRef.current?.focus();
       return;
     }
     if (!date) {
@@ -66,6 +73,7 @@ export default function BirthForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name,
+          gender,
           email: email || undefined,
           date,
           time: time || undefined,
@@ -124,6 +132,32 @@ export default function BirthForm() {
             aria-describedby={error ? "birth-form-error" : undefined}
             className={inputClass}
             placeholder="What should the roast call you?"
+          />
+        </div>
+
+        {/* Gender */}
+        <div className="relative group interactive">
+          <label htmlFor="birth-gender" className={labelClass}>
+            Gender
+          </label>
+          <input
+            ref={genderRef}
+            id="birth-gender"
+            name="sex"
+            type="text"
+            required
+            value={gender}
+            onChange={(e) => setGender(e.target.value)}
+            disabled={loading}
+            autoComplete="sex"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
+            enterKeyHint="next"
+            aria-invalid={!!error && !gender.trim()}
+            aria-describedby={error ? "birth-form-error" : undefined}
+            className={inputClass}
+            placeholder="e.g. woman, man, non-binary"
           />
         </div>
 
