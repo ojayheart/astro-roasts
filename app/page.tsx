@@ -1,7 +1,6 @@
 import BirthForm from "@/components/BirthForm";
 import HeroSection from "@/components/HeroSection";
 import ManifestoSection from "@/components/ManifestoSection";
-import SpecimenSection from "@/components/SpecimenSection";
 import SiteNav from "@/components/SiteNav";
 import SiteFooter from "@/components/SiteFooter";
 
@@ -13,7 +12,6 @@ export default function Home() {
       <main id="main">
         <HeroSection />
         <ManifestoSection />
-        <SpecimenSection />
 
         {/* The Confessional Form */}
         <section
