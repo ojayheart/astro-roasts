@@ -1483,11 +1483,10 @@ function RoastDetail({ id, onChange }: { id: string; onChange: () => void }) {
     if (!confirm(`${label} for this roast?`)) return;
     setBusy(true);
     setMsg("");
-    const body = path === "resend" ? { roastId: id } : { roastId: id };
     const res = await fetch(`/api/admin/${path}`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify(body),
+      body: JSON.stringify({ roastId: id }),
     });
     const data = await res.json();
     setBusy(false);
