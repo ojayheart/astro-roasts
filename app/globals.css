@@ -13,10 +13,6 @@
   --animate-pulse-slow: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
-:root {
-  cursor: none;
-}
-
 body {
   background-color: var(--color-void);
   color: var(--color-ash);
@@ -193,17 +189,6 @@ input:-webkit-autofill:active {
   }
   50% {
     opacity: 1;
-  }
-}
-
-/* Cursor styling — hide native cursor only on devices that have one. */
-@media (hover: hover) and (pointer: fine) {
-  :root {
-    cursor: none;
-  }
-  a,
-  button {
-    cursor: none;
   }
 }
 
