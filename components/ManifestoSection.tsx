@@ -8,42 +8,42 @@ const ROAST_LINES = [
   {
     quote:
       "Tea and feelings — but the tea's brewed at the temperature of the earth's core. You serve it smiling, then act surprised when someone mentions the burns. Hospitality as siege warfare. The doilies are load-bearing.",
-    author: "Sierra, Cancer Rising",
+    author: "Delia, Cancer Rising",
   },
   {
     quote:
       "You don't experience feelings. You undergo them, the way buildings undergo demolition. Afterwards you sweep the rubble behind the couch and call it processing.",
-    author: "Wiktor, Scorpio Stellium",
+    author: "Marcus, Scorpio Stellium",
   },
   {
     quote:
       "Two people stacked in a trench coat — and the scary one got the outside. Visitors knock and the soft one answers through the letterbox. Nobody's been past the hallway since 2019. You call this boundaries; the chart calls it a moat.",
-    author: "Sage, Scorpio Rising",
+    author: "Noor, Scorpio Rising",
   },
   {
     quote:
       "You text the emotional bomb, then follow up twenty minutes later with “what I meant was—”. The clarification is always longer than the detonation. Forensics could reconstruct your relationships from the edit history alone.",
-    author: "Sierra, Cancer Rising",
+    author: "Delia, Cancer Rising",
   },
   {
     quote:
       "You've rewritten text messages more times than most people rewrite their CVs. Every draft gets colder, and you call that maturity. Somewhere there's a museum of the warm versions you never sent.",
-    author: "Wiktor, Scorpio Stellium",
+    author: "Marcus, Scorpio Stellium",
   },
   {
     quote:
       "The 12th-house Venus is writing poetry. Mars is guarding the notebook with a sword. Nobody has read a single stanza in eleven years, and you wonder why people describe you as hard to know. The poems are good — that's the tragedy.",
-    author: "Sage, Scorpio Rising",
+    author: "Noor, Scorpio Rising",
   },
   {
     quote:
       "Joy has a permit system. Applications are reviewed quarterly by a committee of your worst memories. Approved fun must be completed quietly and is subject to inspection. Saturn signed off on this, and you framed the signature.",
-    author: "Sierra, Cancer Rising",
+    author: "Delia, Cancer Rising",
   },
   {
     quote:
       "A sommelier of your own darkness. You swirl the mood, sniff it, announce the vintage — ah yes, 2014, abandonment with oak notes. Connoisseurship is not the same as healing. But God, the cellar is impressive.",
-    author: "Wiktor, Scorpio Stellium",
+    author: "Marcus, Scorpio Stellium",
   },
 ];
 
