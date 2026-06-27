@@ -50,6 +50,11 @@ const ROAST_LINES = [
       "Give her a Capricorn Ascendant so she walks into every room like she's about to chair a meeting, FIVE fire planets so the meeting is secretly a bonfire, an Aries stellium in the 3rd house so her mouth is a flamethrower that thinks it's making polite conversation.",
     author: "Imogen, Aries Stellium",
   },
+  {
+    quote:
+      "The mind works like a duck: smooth on the surface, paddling FURIOUSLY underneath.",
+    author: "Theo, Gemini Sun",
+  },
 ];
 
 const ROTATION_MS = 9000;
