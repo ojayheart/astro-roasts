@@ -52,7 +52,7 @@ const ROAST_LINES = [
   },
   {
     quote:
-      "The mind works like a duck: smooth on the surface, paddling FURIOUSLY underneath.",
+      "Her mind works like a duck: smooth on the surface, paddling FURIOUSLY underneath.",
     author: "Theo, Gemini Sun",
   },
 ];
