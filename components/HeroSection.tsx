@@ -35,7 +35,7 @@ export default function HeroSection() {
   }, []);
 
   return (
-    <section className="relative min-h-[100dvh] w-full flex flex-col justify-center items-center overflow-hidden px-4 py-20 md:py-28">
+    <section className="relative min-h-[100dvh] w-full overflow-hidden">
       {/* Background SVG */}
       <svg
         className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[150vw] md:w-[80vw] h-auto opacity-10 animate-spin-slow pointer-events-none"
@@ -54,37 +54,40 @@ export default function HeroSection() {
         <polygon points="50,12 88,50 50,88 12,50" opacity="0.3" />
       </svg>
 
-      {/* Hero Typography */}
-      <div className="relative z-10 w-full max-w-7xl mx-auto flex flex-col items-center text-center clip-text">
-        <h1 className="font-syne font-extrabold text-[13vw] md:text-[min(8vw,8.5rem)] leading-[0.85] tracking-tighter uppercase flex flex-col items-center">
-          <div className="hero-line overflow-hidden">
-            <span className="block translate-y-[100%] whitespace-nowrap">
-              Stop blaming
-            </span>
-          </div>
-          <div className="hero-line overflow-hidden">
-            <span className="block translate-y-[100%] whitespace-nowrap text-outline">
-              your moon
-            </span>
-          </div>
-          <div className="hero-line overflow-hidden">
-            <span className="block translate-y-[100%] whitespace-nowrap text-blood">
-              sign.
-            </span>
-          </div>
-        </h1>
+      {/* Hero Typography — headline locked to the vertical center */}
+      <div className="absolute inset-0 z-10 flex items-center justify-center px-4">
+        <div className="relative w-full max-w-7xl mx-auto flex flex-col items-center text-center clip-text">
+          <h1 className="font-syne font-extrabold text-[13vw] md:text-[min(8vw,8.5rem)] leading-[0.85] tracking-tighter uppercase flex flex-col items-center">
+            <div className="hero-line overflow-hidden">
+              <span className="block translate-y-[100%] whitespace-nowrap">
+                Stop blaming
+              </span>
+            </div>
+            <div className="hero-line overflow-hidden">
+              <span className="block translate-y-[100%] whitespace-nowrap text-outline">
+                your moon
+              </span>
+            </div>
+            <div className="hero-line overflow-hidden">
+              <span className="block translate-y-[100%] whitespace-nowrap text-blood">
+                sign.
+              </span>
+            </div>
+          </h1>
 
-        <p className="hero-fade mt-8 md:mt-12 text-sm md:text-base max-w-md opacity-0 font-light text-ash/70 leading-relaxed">
-          A radically honest, surgically precise teardown of your exact natal
-          chart. We see your patterns. We know your delusions.
-        </p>
-
-        <div className="hero-fade mt-16 opacity-0 flex flex-col items-center gap-4">
-          <span className="text-[10px] uppercase tracking-[0.3em] opacity-50">
-            Scroll to face it
-          </span>
-          <div className="w-[1px] h-16 bg-gradient-to-b from-ash to-transparent" />
+          <p className="hero-fade absolute top-full left-1/2 -translate-x-1/2 mt-6 md:mt-8 w-full max-w-md text-sm md:text-base opacity-0 font-light text-ash/70 leading-relaxed">
+            A radically honest, surgically precise teardown of your exact natal
+            chart. We see your patterns. We know your delusions.
+          </p>
         </div>
+      </div>
+
+      {/* Scroll cue — pinned to the bottom, out of the centering calc */}
+      <div className="hero-fade absolute bottom-8 left-1/2 -translate-x-1/2 z-10 opacity-0 flex flex-col items-center gap-4">
+        <span className="text-[10px] uppercase tracking-[0.3em] opacity-50">
+          Scroll to face it
+        </span>
+        <div className="w-[1px] h-16 bg-gradient-to-b from-ash to-transparent" />
       </div>
     </section>
   );
