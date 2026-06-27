@@ -2,7 +2,6 @@ import type { Metadata, Viewport } from "next";
 import { Syne, DM_Mono, Noto_Sans_Symbols_2 } from "next/font/google";
 import "./globals.css";
 import NoiseOverlay from "@/components/NoiseOverlay";
-import CustomCursor from "@/components/CustomCursor";
 import PostHogProvider from "@/components/PostHogProvider";
 
 const syne = Syne({
@@ -68,7 +67,6 @@ export default function RootLayout({
         </a>
         <PostHogProvider />
         <NoiseOverlay />
-        <CustomCursor />
         {children}
       </body>
     </html>
