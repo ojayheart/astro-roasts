@@ -173,7 +173,11 @@ function RoastDetail({ id, onChange }: { id: string; onChange: () => void }) {
   }, [id]);
 
   async function act(path: string, label: string) {
-    if (!confirm(`${label} for this roast?`)) return;
+    const confirmMsg =
+      path === "regenerate"
+        ? "Regenerate this roast? This re-runs the pipeline and overwrites the existing roast text."
+        : `${label} for this roast?`;
+    if (!confirm(confirmMsg)) return;
     setBusy(true);
     setMsg("");
     const res = await fetch(`/api/admin/${path}`, {
@@ -213,13 +217,15 @@ function RoastDetail({ id, onChange }: { id: string; onChange: () => void }) {
         >
           Resend email
         </button>
-        <button
-          className={styles.chip}
-          disabled={busy}
-          onClick={() => act("regenerate", "Regenerate")}
-        >
-          Regenerate
-        </button>
+        {d.status !== "ready" && (
+          <button
+            className={styles.chip}
+            disabled={busy}
+            onClick={() => act("regenerate", "Regenerate")}
+          >
+            Regenerate
+          </button>
+        )}
       </div>
       {msg && <div className={styles.muted}>{msg}</div>}
     </div>

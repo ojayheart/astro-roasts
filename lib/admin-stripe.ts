@@ -73,8 +73,12 @@ export function summarizeRevenue(
 
 async function listSucceededPayments(): Promise<PaymentLike[]> {
   const stripe = getStripe();
-  const res = await stripe.paymentIntents.list({ limit: 100 });
-  return res.data.map((pi) => ({
+  const all = [];
+  for await (const pi of stripe.paymentIntents.list({ limit: 100 })) {
+    all.push(pi);
+    if (all.length >= 1000) break;
+  }
+  return all.map((pi) => ({
     amount: pi.amount,
     currency: pi.currency,
     status: pi.status,

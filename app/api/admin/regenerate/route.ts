@@ -25,6 +25,7 @@ export async function POST(req: NextRequest) {
       dob: users.dob,
       birthTime: users.birthTime,
       birthCity: users.birthCity,
+      status: roasts.status,
     })
     .from(roasts)
     .innerJoin(users, eq(roasts.userId, users.id))
@@ -33,6 +34,13 @@ export async function POST(req: NextRequest) {
 
   if (!row) {
     return NextResponse.json({ error: "Roast not found" }, { status: 404 });
+  }
+
+  if (row.status === "ready") {
+    return NextResponse.json(
+      { error: "Roast already complete — nothing to regenerate." },
+      { status: 409 },
+    );
   }
 
   await db
