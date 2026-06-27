@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { ADMIN_COOKIE, verifyAdminToken } from "@/lib/admin-auth";
 import styles from "./admin.module.css";
 import LoginForm from "./LoginForm";
+import AdminDashboard from "./AdminDashboard";
 
 export default async function AdminPage() {
   const secret = process.env.ADMIN_SECRET?.trim() ?? "";
@@ -10,13 +11,12 @@ export default async function AdminPage() {
     ? await verifyAdminToken(token, secret, Date.now())
     : false;
 
-  return (
-    <div className={styles.shell}>
-      {authed ? (
-        <div className={styles.muted}>Authed ✓ (dashboard in Task 8)</div>
-      ) : (
+  if (!authed) {
+    return (
+      <div className={styles.shell}>
         <LoginForm />
-      )}
-    </div>
-  );
+      </div>
+    );
+  }
+  return <AdminDashboard />;
 }
