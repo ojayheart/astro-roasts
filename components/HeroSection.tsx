@@ -35,7 +35,7 @@ export default function HeroSection() {
   }, []);
 
   return (
-    <section className="relative h-[100dvh] w-full flex flex-col justify-center items-center overflow-hidden px-4">
+    <section className="relative min-h-[100dvh] w-full flex flex-col justify-center items-center overflow-hidden px-4 py-20 md:py-28">
       {/* Background SVG */}
       <svg
         className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[150vw] md:w-[80vw] h-auto opacity-10 animate-spin-slow pointer-events-none"
@@ -56,17 +56,21 @@ export default function HeroSection() {
 
       {/* Hero Typography */}
       <div className="relative z-10 w-full max-w-7xl mx-auto flex flex-col items-center text-center clip-text">
-        <h1 className="font-syne font-extrabold text-[12vw] md:text-[8vw] leading-[0.85] tracking-tighter uppercase flex flex-col items-center">
+        <h1 className="font-syne font-extrabold text-[13vw] md:text-[min(8vw,8.5rem)] leading-[0.85] tracking-tighter uppercase flex flex-col items-center">
           <div className="hero-line overflow-hidden">
-            <span className="block translate-y-[100%]">Stop blaming</span>
+            <span className="block translate-y-[100%] whitespace-nowrap">
+              Stop blaming
+            </span>
           </div>
           <div className="hero-line overflow-hidden">
-            <span className="block translate-y-[100%] text-outline">
+            <span className="block translate-y-[100%] whitespace-nowrap text-outline">
               your moon
             </span>
           </div>
           <div className="hero-line overflow-hidden">
-            <span className="block translate-y-[100%] text-blood">sign.</span>
+            <span className="block translate-y-[100%] whitespace-nowrap text-blood">
+              sign.
+            </span>
           </div>
         </h1>
 
