@@ -45,6 +45,11 @@ const ROAST_LINES = [
       "A sommelier of your own darkness. You swirl the mood, sniff it, announce the vintage — ah yes, 2014, abandonment with oak notes. Connoisseurship is not the same as healing. But God, the cellar is impressive.",
     author: "Marcus, Scorpio Stellium",
   },
+  {
+    quote:
+      "Give her a Capricorn Ascendant so she walks into every room like she's about to chair a meeting, FIVE fire planets so the meeting is secretly a bonfire, an Aries stellium in the 3rd house so her mouth is a flamethrower that thinks it's making polite conversation.",
+    author: "Imogen, Aries Stellium",
+  },
 ];
 
 const ROTATION_MS = 9000;
