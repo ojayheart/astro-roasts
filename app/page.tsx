@@ -1,3 +1,4 @@
+import AboutSection from "@/components/AboutSection";
 import BirthForm from "@/components/BirthForm";
 import HeroSection from "@/components/HeroSection";
 import ManifestoSection from "@/components/ManifestoSection";
@@ -12,6 +13,7 @@ export default function Home() {
       <main id="main">
         <HeroSection />
         <ManifestoSection />
+        <AboutSection />
 
         {/* The Confessional Form */}
         <section
