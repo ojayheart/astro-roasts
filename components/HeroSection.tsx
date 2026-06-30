@@ -57,7 +57,7 @@ export default function HeroSection() {
       {/* Hero Typography — headline locked to the vertical center */}
       <div className="absolute inset-0 z-10 flex items-center justify-center px-4">
         <div className="relative w-full max-w-7xl mx-auto flex flex-col items-center text-center clip-text">
-          <h1 className="font-syne font-extrabold text-[13vw] md:text-[min(8vw,8.5rem)] leading-[0.85] tracking-tighter uppercase flex flex-col items-center">
+          <h1 className="font-syne font-extrabold text-[clamp(1.25rem,7vw,8.5rem)] leading-[0.85] tracking-tighter uppercase flex flex-col items-center">
             <div className="hero-line overflow-hidden">
               <span className="block translate-y-[100%] whitespace-nowrap">
                 Stop blaming
