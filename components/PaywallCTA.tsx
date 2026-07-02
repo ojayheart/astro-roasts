@@ -6,9 +6,14 @@ import { track } from "@/lib/track";
 
 interface PaywallCTAProps {
   roastId: string;
+  amountMinorUnits?: number;
 }
 
-export default function PaywallCTA({ roastId }: PaywallCTAProps) {
+export default function PaywallCTA({
+  roastId,
+  amountMinorUnits = 500,
+}: PaywallCTAProps) {
+  const price = `€${(amountMinorUnits / 100).toFixed(0)}`;
   const [open, setOpen] = useState(false);
 
   return (
@@ -27,7 +32,7 @@ export default function PaywallCTA({ roastId }: PaywallCTAProps) {
             className="interactive w-full bg-ash text-void font-syne font-extrabold uppercase tracking-[0.15em] py-5 px-8 min-h-[44px] text-center text-lg md:text-xl hover:bg-blood hover:text-ash active:bg-blood active:text-ash focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blood focus-visible:ring-offset-2 focus-visible:ring-offset-void transition-colors duration-300 relative overflow-hidden group"
           >
             <span className="relative z-10 block group-hover:scale-[1.02] transition-transform duration-300">
-              Unlock the full roast — $5
+              Unlock the full roast — {price}
             </span>
           </button>
           <span className="text-[10px] font-mono tracking-[0.15em] text-ash/40 mt-3 uppercase text-center">

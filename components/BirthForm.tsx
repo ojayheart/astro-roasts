@@ -1,30 +1,50 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { identifyByEmail, track } from "@/lib/track";
+import PersonFields, {
+  EMPTY_PERSON,
+  type PersonFormValue,
+} from "./PersonFields";
+
+type FormMode = "solo" | "couple" | "family";
 
 export default function BirthForm() {
   const router = useRouter();
-  const [name, setName] = useState("");
-  const [gender, setGender] = useState("");
+  const [mode, setMode] = useState<FormMode>("solo");
+  const [people, setPeople] = useState<PersonFormValue[]>([EMPTY_PERSON]);
+  const [familyUnlocked, setFamilyUnlocked] = useState(false);
   const [email, setEmail] = useState("");
-  const [date, setDate] = useState("");
-  const [time, setTime] = useState("");
-  const [placeName, setPlaceName] = useState("");
-  const [countryName, setCountryName] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const nameRef = useRef<HTMLInputElement>(null);
-  const genderRef = useRef<HTMLInputElement>(null);
-  const dateRef = useRef<HTMLInputElement>(null);
-  const placeRef = useRef<HTMLInputElement>(null);
-  const countryRef = useRef<HTMLInputElement>(null);
-
   useEffect(() => {
     track("birth_form_opened", {});
+    const params = new URLSearchParams(window.location.search);
+    const unlocked =
+      localStorage.getItem("ar_has_roast") === "1" ||
+      params.get("mode") === "family";
+    setFamilyUnlocked(unlocked);
+    if (params.get("mode") === "family") switchMode("family");
+    if (params.get("mode") === "couple") switchMode("couple");
   }, []);
+
+  const PEOPLE_BY_MODE: Record<FormMode, number> = {
+    solo: 1,
+    couple: 2,
+    family: 3,
+  };
+
+  function switchMode(next: FormMode) {
+    setMode(next);
+    setPeople((prev) => {
+      const target = PEOPLE_BY_MODE[next];
+      const copy = prev.slice(0, next === "family" ? 6 : target);
+      while (copy.length < target) copy.push(EMPTY_PERSON);
+      return copy;
+    });
+  }
 
   const inputClass =
     "w-full bg-transparent border-b border-ash/20 text-lg md:text-xl font-syne font-bold text-ash py-3 focus:border-blood focus-visible:outline-none focus-visible:border-blood transition-colors placeholder:text-ash/20 disabled:opacity-50 disabled:cursor-not-allowed";
@@ -33,53 +53,88 @@ export default function BirthForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) {
-      setError("Add your first name so the roast can address you.");
-      nameRef.current?.focus();
-      return;
+
+    // Validate every person
+    for (let i = 0; i < people.length; i++) {
+      const p = people[i];
+      if (!p.name.trim()) {
+        setError(
+          `Add ${mode === "solo" ? "your" : `person ${i + 1}'s`} first name so the roast can address ${mode === "solo" ? "you" : "them"}.`,
+        );
+        return;
+      }
+      if (!p.gender.trim()) {
+        setError(
+          `Add ${mode === "solo" ? "your" : `person ${i + 1}'s`} gender so the roast uses the right voice.`,
+        );
+        return;
+      }
+      if (!p.date) {
+        setError(
+          `Add ${mode === "solo" ? "your" : `person ${i + 1}'s`} date of birth so we can calculate the chart.`,
+        );
+        return;
+      }
+      if (!p.placeName.trim()) {
+        setError(
+          `Add ${mode === "solo" ? "your" : `person ${i + 1}'s`} birth place so we can calculate the chart.`,
+        );
+        return;
+      }
+      if (!p.countryName.trim()) {
+        setError(
+          `Add ${mode === "solo" ? "your" : `person ${i + 1}'s`} birth country so we can calculate the chart.`,
+        );
+        return;
+      }
     }
-    if (!gender.trim()) {
-      setError("Add your gender so the roast uses the right voice.");
-      genderRef.current?.focus();
-      return;
-    }
-    if (!date) {
-      setError("Add your date of birth so we can calculate the chart.");
-      dateRef.current?.focus();
-      return;
-    }
-    if (!placeName.trim()) {
-      setError("Add your birth place so we can calculate the chart.");
-      placeRef.current?.focus();
-      return;
-    }
-    if (!countryName.trim()) {
-      setError("Add your birth country so we can calculate the chart.");
-      countryRef.current?.focus();
-      return;
-    }
+
     setError("");
     setLoading(true);
 
     track("birth_form_submitted", {
+      mode,
       hasEmail: !!email,
-      hasBirthTime: !!time,
+      hasBirthTime: !!people[0].time,
+      peopleCount: people.length,
     });
-    if (email) identifyByEmail(email, { name });
+    if (email) identifyByEmail(email, { name: people[0].name });
 
     try {
+      let body;
+      if (mode === "solo") {
+        // Solo: unchanged body shape
+        const p = people[0];
+        body = {
+          name: p.name,
+          gender: p.gender,
+          email: email || undefined,
+          date: p.date,
+          time: p.time || undefined,
+          placeName: p.placeName,
+          countryName: p.countryName,
+        };
+      } else {
+        // Couple/family: group body
+        body = {
+          kind: mode,
+          email: email || undefined,
+          people: people.map((p) => ({
+            name: p.name,
+            gender: p.gender,
+            date: p.date,
+            time: p.time || null,
+            birthPlace: [p.placeName, p.countryName]
+              .filter((s) => s.trim())
+              .join(", "),
+          })),
+        };
+      }
+
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name,
-          gender,
-          email: email || undefined,
-          date,
-          time: time || undefined,
-          placeName,
-          countryName,
-        }),
+        body: JSON.stringify(body),
       });
 
       const data = await res.json();
@@ -101,6 +156,20 @@ export default function BirthForm() {
     }
   };
 
+  const priceHint =
+    mode === "solo"
+      ? "€5"
+      : mode === "couple"
+        ? "€8"
+        : `€${8 + 4 * (people.length - 2)}`;
+
+  const ctaLabel =
+    mode === "solo"
+      ? "Generate my roast"
+      : mode === "couple"
+        ? "Roast us both"
+        : "Roast the whole family";
+
   return (
     <form
       className="space-y-10"
@@ -108,58 +177,69 @@ export default function BirthForm() {
       aria-busy={loading}
       noValidate
     >
-      <div className="space-y-10">
-        {/* Name */}
-        <div className="relative group interactive">
-          <label htmlFor="birth-name" className={labelClass}>
-            First name
-          </label>
-          <input
-            ref={nameRef}
-            id="birth-name"
-            name="given-name"
-            type="text"
-            required
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            disabled={loading}
-            autoComplete="given-name"
-            autoCapitalize="words"
-            autoCorrect="off"
-            spellCheck={false}
-            enterKeyHint="next"
-            aria-invalid={!!error && !name.trim()}
-            aria-describedby={error ? "birth-form-error" : undefined}
-            className={inputClass}
-            placeholder="What should the roast call you?"
-          />
-        </div>
+      {/* Mode tabs */}
+      <div className="flex gap-6 font-mono text-xs uppercase tracking-[0.2em]">
+        {(
+          [
+            "solo",
+            "couple",
+            ...(familyUnlocked ? ["family"] : []),
+          ] as FormMode[]
+        ).map((m) => (
+          <button
+            key={m}
+            type="button"
+            onClick={() => switchMode(m)}
+            className={`interactive pb-1 border-b-2 transition-colors ${
+              mode === m
+                ? "border-blood text-blood"
+                : "border-transparent text-ash/50 hover:text-ash"
+            }`}
+          >
+            {m === "solo" ? "Just me" : m === "couple" ? "Us" : "My family"}
+          </button>
+        ))}
+      </div>
 
-        {/* Gender */}
-        <div className="relative group interactive">
-          <label htmlFor="birth-gender" className={labelClass}>
-            Gender
-          </label>
-          <input
-            ref={genderRef}
-            id="birth-gender"
-            name="sex"
-            type="text"
-            required
-            value={gender}
-            onChange={(e) => setGender(e.target.value)}
+      <div className="space-y-10">
+        {/* Person fields */}
+        {people.map((p, i) => (
+          <div key={i} className="space-y-10">
+            <PersonFields
+              idPrefix={`p${i}`}
+              label={mode === "solo" ? null : `Person ${i + 1}`}
+              value={p}
+              onChange={(updated) => {
+                const copy = [...people];
+                copy[i] = updated;
+                setPeople(copy);
+              }}
+              disabled={loading}
+            />
+            {mode === "family" && i >= 3 && (
+              <button
+                type="button"
+                onClick={() => setPeople(people.filter((_, idx) => idx !== i))}
+                disabled={loading}
+                className="interactive text-xs font-mono uppercase tracking-[0.2em] text-ash/50 hover:text-blood transition-colors"
+              >
+                Remove person {i + 1}
+              </button>
+            )}
+          </div>
+        ))}
+
+        {/* Family mode: add person button */}
+        {mode === "family" && people.length < 6 && (
+          <button
+            type="button"
+            onClick={() => setPeople([...people, EMPTY_PERSON])}
             disabled={loading}
-            autoComplete="sex"
-            autoCapitalize="none"
-            autoCorrect="off"
-            spellCheck={false}
-            enterKeyHint="next"
-            aria-invalid={!!error && !gender.trim()}
-            aria-describedby={error ? "birth-form-error" : undefined}
-            className={inputClass}
-            placeholder="e.g. woman, man, non-binary"
-          />
-        </div>
+            className="interactive text-xs font-mono uppercase tracking-[0.2em] text-blood hover:text-ash transition-colors"
+          >
+            Add person (+ €4)
+          </button>
+        )}
 
         {/* Email */}
         <div className="relative group interactive">
@@ -183,101 +263,6 @@ export default function BirthForm() {
             placeholder="Optional, but useful"
           />
         </div>
-
-        {/* Date + Time row */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-10">
-          {/* Date */}
-          <div className="relative group interactive">
-            <label htmlFor="birth-date" className={labelClass}>
-              Date of birth
-            </label>
-            <input
-              ref={dateRef}
-              id="birth-date"
-              name="bday"
-              type="date"
-              required
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              disabled={loading}
-              autoComplete="bday"
-              aria-invalid={!!error && !date}
-              aria-describedby={error ? "birth-form-error" : undefined}
-              className={inputClass}
-              style={{ colorScheme: "dark" }}
-            />
-          </div>
-
-          {/* Time */}
-          <div className="relative group interactive">
-            <label htmlFor="birth-time" className={labelClass}>
-              Birth time{" "}
-              <span className="text-ash/30 normal-case tracking-normal">
-                (optional)
-              </span>
-            </label>
-            <input
-              id="birth-time"
-              name="bday-time"
-              type="time"
-              value={time}
-              onChange={(e) => setTime(e.target.value)}
-              disabled={loading}
-              className={inputClass}
-              style={{ colorScheme: "dark" }}
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-10">
-          <div className="relative group interactive">
-            <label htmlFor="birth-place" className={labelClass}>
-              Birth place
-            </label>
-            <input
-              ref={placeRef}
-              id="birth-place"
-              name="birth-place"
-              type="text"
-              required
-              value={placeName}
-              onChange={(e) => setPlaceName(e.target.value)}
-              disabled={loading}
-              autoComplete="address-level2"
-              autoCapitalize="words"
-              autoCorrect="off"
-              enterKeyHint="next"
-              aria-invalid={!!error && !placeName.trim()}
-              aria-describedby={error ? "birth-form-error" : undefined}
-              className={inputClass}
-              placeholder="City or town"
-            />
-          </div>
-
-          <div className="relative group interactive">
-            <label htmlFor="birth-country" className={labelClass}>
-              Country
-            </label>
-            <input
-              ref={countryRef}
-              id="birth-country"
-              name="country-name"
-              type="text"
-              required
-              value={countryName}
-              onChange={(e) => setCountryName(e.target.value)}
-              disabled={loading}
-              autoComplete="country-name"
-              autoCapitalize="words"
-              autoCorrect="off"
-              enterKeyHint="done"
-              aria-invalid={!!error && !countryName.trim()}
-              aria-describedby={error ? "birth-form-error" : undefined}
-              className={inputClass}
-              placeholder="Country"
-            />
-          </div>
-        </div>
       </div>
 
       {error && (
@@ -299,10 +284,13 @@ export default function BirthForm() {
           className="interactive w-full bg-ash text-void font-syne font-bold text-lg md:text-2xl uppercase py-5 min-h-[44px] hover:bg-blood hover:text-ash active:bg-blood active:text-ash focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blood focus-visible:ring-offset-2 focus-visible:ring-offset-void transition-colors duration-300 relative overflow-hidden group disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <span className="relative z-10">
-            {loading ? "Calculating your chart..." : "Generate my roast"}
+            {loading ? "Calculating your chart..." : ctaLabel}
           </span>
           <div className="absolute inset-0 bg-blood transform scale-y-0 origin-bottom group-hover:scale-y-100 transition-transform duration-300 ease-in-out z-0" />
         </button>
+        <p className="text-xs font-mono tracking-[0.15em] text-ash/40 mt-3 uppercase text-center">
+          {priceHint}
+        </p>
       </div>
     </form>
   );

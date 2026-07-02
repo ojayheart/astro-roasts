@@ -32,6 +32,15 @@ export interface RoastData {
   paid: boolean;
   createdAt?: string;
   stagePct?: number;
+  kind?: "solo" | "couple" | "family";
+  subjectNames?: string[];
+  extraPlacements?: {
+    name: string;
+    sunSign: string;
+    moonSign: string;
+    rising: string | null;
+  }[];
+  amountMinorUnits?: number;
 }
 
 export interface ChartPlacement {
@@ -118,12 +127,7 @@ export type ZodiacSign =
   | "Pisces";
 
 export type AspectType =
-  | "conjunction"
-  | "sextile"
-  | "square"
-  | "trine"
-  | "quincunx"
-  | "opposition";
+  "conjunction" | "sextile" | "square" | "trine" | "quincunx" | "opposition";
 
 export interface ChartPoint {
   lon: number; // absolute ecliptic longitude 0-360

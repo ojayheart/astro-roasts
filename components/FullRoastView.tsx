@@ -21,6 +21,13 @@ interface FullRoastViewProps {
   fullText: string;
   callouts: string[];
   roastId: string;
+  subjectNames?: string[];
+  extraPlacements?: {
+    name: string;
+    sunSign: string;
+    moonSign: string;
+    rising: string | null;
+  }[];
 }
 
 export default function FullRoastView({
@@ -36,6 +43,8 @@ export default function FullRoastView({
   fullText,
   callouts,
   roastId,
+  subjectNames,
+  extraPlacements,
 }: FullRoastViewProps) {
   useEffect(() => {
     gsap.registerPlugin(ScrollTrigger);
@@ -133,15 +142,61 @@ export default function FullRoastView({
           <h2 className="sr-only">Dossier</h2>
           <div className="border-y border-ash/10 py-8 relative bg-void">
             <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-bruise/30 to-transparent pointer-events-none" />
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-y-8 gap-x-4 font-mono text-sm uppercase tracking-[0.15em] text-ash/80 relative z-10">
-              {placements.map((p) => (
-                <div key={p.label}>
-                  <span className="block text-ash/40 text-[10px] mb-2 font-medium">
-                    {p.label}
-                  </span>
-                  <span>
-                    {p.value} <SignGlyph sign={p.value} />
-                  </span>
+            <div className="space-y-8 relative z-10">
+              {/* Person 1 (main) */}
+              <div>
+                {subjectNames?.[0] && (
+                  <p className="font-mono text-xs uppercase tracking-[0.15em] text-blood mb-4">
+                    {subjectNames[0]}
+                  </p>
+                )}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-y-8 gap-x-4 font-mono text-sm uppercase tracking-[0.15em] text-ash/80">
+                  {placements.map((p) => (
+                    <div key={p.label}>
+                      <span className="block text-ash/40 text-[10px] mb-2 font-medium">
+                        {p.label}
+                      </span>
+                      <span>
+                        {p.value} <SignGlyph sign={p.value} />
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Extra people */}
+              {extraPlacements?.map((ep, i) => (
+                <div key={i} className="border-t border-ash/10 pt-8">
+                  <p className="font-mono text-xs uppercase tracking-[0.15em] text-blood mb-4">
+                    {ep.name}
+                  </p>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-y-8 gap-x-4 font-mono text-sm uppercase tracking-[0.15em] text-ash/80">
+                    <div>
+                      <span className="block text-ash/40 text-[10px] mb-2 font-medium">
+                        SUN
+                      </span>
+                      <span>
+                        {ep.sunSign} <SignGlyph sign={ep.sunSign} />
+                      </span>
+                    </div>
+                    <div>
+                      <span className="block text-ash/40 text-[10px] mb-2 font-medium">
+                        MOON
+                      </span>
+                      <span>
+                        {ep.moonSign} <SignGlyph sign={ep.moonSign} />
+                      </span>
+                    </div>
+                    <div>
+                      <span className="block text-ash/40 text-[10px] mb-2 font-medium">
+                        RISING
+                      </span>
+                      <span>
+                        {ep.rising ?? "—"}{" "}
+                        {ep.rising && <SignGlyph sign={ep.rising} />}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
@@ -181,6 +236,22 @@ export default function FullRoastView({
             })}
           </div>
         </section>
+
+        {/* Upsell block */}
+        <div className="mt-16 border-t border-ash/15 pt-10 gs-reveal">
+          <p className="font-mono text-xs uppercase tracking-[0.2em] text-blood mb-3">
+            Next victim
+          </p>
+          <p className="font-syne font-bold text-2xl text-ash mb-6">
+            Now do your family. €4 a head.
+          </p>
+          <a
+            href="/?mode=family#confessional"
+            className="interactive inline-block bg-ash text-void font-syne font-bold uppercase px-8 py-4 hover:bg-blood hover:text-ash transition-colors duration-300"
+          >
+            Roast my family
+          </a>
+        </div>
 
         {/* Footer */}
         <footer className="border-t border-ash/10 pt-16 mt-32 pb-16 gs-reveal">

@@ -69,6 +69,7 @@ export default function RoastClient({
   useEffect(() => {
     if (data.status === "ready" && !finishedFiredRef.current) {
       finishedFiredRef.current = true;
+      localStorage.setItem("ar_has_roast", "1");
       track("roast_generation_finished", {
         roastId,
         durationMs: loadingStartedAt.current
@@ -312,6 +313,8 @@ export default function RoastClient({
         fullText={data.fullText || ""}
         callouts={data.callouts || []}
         roastId={roastId}
+        subjectNames={data.subjectNames}
+        extraPlacements={data.extraPlacements}
       />
     );
   }
@@ -325,6 +328,9 @@ export default function RoastClient({
       rising={data.rising}
       teaser={data.teaser}
       roastId={roastId}
+      subjectNames={data.subjectNames}
+      extraPlacements={data.extraPlacements}
+      amountMinorUnits={data.amountMinorUnits}
     />
   );
 }
