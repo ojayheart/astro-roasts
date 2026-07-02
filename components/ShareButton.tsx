@@ -10,6 +10,39 @@ export default function ShareButton({ roastId }: { roastId: string }) {
 
   const handleShare = async () => {
     const url = `${window.location.origin}/roast/${roastId}`;
+
+    // Story-card share: real image into the sheet → "Add to Instagram Story".
+    try {
+      const res = await fetch(`/roast/${roastId}/story-image`);
+      if (res.ok) {
+        const blob = await res.blob();
+        const file = new File([blob], "astroroast-story.png", {
+          type: "image/png",
+        });
+        if (navigator.canShare?.({ files: [file] })) {
+          await navigator.share({
+            files: [file],
+            title: "Astro Roasts",
+            text: "My natal chart got roasted. Yours next. astroroast.com",
+          });
+          track("share_clicked", { roastId, method: "story_file" });
+          setState("shared");
+          setTimeout(() => setState("idle"), 2000);
+          return;
+        }
+        // Desktop / no file-share: download the card, then continue to URL share.
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "astroroast-story.png";
+        a.click();
+        URL.revokeObjectURL(a.href);
+        track("share_clicked", { roastId, method: "story_download" });
+      }
+    } catch (err) {
+      if (err instanceof Error && err.name === "AbortError") return;
+      // story card unavailable — fall through to URL share
+    }
+
     const shareData: ShareData = {
       title: "Astro Roasts",
       text: "My natal chart got roasted. Yours next.",
