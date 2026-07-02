@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { roasts, users } from "@/lib/db/schema";
+import { roasts, users, roastSubjects } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { getStripe } from "@/lib/stripe";
 import { pickCurrencyForCountry, readCountryFromHeaders } from "@/lib/currency";
+import { groupAmountMinorUnits } from "@/lib/group";
 
 export const runtime = "nodejs";
 
@@ -41,6 +42,7 @@ export async function POST(req: NextRequest) {
       id: roasts.id,
       paid: roasts.paid,
       userId: roasts.userId,
+      kind: roasts.kind,
     })
     .from(roasts)
     .where(eq(roasts.id, roastId))
@@ -63,7 +65,14 @@ export async function POST(req: NextRequest) {
 
   const country = readCountryFromHeaders(req.headers);
   const currency = pickCurrencyForCountry(country);
-  const amount = AMOUNT_BY_CURRENCY[currency] ?? 500;
+  let amount = AMOUNT_BY_CURRENCY[currency] ?? 500;
+  if (roast.kind === "couple" || roast.kind === "family") {
+    const subjectRows = await db
+      .select({ id: roastSubjects.id })
+      .from(roastSubjects)
+      .where(eq(roastSubjects.roastId, roastId));
+    amount = groupAmountMinorUnits(Math.max(subjectRows.length, 2));
+  }
 
   try {
     const stripe = getStripe();
@@ -72,7 +81,10 @@ export async function POST(req: NextRequest) {
       currency,
       automatic_payment_methods: { enabled: true },
       metadata: { roastId, country: country ?? "" },
-      description: "Astroroast — personalized comedic essay (entertainment)",
+      description:
+        roast.kind === "solo"
+          ? "Astroroast — personalized comedic essay (entertainment)"
+          : `Astroroast — ${roast.kind} roast (entertainment)`,
       statement_descriptor_suffix: "ASTROROAST",
       ...(customerEmail ? { receipt_email: customerEmail } : {}),
     });
