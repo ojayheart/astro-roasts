@@ -18,5 +18,7 @@ export type RoastGenerateEvent = {
     city: string;
     /** Present when the roast came in via the Instagram DM funnel */
     mcSubscriberId?: string;
+    /** Present when the roast came in via Meta's direct Instagram webhook */
+    igSenderId?: string;
   };
 };

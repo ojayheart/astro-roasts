@@ -18,6 +18,7 @@ import {
   extractRoastBlock,
 } from "@/lib/roast-runner";
 import { sendInstagramDm, buildDmTeaser } from "@/lib/manychat";
+import { sendInstagramDm as sendInstagramGraphDm } from "@/lib/instagram";
 
 const ROAST_RUNNER_URL = process.env.ROAST_RUNNER_URL;
 const ROAST_RUNNER_SECRET = process.env.ROAST_RUNNER_SECRET;
@@ -105,8 +106,17 @@ export const generateRoast = inngest.createFunction(
     },
   },
   async ({ event, step }) => {
-    const { roastId, name, gender, email, date, time, city, mcSubscriberId } =
-      event.data;
+    const {
+      roastId,
+      name,
+      gender,
+      email,
+      date,
+      time,
+      city,
+      mcSubscriberId,
+      igSenderId,
+    } = event.data;
 
     const hasBirthTime = !!time;
 
@@ -242,7 +252,29 @@ export const generateRoast = inngest.createFunction(
     });
 
     // ─── Step 3: DM teaser back (Instagram DM funnel only) ─────────────
-    if (mcSubscriberId) {
+    if (igSenderId) {
+      await step.run("send-instagram-graph-dm", async () => {
+        const roastUrl = `https://astroroast.com/roast/${roastId}`;
+        try {
+          await sendInstagramGraphDm({
+            recipientId: igSenderId,
+            texts: buildDmTeaser({
+              title: saved.title || null,
+              teaser: saved.teaser,
+              roastUrl,
+            }),
+          });
+        } catch (dmErr) {
+          console.error("Instagram Graph DM send failed:", dmErr);
+          Sentry.withScope((scope) => {
+            scope.setTag("subsystem", "instagram-graph");
+            scope.setContext("instagram_graph", { roastId, igSenderId });
+            Sentry.captureException(dmErr);
+          });
+          throw dmErr;
+        }
+      });
+    } else if (mcSubscriberId) {
       await step.run("send-instagram-dm", async () => {
         const roastUrl = `https://astroroast.com/roast/${roastId}`;
         try {
