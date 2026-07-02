@@ -18,3 +18,7 @@ test("rejects hallucinated or oversize lines", () => {
     null,
   );
 });
+
+test("rejects empty string", () => {
+  assert.equal(sanitizeGoldLine("", roast), null);
+});

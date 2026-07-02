@@ -211,7 +211,7 @@ export const generateRoast = inngest.createFunction(
         isGroup ? charts[0] || "" : chartData,
       );
       const extraPlacements = isGroup
-        ? charts.slice(1).map((c, i) => {
+        ? charts.slice(1, people.length).map((c, i) => {
             const p = extractChartPlacements(c);
             return {
               name: people[i + 1].name,
