@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import * as Sentry from "@sentry/nextjs";
 import { db } from "@/lib/db";
-import { users, roasts } from "@/lib/db/schema";
+import { users, roasts, roastSubjects } from "@/lib/db/schema";
 import { inngest } from "@/inngest/client";
 import { generateRateLimiter, getClientIp } from "@/lib/rate-limit";
 import { normalizeBirthLocation } from "@/lib/location";
+import { validateGroupRequest } from "@/lib/group";
 
 export const maxDuration = 60;
-const MAX_BODY_BYTES = 10_000;
+const MAX_BODY_BYTES = 30_000;
 
 export async function POST(req: NextRequest) {
   try {
@@ -32,6 +33,11 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
+
+    if (body.kind === "couple" || body.kind === "family") {
+      return handleGroupGenerate(body);
+    }
+
     const { name, gender, email, date, time } = body;
     const birthPlace =
       body.birthPlace ||
@@ -126,4 +132,73 @@ export async function POST(req: NextRequest) {
       { status: 500 },
     );
   }
+}
+
+async function handleGroupGenerate(body: {
+  kind: unknown;
+  people: unknown;
+  email?: unknown;
+}) {
+  const validated = validateGroupRequest(body.kind, body.people);
+  if (!validated.ok) {
+    return NextResponse.json({ error: validated.error }, { status: 400 });
+  }
+  const email =
+    typeof body.email === "string" && body.email.length <= 254
+      ? body.email
+      : null;
+
+  const userIds: string[] = [];
+  for (const person of validated.people) {
+    const rows = (await db
+      .insert(users)
+      .values({
+        name: person.name,
+        gender: person.gender,
+        email: userIds.length === 0 ? email : null, // owner gets the email
+        dob: person.date,
+        birthTime: person.time,
+        birthCity: normalizeBirthLocation(person.birthPlace),
+        lat: 0,
+        lon: 0,
+        tz: "UTC",
+        referralCode: crypto.randomUUID().slice(0, 8),
+      })
+      .returning()) as (typeof users.$inferSelect)[];
+    userIds.push(rows[0].id);
+  }
+
+  const roastRows = (await db
+    .insert(roasts)
+    .values({
+      userId: userIds[0],
+      kind: validated.kind,
+      status: "generating",
+      paid: false,
+      emailSent: false,
+    })
+    .returning()) as (typeof roasts.$inferSelect)[];
+  const roast = roastRows[0];
+
+  await db.insert(roastSubjects).values(
+    userIds.map((userId, position) => ({
+      roastId: roast.id,
+      userId,
+      position,
+    })),
+  );
+
+  await inngest.send({
+    name: "roast/generate",
+    data: {
+      roastId: roast.id,
+      userId: userIds[0],
+      kind: validated.kind,
+      relationship: validated.kind,
+      people: validated.people,
+      email,
+    },
+  });
+
+  return NextResponse.json({ id: roast.id });
 }
