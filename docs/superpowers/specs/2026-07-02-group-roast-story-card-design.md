@@ -44,7 +44,7 @@ Idempotent ALTERs / CREATEs:
 ## API + Pipeline
 
 - `/api/generate`: accept optional `kind` (`couple | family`) + `people[]` (persons 2..N, same field shape as person 1). Validates count by kind (couple = exactly 2 total, family = 3–6 total). Creates one `users` row per person, `roast_subjects` rows, roast row with `kind`, fires the existing `roast/generate` event with the people array.
-- `inngest/pipeline.ts`: when `kind !== 'solo'`, build group runner payload. Parse person-1 placements into existing columns, persons 2..N into `extra_placements`, `GOLDLINE:` into `gold_line` (also parsed for solo). Email + DM teaser steps unchanged. Merge carefully on top of the uncommitted `igSenderId` work.
+- `inngest/pipeline.ts`: when `kind !== 'solo'`, build group runner payload. Parse person-1 placements into existing columns, persons 2..N into `extra_placements`. `gold_line` is picked post-hoc by the pipeline's Haiku call (see Runner section — the runner emits no GOLDLINE field), for solo and group alike. Email + DM teaser steps unchanged. Merge carefully on top of the uncommitted `igSenderId` work.
 
 ## Web UI
 
