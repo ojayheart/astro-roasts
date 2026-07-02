@@ -61,30 +61,35 @@ export default function BirthForm() {
         setError(
           `Add ${mode === "solo" ? "your" : `person ${i + 1}'s`} first name so the roast can address ${mode === "solo" ? "you" : "them"}.`,
         );
+        document.getElementById(`p${i}-name`)?.focus();
         return;
       }
       if (!p.gender.trim()) {
         setError(
           `Add ${mode === "solo" ? "your" : `person ${i + 1}'s`} gender so the roast uses the right voice.`,
         );
+        document.getElementById(`p${i}-gender`)?.focus();
         return;
       }
       if (!p.date) {
         setError(
           `Add ${mode === "solo" ? "your" : `person ${i + 1}'s`} date of birth so we can calculate the chart.`,
         );
+        document.getElementById(`p${i}-date`)?.focus();
         return;
       }
       if (!p.placeName.trim()) {
         setError(
           `Add ${mode === "solo" ? "your" : `person ${i + 1}'s`} birth place so we can calculate the chart.`,
         );
+        document.getElementById(`p${i}-place`)?.focus();
         return;
       }
       if (!p.countryName.trim()) {
         setError(
           `Add ${mode === "solo" ? "your" : `person ${i + 1}'s`} birth country so we can calculate the chart.`,
         );
+        document.getElementById(`p${i}-country`)?.focus();
         return;
       }
     }
