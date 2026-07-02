@@ -18,6 +18,8 @@ export type ExtraPlacement = {
 // €8 for two, €4 per extra head, all supported currencies use the same
 // number in minor units (matches the solo AMOUNT_BY_CURRENCY convention).
 export function groupAmountMinorUnits(peopleCount: number): number {
+  if (peopleCount < 2)
+    throw new Error("Group pricing requires at least 2 people");
   return 800 + 400 * (peopleCount - 2);
 }
 
