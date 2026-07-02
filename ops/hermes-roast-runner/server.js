@@ -55,7 +55,7 @@ function buildGroupWriteUserPrompt({ relationship, people }) {
 ${roster}
 
 Resolve each messy place input to exact coordinates and IANA timezone. Run the synastry engine as the skill instructs, then write ONE group roast of the dynamic. Output format, EXACTLY:
-${people.map((_, i) => `---CHART_${i + 1}_START---\n<person ${i + 1} full chart text>\n---CHART_${i + 1}_END---`).join("\n")}
+${people.map((_, i) => `---CHART_${i + 1}_START---\n<person ${i + 1} full chart text>\n---CHART_${i + 1}_END---`).join("\n\n")}
 ---ROAST_START---
 <the group roast prose — no TITLE/TEASER/FULL/CALLOUTS fields>
 ---ROAST_END---
@@ -243,7 +243,9 @@ const server = createServer(async (req, res) => {
   const write = await runClaude({
     userPrompt: isGroup
       ? buildGroupWriteUserPrompt({
-          relationship: relationship || "couple",
+          relationship:
+            (typeof relationship === "string" && relationship.trim()) ||
+            "couple",
           people,
         })
       : buildWriteUserPrompt({
@@ -299,6 +301,13 @@ ${roastBody}
     const charts = people.map((_, i) =>
       extractMarkedSection(write.stdout, `CHART_${i + 1}`),
     );
+    if (charts.some((c) => !c)) {
+      return send(500, {
+        error: "missing_structured_output",
+        detail: write.stdout.slice(0, 1000),
+        durationMs: Date.now() - startedAt,
+      });
+    }
     const chartData = charts
       .map((c, i) => `=== ${people[i].name} ===\n\n${c}`)
       .join("\n\n");
