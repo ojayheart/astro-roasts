@@ -238,20 +238,22 @@ export default function FullRoastView({
         </section>
 
         {/* Upsell block */}
-        <div className="mt-16 border-t border-ash/15 pt-10 gs-reveal">
-          <p className="font-mono text-xs uppercase tracking-[0.2em] text-blood mb-3">
-            Next victim
-          </p>
-          <p className="font-syne font-bold text-2xl text-ash mb-6">
-            Now do your family. €4 a head.
-          </p>
-          <a
-            href="/?mode=family#confessional"
-            className="interactive inline-block bg-ash text-void font-syne font-bold uppercase px-8 py-4 hover:bg-blood hover:text-ash transition-colors duration-300"
-          >
-            Roast my family
-          </a>
-        </div>
+        {!extraPlacements?.length && (
+          <div className="mt-16 border-t border-ash/15 pt-10 gs-reveal">
+            <p className="font-mono text-xs uppercase tracking-[0.2em] text-blood mb-3">
+              Next victim
+            </p>
+            <p className="font-syne font-bold text-2xl text-ash mb-6">
+              Now do your family. €4 a head.
+            </p>
+            <a
+              href="/?mode=family#confessional"
+              className="interactive inline-block bg-ash text-void font-syne font-bold uppercase px-8 py-4 hover:bg-blood hover:text-ash transition-colors duration-300"
+            >
+              Roast my family
+            </a>
+          </div>
+        )}
 
         {/* Footer */}
         <footer className="border-t border-ash/10 pt-16 mt-32 pb-16 gs-reveal">

@@ -1,3 +1,5 @@
+import { createHmac, timingSafeEqual } from "node:crypto";
+
 export type InstagramWebhookMessage = {
   senderId: string;
   recipientId: string | null;
@@ -240,4 +242,30 @@ export function parseInstagramGroupRequest(text: string): {
     relationship: people.length === 2 ? "couple" : "family",
     people,
   };
+}
+
+// Meta signs every webhook delivery with the app secret. When the secret is
+// configured we enforce the signature; when it isn't we accept and warn so
+// the funnel keeps working until the env var ships.
+export function verifyInstagramWebhookSignature(
+  rawBody: string,
+  signatureHeader: string | null,
+  appSecret: string | undefined,
+): boolean {
+  if (!appSecret) {
+    console.warn(
+      "INSTAGRAM_APP_SECRET not set — webhook signature NOT verified",
+    );
+    return true;
+  }
+  if (!signatureHeader?.startsWith("sha256=")) return false;
+  const expected = createHmac("sha256", appSecret)
+    .update(rawBody)
+    .digest("hex");
+  const received = signatureHeader.slice("sha256=".length);
+  if (received.length !== expected.length) return false;
+  return timingSafeEqual(
+    Buffer.from(received, "hex"),
+    Buffer.from(expected, "hex"),
+  );
 }

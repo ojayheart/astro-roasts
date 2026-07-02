@@ -10,12 +10,21 @@ export type RoastGenerateEvent = {
   data: {
     roastId: string;
     userId: string;
-    name: string;
-    gender: string;
+    name?: string;
+    gender?: string;
     email: string | null;
-    date: string;
-    time: string | null;
-    city: string;
+    date?: string;
+    time?: string | null;
+    city?: string;
+    kind?: "solo" | "couple" | "family";
+    relationship?: "couple" | "family";
+    people?: Array<{
+      name: string;
+      gender: string;
+      date: string;
+      time: string | null;
+      birthPlace: string;
+    }>;
     /** Present when the roast came in via the Instagram DM funnel */
     mcSubscriberId?: string;
     /** Present when the roast came in via Meta's direct Instagram webhook */

@@ -148,16 +148,24 @@ async function handleGroupGenerate(body: {
       ? body.email
       : null;
 
+  const normalizedPeople = validated.people.map((person) => ({
+    name: person.name,
+    gender: person.gender,
+    date: person.date,
+    time: person.time,
+    birthPlace: normalizeBirthLocation(person.birthPlace),
+  }));
+
   const userRows = (await db
     .insert(users)
     .values(
-      validated.people.map((person, i) => ({
+      normalizedPeople.map((person, i) => ({
         name: person.name,
         gender: person.gender,
         email: i === 0 ? email : null, // owner gets the email
         dob: person.date,
         birthTime: person.time,
-        birthCity: normalizeBirthLocation(person.birthPlace),
+        birthCity: person.birthPlace,
         lat: 0,
         lon: 0,
         tz: "UTC",
@@ -194,7 +202,7 @@ async function handleGroupGenerate(body: {
       userId: userIds[0],
       kind: validated.kind,
       relationship: validated.kind,
-      people: validated.people,
+      people: normalizedPeople,
       email,
     },
   });

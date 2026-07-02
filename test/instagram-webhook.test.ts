@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { createHmac } from "node:crypto";
 import {
   extractInstagramTextMessages,
   parseInstagramRoastRequest,
@@ -7,6 +8,7 @@ import {
   detectGroupKeyword,
   parseInstagramGroupRequest,
   GROUP_TEMPLATE_MESSAGES,
+  verifyInstagramWebhookSignature,
 } from "../lib/instagram-webhook.ts";
 
 test("Instagram webhook challenge verifies matching token", () => {
@@ -132,4 +134,45 @@ test("group parse: 3+ blocks = family, 7 blocks rejected, junk rejected", () => 
 test("templates mention the field format", () => {
   assert.match(GROUP_TEMPLATE_MESSAGES.couple.join(" "), /person 1/i);
   assert.match(GROUP_TEMPLATE_MESSAGES.family.join(" "), /person 3/i);
+});
+
+test("malformed group messages look like group and must not reach solo parser", () => {
+  const seven = [1, 2, 3, 4, 5, 6, 7]
+    .map((i) => `person ${i}:\nname: P${i}\ndob: 1990-01-01\nplace: Auckland`)
+    .join("\n");
+  assert.equal(parseInstagramGroupRequest(seven), null);
+  assert.match(seven, /person\s*\d+\s*:/i);
+  const missingDob =
+    "person 1:\nname: A\ndob: 1990-01-01\nplace: X\nperson 2:\nname: B\nplace: Y";
+  assert.equal(parseInstagramGroupRequest(missingDob), null);
+  assert.match(missingDob, /person\s*\d+\s*:/i);
+});
+
+test("webhook signature verification with valid signature", () => {
+  const secret = "test-secret";
+  const body = '{"test":"data"}';
+  const signature =
+    "sha256=" + createHmac("sha256", secret).update(body).digest("hex");
+  assert.equal(verifyInstagramWebhookSignature(body, signature, secret), true);
+});
+
+test("webhook signature verification fails on tampered body", () => {
+  const secret = "test-secret";
+  const body = '{"test":"data"}';
+  const signature =
+    "sha256=" + createHmac("sha256", secret).update(body).digest("hex");
+  const tamperedBody = '{"test":"tampered"}';
+  assert.equal(
+    verifyInstagramWebhookSignature(tamperedBody, signature, secret),
+    false,
+  );
+});
+
+test("webhook signature verification passes with warning when secret missing", () => {
+  const body = '{"test":"data"}';
+  const signature = "sha256=abc123";
+  assert.equal(
+    verifyInstagramWebhookSignature(body, signature, undefined),
+    true,
+  );
 });

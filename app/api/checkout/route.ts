@@ -29,6 +29,7 @@ export async function POST(req: NextRequest) {
       id: roasts.id,
       paid: roasts.paid,
       userId: roasts.userId,
+      kind: roasts.kind,
     })
     .from(roasts)
     .where(eq(roasts.id, roastId))
@@ -40,6 +41,12 @@ export async function POST(req: NextRequest) {
   }
   if (roast.paid) {
     return NextResponse.json({ error: "Already paid" }, { status: 409 });
+  }
+  if (roast.kind !== "solo") {
+    return NextResponse.json(
+      { error: "Group roasts are paid on the roast page" },
+      { status: 409 },
+    );
   }
 
   const userRows = await db

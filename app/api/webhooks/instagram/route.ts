@@ -11,6 +11,7 @@ import {
   detectGroupKeyword,
   parseInstagramGroupRequest,
   GROUP_TEMPLATE_MESSAGES,
+  verifyInstagramWebhookSignature,
   type ParsedInstagramRoastRequest,
 } from "@/lib/instagram-webhook";
 import { sendInstagramDm } from "@/lib/instagram";
@@ -43,7 +44,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Request too large" }, { status: 413 });
     }
 
-    const payload = (await req.json()) as unknown;
+    const rawBody = await req.text();
+    if (
+      !verifyInstagramWebhookSignature(
+        rawBody,
+        req.headers.get("x-hub-signature-256"),
+        process.env.INSTAGRAM_APP_SECRET,
+      )
+    ) {
+      return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
+    }
+    const payload = JSON.parse(rawBody) as unknown;
     const messages = extractInstagramTextMessages(payload);
 
     for (const message of messages) {
@@ -61,9 +72,27 @@ export async function POST(req: NextRequest) {
         continue;
       }
 
+      const looksLikeGroup = /person\s*\d+\s*:/i.test(message.text);
       const group = parseInstagramGroupRequest(message.text);
       if (group) {
         await handleGroupDmRequest(group, message.senderId);
+        continue;
+      }
+      if (looksLikeGroup) {
+        // Malformed group submission — re-send the template, never let the
+        // solo parser build a frankenperson from mixed person blocks.
+        try {
+          await sendInstagramDm({
+            recipientId: message.senderId,
+            texts: GROUP_TEMPLATE_MESSAGES.family,
+          });
+        } catch (dmErr) {
+          console.error("Group template resend failed:", dmErr);
+          Sentry.withScope((scope) => {
+            scope.setTag("route", "/api/webhooks/instagram");
+            Sentry.captureException(dmErr);
+          });
+        }
         continue;
       }
 
