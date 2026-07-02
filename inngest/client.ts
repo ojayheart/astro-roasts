@@ -16,5 +16,7 @@ export type RoastGenerateEvent = {
     date: string;
     time: string | null;
     city: string;
+    /** Present when the roast came in via the Instagram DM funnel */
+    mcSubscriberId?: string;
   };
 };
