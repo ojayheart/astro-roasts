@@ -148,14 +148,13 @@ async function handleGroupGenerate(body: {
       ? body.email
       : null;
 
-  const userIds: string[] = [];
-  for (const person of validated.people) {
-    const rows = (await db
-      .insert(users)
-      .values({
+  const userRows = (await db
+    .insert(users)
+    .values(
+      validated.people.map((person, i) => ({
         name: person.name,
         gender: person.gender,
-        email: userIds.length === 0 ? email : null, // owner gets the email
+        email: i === 0 ? email : null, // owner gets the email
         dob: person.date,
         birthTime: person.time,
         birthCity: normalizeBirthLocation(person.birthPlace),
@@ -163,10 +162,10 @@ async function handleGroupGenerate(body: {
         lon: 0,
         tz: "UTC",
         referralCode: crypto.randomUUID().slice(0, 8),
-      })
-      .returning()) as (typeof users.$inferSelect)[];
-    userIds.push(rows[0].id);
-  }
+      })),
+    )
+    .returning()) as (typeof users.$inferSelect)[];
+  const userIds = userRows.map((row) => row.id);
 
   const roastRows = (await db
     .insert(roasts)
