@@ -17,6 +17,7 @@ import {
   extractMarkedSection,
   extractRoastBlock,
 } from "@/lib/roast-runner";
+import { sendInstagramDm, buildDmTeaser } from "@/lib/manychat";
 
 const ROAST_RUNNER_URL = process.env.ROAST_RUNNER_URL;
 const ROAST_RUNNER_SECRET = process.env.ROAST_RUNNER_SECRET;
@@ -104,7 +105,8 @@ export const generateRoast = inngest.createFunction(
     },
   },
   async ({ event, step }) => {
-    const { roastId, name, gender, email, date, time, city } = event.data;
+    const { roastId, name, gender, email, date, time, city, mcSubscriberId } =
+      event.data;
 
     const hasBirthTime = !!time;
 
@@ -196,7 +198,7 @@ export const generateRoast = inngest.createFunction(
     });
 
     // ─── Step 2: Parse + Save + Email ──────────────────────────────────
-    await step.run("save-and-email", async () => {
+    const saved = await step.run("save-and-email", async () => {
       const { title, teaser, fullText, callouts } = parseRoastOutput(
         runnerOutput.roastOutput,
       );
@@ -235,7 +237,34 @@ export const generateRoast = inngest.createFunction(
           Sentry.captureException(emailErr);
         });
       }
+
+      return { title, teaser: finalTeaser };
     });
+
+    // ─── Step 3: DM teaser back (Instagram DM funnel only) ─────────────
+    if (mcSubscriberId) {
+      await step.run("send-instagram-dm", async () => {
+        const roastUrl = `https://astroroast.com/roast/${roastId}`;
+        try {
+          await sendInstagramDm(
+            mcSubscriberId,
+            buildDmTeaser({
+              title: saved.title || null,
+              teaser: saved.teaser,
+              roastUrl,
+            }),
+          );
+        } catch (dmErr) {
+          console.error("ManyChat DM send failed:", dmErr);
+          Sentry.withScope((scope) => {
+            scope.setTag("subsystem", "manychat");
+            scope.setContext("manychat", { roastId, mcSubscriberId });
+            Sentry.captureException(dmErr);
+          });
+          throw dmErr; // let Inngest retry the DM step
+        }
+      });
+    }
 
     return { roastId, status: "ready", hasBirthTime };
   },
