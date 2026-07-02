@@ -157,3 +157,87 @@ function pick(fields: Map<string, string>, keys: string[]): string | null {
 function compact(value: string): string {
   return value.replace(/\s+/g, " ").trim();
 }
+
+export function detectGroupKeyword(text: string): "couple" | "family" | null {
+  const clean = text
+    .trim()
+    .replace(/^[^a-zA-Z]+|[^a-zA-Z]+$/g, "")
+    .toLowerCase();
+  if (clean === "roast us") return "couple";
+  if (clean === "roast my family" || clean === "roast family") return "family";
+  return null;
+}
+
+export const GROUP_TEMPLATE_MESSAGES: Record<"couple" | "family", string[]> = {
+  couple: [
+    `both of you. one message, this exact shape:
+
+person 1:
+name: …
+dob: 1994-01-21
+place: city, country
+time: 13:00 (optional)
+gender: …
+
+person 2:
+name: …
+dob: …
+place: …
+
+send it and the chart does the rest.`,
+  ],
+  family: [
+    `the whole household. one message, 3 to 6 people, this exact shape:
+
+person 1:
+name: …
+dob: 1994-01-21
+place: city, country
+time: 13:00 (optional)
+gender: …
+
+person 2:
+name: …
+dob: …
+place: …
+
+person 3:
+name: …
+dob: …
+place: …
+
+add person 4-6 the same way. send it. nobody is safe.`,
+  ],
+};
+
+export function parseInstagramGroupRequest(text: string): {
+  relationship: "couple" | "family";
+  people: ParsedInstagramRoastRequest[];
+} | null {
+  const blocks = text
+    .replace(/\r\n/g, "\n")
+    .split(/(?=^\s*person\s*\d+\s*:)/im)
+    .map((b) => b.replace(/^\s*person\s*\d+\s*:/im, "").trim())
+    .filter(Boolean);
+
+  if (
+    blocks.length &&
+    !/^name\s*[:=-]/im.test(blocks[0]) &&
+    !parseInstagramRoastRequest(blocks[0])
+  ) {
+    blocks.shift();
+  }
+
+  if (blocks.length < 2 || blocks.length > 6) return null;
+
+  const people: ParsedInstagramRoastRequest[] = [];
+  for (const block of blocks) {
+    const person = parseInstagramRoastRequest(block);
+    if (!person) return null;
+    people.push(person);
+  }
+  return {
+    relationship: people.length === 2 ? "couple" : "family",
+    people,
+  };
+}

@@ -1,14 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import * as Sentry from "@sentry/nextjs";
 import { db } from "@/lib/db";
-import { roasts, users } from "@/lib/db/schema";
+import { roasts, users, roastSubjects } from "@/lib/db/schema";
 import { inngest } from "@/inngest/client";
 import { normalizeBirthLocation } from "@/lib/location";
 import {
   extractInstagramTextMessages,
   parseInstagramRoastRequest,
   verifyInstagramWebhookChallenge,
+  detectGroupKeyword,
+  parseInstagramGroupRequest,
+  GROUP_TEMPLATE_MESSAGES,
+  type ParsedInstagramRoastRequest,
 } from "@/lib/instagram-webhook";
+import { sendInstagramDm } from "@/lib/instagram";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -42,6 +47,26 @@ export async function POST(req: NextRequest) {
     const messages = extractInstagramTextMessages(payload);
 
     for (const message of messages) {
+      const keyword = detectGroupKeyword(message.text);
+      if (keyword) {
+        try {
+          await sendInstagramDm({
+            recipientId: message.senderId,
+            texts: GROUP_TEMPLATE_MESSAGES[keyword],
+          });
+        } catch (error) {
+          console.error("Failed to send Instagram DM template:", error);
+          Sentry.captureException(error);
+        }
+        continue;
+      }
+
+      const group = parseInstagramGroupRequest(message.text);
+      if (group) {
+        await handleGroupDmRequest(group, message.senderId);
+        continue;
+      }
+
       const request = parseInstagramRoastRequest(message.text);
       if (!request) continue;
 
@@ -116,4 +141,85 @@ export async function POST(req: NextRequest) {
       { status: 500 },
     );
   }
+}
+
+async function handleGroupDmRequest(
+  group: {
+    relationship: "couple" | "family";
+    people: ParsedInstagramRoastRequest[];
+  },
+  senderId: string,
+) {
+  const existing = await db.query.roasts.findFirst({
+    where: (r, { and: dbAnd, eq: dbEq }) =>
+      dbAnd(
+        dbEq(r.source, "instagram_dm"),
+        dbEq(r.mcSubscriberId, senderId),
+        dbEq(r.status, "generating"),
+      ),
+  });
+  if (existing) return;
+
+  const kind = group.relationship;
+  const people = group.people.map((p) => ({
+    name: p.name,
+    gender: p.gender,
+    date: p.date,
+    time: p.time,
+    birthPlace: normalizeBirthLocation(p.birthPlace),
+  }));
+
+  const userRows = (await db
+    .insert(users)
+    .values(
+      people.map((person) => ({
+        name: person.name,
+        gender: person.gender,
+        email: null,
+        dob: person.date,
+        birthTime: person.time,
+        birthCity: person.birthPlace,
+        lat: 0,
+        lon: 0,
+        tz: "UTC",
+        referralCode: crypto.randomUUID().slice(0, 8),
+      })),
+    )
+    .returning()) as (typeof users.$inferSelect)[];
+  const userIds = userRows.map((u) => u.id);
+
+  const roastRows = (await db
+    .insert(roasts)
+    .values({
+      userId: userIds[0],
+      kind,
+      status: "generating",
+      paid: false,
+      emailSent: false,
+      source: "instagram_dm",
+      mcSubscriberId: senderId,
+    })
+    .returning()) as (typeof roasts.$inferSelect)[];
+  const roast = roastRows[0];
+
+  await db.insert(roastSubjects).values(
+    userIds.map((userId, position) => ({
+      roastId: roast.id,
+      userId,
+      position,
+    })),
+  );
+
+  await inngest.send({
+    name: "roast/generate",
+    data: {
+      roastId: roast.id,
+      userId: userIds[0],
+      kind,
+      relationship: kind,
+      people,
+      email: null,
+      igSenderId: senderId,
+    },
+  });
 }

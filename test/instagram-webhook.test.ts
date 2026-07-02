@@ -4,6 +4,9 @@ import {
   extractInstagramTextMessages,
   parseInstagramRoastRequest,
   verifyInstagramWebhookChallenge,
+  detectGroupKeyword,
+  parseInstagramGroupRequest,
+  GROUP_TEMPLATE_MESSAGES,
 } from "../lib/instagram-webhook.ts";
 
 test("Instagram webhook challenge verifies matching token", () => {
@@ -88,4 +91,45 @@ test("Instagram roast request requires name, date, and place", () => {
     parseInstagramRoastRequest("Name: Ayumi\nDOB: 21 August 1986"),
     null,
   );
+});
+
+test("keyword detection", () => {
+  assert.equal(detectGroupKeyword("ROAST US"), "couple");
+  assert.equal(detectGroupKeyword("  roast us! "), "couple");
+  assert.equal(detectGroupKeyword("Roast my family"), "family");
+  assert.equal(detectGroupKeyword("roast"), null);
+  assert.equal(detectGroupKeyword("name: A\ndob: 1990-01-01"), null);
+});
+
+test("group parse: two person blocks", () => {
+  const msg = `person 1:
+name: Ana
+dob: 1992-08-29
+place: Munich
+time: 08:16
+person 2:
+name: Ben
+dob: 1994-01-21
+place: Wellington`;
+  const parsed = parseInstagramGroupRequest(msg);
+  assert.ok(parsed);
+  assert.equal(parsed.people.length, 2);
+  assert.equal(parsed.relationship, "couple");
+  assert.equal(parsed.people[0].name, "Ana");
+  assert.equal(parsed.people[1].time, null);
+});
+
+test("group parse: 3+ blocks = family, 7 blocks rejected, junk rejected", () => {
+  const block = (i: number) =>
+    `person ${i}:\nname: P${i}\ndob: 1990-01-0${(i % 9) + 1}\nplace: Auckland`;
+  const three = [1, 2, 3].map(block).join("\n");
+  assert.equal(parseInstagramGroupRequest(three)?.relationship, "family");
+  const seven = [1, 2, 3, 4, 5, 6, 7].map(block).join("\n");
+  assert.equal(parseInstagramGroupRequest(seven), null);
+  assert.equal(parseInstagramGroupRequest("person 1:\nname: only"), null);
+});
+
+test("templates mention the field format", () => {
+  assert.match(GROUP_TEMPLATE_MESSAGES.couple.join(" "), /person 1/i);
+  assert.match(GROUP_TEMPLATE_MESSAGES.family.join(" "), /person 3/i);
 });
