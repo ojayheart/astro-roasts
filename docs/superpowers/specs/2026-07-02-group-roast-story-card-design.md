@@ -38,7 +38,7 @@ Idempotent ALTERs / CREATEs:
 
 - `server.js`: accept payload `mode: "group"` with `people: [{name, gender, date, time, birthPlace}] (2..6)` and `relationship: "couple" | "family" | free text`. Solo payload shape unchanged; couple = group of 2 with `relationship: "couple"` — one group code path.
 - Prompt: new group section in the runner SKILL.md, ported from the local `astro-roast-group` skill — individual reads per person, then the group-dynamic collision as the climax. Same `---CHART_START---`/`---ROAST_START---` marker protocol; charts per person are marked per subject.
-- New output field in BOTH modes: `GOLDLINE:` — one line, the most savage standalone quote in the roast. Parsed into `roasts.gold_line`.
+- Gold line is NOT emitted by the runner (its creative call stays uncontaminated — documented design in `server.js`). Instead the pipeline picks it post-hoc with a cheap Haiku call (`lib/gold-line.ts`, pattern from `lib/chart-annotations.ts`); any failure → null → story card falls back to the teaser quote.
 - Deploy: scp `server.js` + SKILL.md to Hermes, restart runner service.
 
 ## API + Pipeline
