@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { roasts } from "@/lib/db/schema";
 import { getRoastUser } from "@/lib/roast-response";
+import { pullQuote } from "@/lib/story-quote";
 
 export const alt = "Astro Roasts — case file";
 export const size = { width: 1200, height: 630 };
@@ -12,26 +13,6 @@ export const contentType = "image/png";
 const VOID = "#030303";
 const ASH = "#e5e5e5";
 const BLOOD = "#ff2a00";
-
-// Opening sentences of the teaser, clipped — enough bite to make the card
-// land, never enough to spoil the read. Accumulates sentences so a one-word
-// opener ("Right.") never ships alone.
-function pullQuote(teaser: string | null): string {
-  if (!teaser) return "The chart has been read. Proceed carefully.";
-  // Whole-teaser sentence stream — stylistic micro-paragraph openers
-  // ("Right. So.") shouldn't cap the quote.
-  const flat = teaser.replace(/\s+/g, " ").trim();
-  const sentences = flat.split(/(?<=[.!?])\s/);
-  let quote = "";
-  for (const s of sentences) {
-    quote = quote ? `${quote} ${s}` : s;
-    if (quote.length >= 60) break;
-  }
-  quote = quote.trim();
-  if (quote.length <= 140) return quote;
-  const cut = quote.slice(0, 140);
-  return cut.slice(0, cut.lastIndexOf(" ")).trimEnd() + "…";
-}
 
 export default async function Image({
   params,
@@ -54,7 +35,7 @@ export default async function Image({
   try {
     const roast = await db.query.roasts.findFirst({
       where: eq(roasts.id, id),
-      with: { user: true },
+      with: { user: true, subjects: { with: { user: true } } },
     });
     if (roast?.status === "ready") {
       name = getRoastUser(roast).name;

@@ -38,6 +38,30 @@ function buildWriteUserPrompt({ name, date, time, birthPlace, hasBirthTime }) {
 Resolve messy place input to the best exact place, coordinates, and IANA timezone. Run natal_chart.py, then write the roast from that chart only. If no birth time, do not use houses, Ascendant, MC, or chart ruler. Output EXACTLY the format the skill specifies — no extra commentary, no nested TITLE/TEASER/FULL/CALLOUTS fields inside the roast (those are derived downstream).`;
 }
 
+function buildGroupWriteUserPrompt({ relationship, people }) {
+  const roster = people
+    .map(
+      (p, i) => `Person ${i + 1}:
+- Name: ${p.name}
+- Gender: ${p.gender}
+- Date of birth: ${p.date}
+- Birth time: ${p.hasBirthTime ? p.time : "unknown"}
+- Place of birth: ${p.birthPlace}`,
+    )
+    .join("\n\n");
+
+  return `Invoke the Skill tool now with skill="astro-roast-group" to load the full skill instructions, then follow them EXACTLY. Relationship type: ${relationship}. The people:
+
+${roster}
+
+Resolve each messy place input to exact coordinates and IANA timezone. Run the synastry engine as the skill instructs, then write ONE group roast of the dynamic. Output format, EXACTLY:
+${people.map((_, i) => `---CHART_${i + 1}_START---\n<person ${i + 1} full chart text>\n---CHART_${i + 1}_END---`).join("\n\n")}
+---ROAST_START---
+<the group roast prose — no TITLE/TEASER/FULL/CALLOUTS fields>
+---ROAST_END---
+No commentary outside the markers.`;
+}
+
 // ─── claude subprocess ─────────────────────────────────────────────────────
 
 function runClaude({ userPrompt, systemPrompt, model, tools }) {
@@ -181,8 +205,23 @@ const server = createServer(async (req, res) => {
     return send(400, { error: "bad_json" });
   }
 
-  const { roastId, name, date, time, birthPlace, hasBirthTime } = body;
-  if (!name || !date || !birthPlace) {
+  const {
+    roastId,
+    name,
+    date,
+    time,
+    birthPlace,
+    hasBirthTime,
+    mode,
+    relationship,
+    people,
+  } = body;
+  const isGroup = mode === "group";
+  if (isGroup) {
+    if (!Array.isArray(people) || people.length < 2 || people.length > 6) {
+      return send(400, { error: "missing_fields" });
+    }
+  } else if (!name || !date || !birthPlace) {
     return send(400, { error: "missing_fields" });
   }
 
@@ -198,17 +237,24 @@ const server = createServer(async (req, res) => {
     roastId,
     fromPct: 10,
     toPct: 70,
-    durationMs: 75_000,
+    durationMs: isGroup ? 150_000 : 75_000,
   });
 
   const write = await runClaude({
-    userPrompt: buildWriteUserPrompt({
-      name,
-      date,
-      time,
-      birthPlace,
-      hasBirthTime: !!hasBirthTime,
-    }),
+    userPrompt: isGroup
+      ? buildGroupWriteUserPrompt({
+          relationship:
+            (typeof relationship === "string" && relationship.trim()) ||
+            "couple",
+          people,
+        })
+      : buildWriteUserPrompt({
+          name,
+          date,
+          time,
+          birthPlace,
+          hasBirthTime: !!hasBirthTime,
+        }),
     model: MODEL,
     tools: "Bash,WebSearch,Skill",
   });
@@ -250,6 +296,28 @@ const server = createServer(async (req, res) => {
   const roast = `---ROAST_START---
 ${roastBody}
 ---ROAST_END---`;
+
+  if (isGroup) {
+    const charts = people.map((_, i) =>
+      extractMarkedSection(write.stdout, `CHART_${i + 1}`),
+    );
+    if (charts.some((c) => !c)) {
+      return send(500, {
+        error: "missing_structured_output",
+        detail: write.stdout.slice(0, 1000),
+        durationMs: Date.now() - startedAt,
+      });
+    }
+    const chartData = charts
+      .map((c, i) => `=== ${people[i].name} ===\n\n${c}`)
+      .join("\n\n");
+    return send(200, {
+      chartData,
+      charts,
+      roast,
+      durationMs: Date.now() - startedAt,
+    });
+  }
 
   return send(200, {
     chartData,

@@ -1,3 +1,5 @@
+import type { PersonInput } from "./group";
+
 export interface RoastRunnerPayload {
   roastId: string;
   name: string;
@@ -52,10 +54,7 @@ export function buildRoastRunnerPayload(input: {
   };
 }
 
-export function extractMarkedSection(
-  raw: string,
-  marker: "CHART" | "ROAST",
-): string {
+export function extractMarkedSection(raw: string, marker: string): string {
   const start = `---${marker}_START---`;
   const end = `---${marker}_END---`;
 
@@ -103,4 +102,30 @@ export function extractChartPlacements(chartData: string): ChartPlacements {
   }
 
   return placements;
+}
+
+export interface GroupRoastRunnerPayload {
+  roastId: string;
+  mode: "group";
+  relationship: "couple" | "family";
+  people: Array<PersonInput & { hasBirthTime: boolean }>;
+}
+
+export function buildGroupRunnerPayload(input: {
+  roastId: string;
+  relationship: "couple" | "family";
+  people: PersonInput[];
+}): GroupRoastRunnerPayload {
+  return {
+    roastId: input.roastId,
+    mode: "group",
+    relationship: input.relationship,
+    people: input.people.map((p) => ({ ...p, hasBirthTime: !!p.time })),
+  };
+}
+
+export function extractGroupCharts(raw: string, peopleCount: number): string[] {
+  return Array.from({ length: peopleCount }, (_, i) =>
+    extractMarkedSection(raw, `CHART_${i + 1}`),
+  );
 }

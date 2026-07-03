@@ -17,6 +17,14 @@ interface TeaserViewProps {
   rising: string;
   teaser: string;
   roastId: string;
+  subjectNames?: string[];
+  extraPlacements?: {
+    name: string;
+    sunSign: string;
+    moonSign: string;
+    rising: string | null;
+  }[];
+  amountMinorUnits?: number;
 }
 
 export default function TeaserView({
@@ -26,6 +34,9 @@ export default function TeaserView({
   rising,
   teaser,
   roastId,
+  subjectNames,
+  extraPlacements,
+  amountMinorUnits = 500,
 }: TeaserViewProps) {
   useEffect(() => {
     gsap.registerPlugin(ScrollTrigger);
@@ -81,37 +92,82 @@ export default function TeaserView({
         {/* Dossier Header */}
         <header className="dossier border border-bruise bg-void p-5 mb-16 relative overflow-hidden">
           <div className="absolute top-0 left-0 w-2 h-2 bg-blood" />
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-xs tracking-[0.2em] uppercase text-ash/60 font-light">
-            <div>
-              <span className="block text-blood mb-1.5 text-[10px] font-bold">
-                Subject
-              </span>
-              <span className="text-ash font-medium">{name}</span>
+          <div className="space-y-6">
+            {/* Person 1 (main) */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-xs tracking-[0.2em] uppercase text-ash/60 font-light">
+              <div>
+                <span className="block text-blood mb-1.5 text-[10px] font-bold">
+                  Subject
+                </span>
+                <span className="text-ash font-medium">
+                  {subjectNames?.[0] ?? name}
+                </span>
+              </div>
+              <div>
+                <span className="block text-blood mb-1.5 text-[10px] font-bold">
+                  Sun
+                </span>
+                <span className="text-ash font-medium">
+                  {sunSign} <SignGlyph sign={sunSign} />
+                </span>
+              </div>
+              <div>
+                <span className="block text-blood mb-1.5 text-[10px] font-bold">
+                  Moon
+                </span>
+                <span className="text-ash font-medium">
+                  {moonSign} <SignGlyph sign={moonSign} />
+                </span>
+              </div>
+              <div>
+                <span className="block text-blood mb-1.5 text-[10px] font-bold">
+                  Rising
+                </span>
+                <span className="text-ash font-medium">
+                  {rising} <SignGlyph sign={rising} />
+                </span>
+              </div>
             </div>
-            <div>
-              <span className="block text-blood mb-1.5 text-[10px] font-bold">
-                Sun
-              </span>
-              <span className="text-ash font-medium">
-                {sunSign} <SignGlyph sign={sunSign} />
-              </span>
-            </div>
-            <div>
-              <span className="block text-blood mb-1.5 text-[10px] font-bold">
-                Moon
-              </span>
-              <span className="text-ash font-medium">
-                {moonSign} <SignGlyph sign={moonSign} />
-              </span>
-            </div>
-            <div>
-              <span className="block text-blood mb-1.5 text-[10px] font-bold">
-                Rising
-              </span>
-              <span className="text-ash font-medium">
-                {rising} <SignGlyph sign={rising} />
-              </span>
-            </div>
+
+            {/* Extra people */}
+            {extraPlacements?.map((ep, i) => (
+              <div
+                key={i}
+                className="grid grid-cols-2 md:grid-cols-4 gap-6 text-xs tracking-[0.2em] uppercase text-ash/60 font-light border-t border-ash/10 pt-6"
+              >
+                <div>
+                  <span className="block text-blood mb-1.5 text-[10px] font-bold">
+                    Subject
+                  </span>
+                  <span className="text-ash font-medium">{ep.name}</span>
+                </div>
+                <div>
+                  <span className="block text-blood mb-1.5 text-[10px] font-bold">
+                    Sun
+                  </span>
+                  <span className="text-ash font-medium">
+                    {ep.sunSign} <SignGlyph sign={ep.sunSign} />
+                  </span>
+                </div>
+                <div>
+                  <span className="block text-blood mb-1.5 text-[10px] font-bold">
+                    Moon
+                  </span>
+                  <span className="text-ash font-medium">
+                    {ep.moonSign} <SignGlyph sign={ep.moonSign} />
+                  </span>
+                </div>
+                <div>
+                  <span className="block text-blood mb-1.5 text-[10px] font-bold">
+                    Rising
+                  </span>
+                  <span className="text-ash font-medium">
+                    {ep.rising ?? "—"}{" "}
+                    {ep.rising && <SignGlyph sign={ep.rising} />}
+                  </span>
+                </div>
+              </div>
+            ))}
           </div>
         </header>
 
@@ -144,7 +200,7 @@ export default function TeaserView({
         </div>
 
         {/* Inline paywall — sits right under the teaser, no scroll trigger */}
-        <PaywallCTA roastId={roastId} />
+        <PaywallCTA roastId={roastId} amountMinorUnits={amountMinorUnits} />
 
         {/* Share */}
         <div className="share-wrapper pl-6 md:pl-8">

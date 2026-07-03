@@ -13,11 +13,15 @@ import { roasts } from "@/lib/db/schema";
 import { sendRoastEmailIfReady } from "@/lib/send-roast-email-if-ready";
 import {
   buildRoastRunnerPayload,
+  buildGroupRunnerPayload,
   extractChartPlacements,
+  extractGroupCharts,
   extractMarkedSection,
   extractRoastBlock,
 } from "@/lib/roast-runner";
 import { sendInstagramDm, buildDmTeaser } from "@/lib/manychat";
+import { sendInstagramDm as sendInstagramGraphDm } from "@/lib/instagram";
+import { pickGoldLine } from "@/lib/gold-line";
 
 const ROAST_RUNNER_URL = process.env.ROAST_RUNNER_URL;
 const ROAST_RUNNER_SECRET = process.env.ROAST_RUNNER_SECRET;
@@ -105,10 +109,23 @@ export const generateRoast = inngest.createFunction(
     },
   },
   async ({ event, step }) => {
-    const { roastId, name, gender, email, date, time, city, mcSubscriberId } =
-      event.data;
+    const {
+      roastId,
+      name,
+      gender,
+      email,
+      date,
+      time,
+      city,
+      mcSubscriberId,
+      igSenderId,
+      kind,
+      relationship,
+      people,
+    } = event.data;
 
     const hasBirthTime = !!time;
+    const isGroup = kind === "couple" || kind === "family";
 
     // ─── Step 1: Generate Chart + Roast via Hermes Runner ──────────────
     const runnerOutput = await step.run("generate-roast", async () => {
@@ -123,14 +140,16 @@ export const generateRoast = inngest.createFunction(
           Authorization: `Bearer ${ROAST_RUNNER_SECRET}`,
         },
         body: JSON.stringify(
-          buildRoastRunnerPayload({
-            roastId,
-            name,
-            gender,
-            date,
-            time,
-            birthPlace: city,
-          }),
+          isGroup
+            ? buildGroupRunnerPayload({ roastId, relationship, people })
+            : buildRoastRunnerPayload({
+                roastId,
+                name,
+                gender,
+                date,
+                time,
+                birthPlace: city,
+              }),
         ),
       });
 
@@ -138,6 +157,7 @@ export const generateRoast = inngest.createFunction(
         output?: string;
         roast?: string;
         chartData?: string;
+        charts?: string[];
         error?: string;
         detail?: string;
       };
@@ -180,7 +200,27 @@ export const generateRoast = inngest.createFunction(
         throw new Error("Roast runner did not return chart data");
       }
 
-      const placements = extractChartPlacements(chartData);
+      const charts: string[] =
+        isGroup && Array.isArray(body.charts) && body.charts.length
+          ? body.charts
+          : isGroup
+            ? extractGroupCharts(output, people.length)
+            : [];
+
+      const placements = extractChartPlacements(
+        isGroup ? charts[0] || "" : chartData,
+      );
+      const extraPlacements = isGroup
+        ? charts.slice(1, people.length).map((c, i) => {
+            const p = extractChartPlacements(c);
+            return {
+              name: people[i + 1].name,
+              sunSign: p.sunSign,
+              moonSign: p.moonSign,
+              rising: p.rising,
+            };
+          })
+        : undefined;
 
       await db
         .update(roasts)
@@ -188,6 +228,7 @@ export const generateRoast = inngest.createFunction(
           chartData,
           draft: roastOutput,
           ...placements,
+          ...(extraPlacements ? { extraPlacements } : {}),
         })
         .where(eq(roasts.id, roastId));
 
@@ -212,6 +253,8 @@ export const generateRoast = inngest.createFunction(
             : paragraphs[0] || "";
         })();
 
+      const goldLine = fullText ? await pickGoldLine(fullText) : null;
+
       await db
         .update(roasts)
         .set({
@@ -219,6 +262,7 @@ export const generateRoast = inngest.createFunction(
           teaser: finalTeaser,
           fullText,
           callouts,
+          goldLine,
           status: "ready",
         })
         .where(eq(roasts.id, roastId));
@@ -242,7 +286,29 @@ export const generateRoast = inngest.createFunction(
     });
 
     // ─── Step 3: DM teaser back (Instagram DM funnel only) ─────────────
-    if (mcSubscriberId) {
+    if (igSenderId) {
+      await step.run("send-instagram-graph-dm", async () => {
+        const roastUrl = `https://astroroast.com/roast/${roastId}`;
+        try {
+          await sendInstagramGraphDm({
+            recipientId: igSenderId,
+            texts: buildDmTeaser({
+              title: saved.title || null,
+              teaser: saved.teaser,
+              roastUrl,
+            }),
+          });
+        } catch (dmErr) {
+          console.error("Instagram Graph DM send failed:", dmErr);
+          Sentry.withScope((scope) => {
+            scope.setTag("subsystem", "instagram-graph");
+            scope.setContext("instagram_graph", { roastId, igSenderId });
+            Sentry.captureException(dmErr);
+          });
+          throw dmErr;
+        }
+      });
+    } else if (mcSubscriberId) {
       await step.run("send-instagram-dm", async () => {
         const roastUrl = `https://astroroast.com/roast/${roastId}`;
         try {

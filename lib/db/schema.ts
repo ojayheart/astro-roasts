@@ -68,6 +68,9 @@ export const roasts = pgTable(
     emailSent: boolean("email_sent").default(false).notNull(),
     source: text("source").default("web").notNull(), // web | instagram_dm
     mcSubscriberId: text("mc_subscriber_id"), // ManyChat subscriber to DM the teaser back to
+    kind: text("kind").default("solo").notNull(), // solo | couple | family
+    goldLine: text("gold_line"), // most savage standalone quote — story card
+    extraPlacements: jsonb("extra_placements"), // ExtraPlacement[] for persons 2..N
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (table) => [index("roasts_user_id_idx").on(table.userId)],
@@ -118,6 +121,21 @@ export const connections = pgTable(
   (table) => [index("connections_buyer_idx").on(table.buyerId)],
 );
 
+export const roastSubjects = pgTable(
+  "roast_subjects",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    roastId: uuid("roast_id")
+      .references(() => roasts.id)
+      .notNull(),
+    userId: uuid("user_id")
+      .references(() => users.id)
+      .notNull(),
+    position: integer("position").notNull(),
+  },
+  (table) => [index("roast_subjects_roast_idx").on(table.roastId)],
+);
+
 // Relations for Drizzle query API
 export const usersRelations = relations(users, ({ many }) => ({
   roasts: many(roasts),
@@ -126,8 +144,9 @@ export const usersRelations = relations(users, ({ many }) => ({
   receivedConnections: many(connections, { relationName: "friend" }),
 }));
 
-export const roastsRelations = relations(roasts, ({ one }) => ({
+export const roastsRelations = relations(roasts, ({ one, many }) => ({
   user: one(users, { fields: [roasts.userId], references: [users.id] }),
+  subjects: many(roastSubjects),
 }));
 
 export const sessionsRelations = relations(sessions, ({ one }) => ({
@@ -143,5 +162,16 @@ export const connectionsRelations = relations(connections, ({ one }) => ({
   roast: one(roasts, {
     fields: [connections.roastId],
     references: [roasts.id],
+  }),
+}));
+
+export const roastSubjectsRelations = relations(roastSubjects, ({ one }) => ({
+  roast: one(roasts, {
+    fields: [roastSubjects.roastId],
+    references: [roasts.id],
+  }),
+  user: one(users, {
+    fields: [roastSubjects.userId],
+    references: [users.id],
   }),
 }));

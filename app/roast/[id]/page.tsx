@@ -16,13 +16,19 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
   const roast = await db.query.roasts.findFirst({
     where: eq(roasts.id, id),
-    with: { user: true },
+    with: { user: true, subjects: { with: { user: true } } },
   });
   if (!roast || roast.status !== "ready") {
     return { title: "Astro Roasts | Case file" };
   }
 
-  const name = getRoastUser(roast).name;
+  const subjectNames =
+    roast.subjects && roast.subjects.length
+      ? [...roast.subjects]
+          .sort((a, b) => a.position - b.position)
+          .map((s) => s.user.name)
+      : [getRoastUser(roast).name];
+  const name = subjectNames.join(" & ");
   const title = `${name} — the case file | Astro Roasts`;
   const description =
     roast.title ||
@@ -41,7 +47,7 @@ export default async function RoastPage({ params }: Props) {
 
   const roast = await db.query.roasts.findFirst({
     where: eq(roasts.id, id),
-    with: { user: true },
+    with: { user: true, subjects: { with: { user: true } } },
   });
 
   if (!roast) {

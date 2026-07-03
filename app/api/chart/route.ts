@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
 
     const roast = await db.query.roasts.findFirst({
       where: eq(roasts.id, roastId),
-      with: { user: true },
+      with: { user: true, subjects: { with: { user: true } } },
     });
     if (!roast || !roast.user) return nullResponse;
 

@@ -18,8 +18,10 @@ import posthog from "posthog-js";
 export interface EventMap {
   birth_form_opened: Record<string, never>;
   birth_form_submitted: {
+    mode?: string;
     hasEmail: boolean;
     hasBirthTime: boolean;
+    peopleCount?: number;
   };
   roast_generation_started: { roastId: string };
   roast_generation_finished: { roastId: string; durationMs?: number };

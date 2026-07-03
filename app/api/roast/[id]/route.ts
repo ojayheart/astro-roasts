@@ -12,7 +12,7 @@ export async function GET(
 
   const roast = await db.query.roasts.findFirst({
     where: eq(roasts.id, id),
-    with: { user: true },
+    with: { user: true, subjects: { with: { user: true } } },
   });
 
   if (!roast) {
