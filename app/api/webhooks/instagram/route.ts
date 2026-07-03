@@ -112,7 +112,20 @@ export async function POST(req: NextRequest) {
       }
 
       const request = parseInstagramRoastRequest(message.text);
-      if (!request) continue;
+      if (!request) {
+        // Catch-all: a delivered DM must never die silently — anything we
+        // can't parse gets the solo template so the funnel always answers.
+        try {
+          await sendInstagramDm({
+            recipientId: message.senderId,
+            texts: SOLO_TEMPLATE_MESSAGES,
+          });
+        } catch (error) {
+          console.error("Catch-all template send failed:", error);
+          Sentry.captureException(error);
+        }
+        continue;
+      }
 
       const existing = await db.query.roasts.findFirst({
         where: (r, { and: dbAnd, eq: dbEq }) =>
