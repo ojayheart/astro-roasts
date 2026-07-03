@@ -52,7 +52,7 @@ export async function sendRoastEmail(
     )
     .join("");
 
-  await resend.emails.send({
+  const { error } = await resend.emails.send({
     from: "Astro Roast <roast@astroroast.com>",
     to,
     subject: `${escapeHtml(name)}, the stars have spoken.`,
@@ -68,5 +68,12 @@ export async function sendRoastEmail(
       </div>
     `,
   });
+
+  // Resend's SDK returns {data, error} instead of throwing on API errors.
+  // Without this check a failed send reports success upstream, emailSent
+  // gets set, and the dedupe logic suppresses any later retry.
+  if (error) {
+    throw new Error(`Resend send failed: ${error.name ?? ""} ${error.message}`);
+  }
   return true;
 }
