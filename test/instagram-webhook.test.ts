@@ -6,8 +6,10 @@ import {
   parseInstagramRoastRequest,
   verifyInstagramWebhookChallenge,
   detectGroupKeyword,
+  detectSoloKeyword,
   parseInstagramGroupRequest,
   GROUP_TEMPLATE_MESSAGES,
+  SOLO_TEMPLATE_MESSAGES,
   verifyInstagramWebhookSignature,
 } from "../lib/instagram-webhook.ts";
 
@@ -175,4 +177,13 @@ test("webhook signature verification passes with warning when secret missing", (
     verifyInstagramWebhookSignature(body, signature, undefined),
     true,
   );
+});
+
+test("solo keyword detection — bare ROAST always gets template", () => {
+  assert.equal(detectSoloKeyword("ROAST"), true);
+  assert.equal(detectSoloKeyword("  roast me! "), true);
+  assert.equal(detectSoloKeyword("Roast my chart"), true);
+  assert.equal(detectSoloKeyword("roast us"), false); // group keyword, not solo
+  assert.equal(detectSoloKeyword("name: A\ndob: 1990-01-01"), false);
+  assert.match(SOLO_TEMPLATE_MESSAGES.join(" "), /dob/i);
 });

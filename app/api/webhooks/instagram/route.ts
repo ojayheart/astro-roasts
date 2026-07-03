@@ -9,8 +9,10 @@ import {
   parseInstagramRoastRequest,
   verifyInstagramWebhookChallenge,
   detectGroupKeyword,
+  detectSoloKeyword,
   parseInstagramGroupRequest,
   GROUP_TEMPLATE_MESSAGES,
+  SOLO_TEMPLATE_MESSAGES,
   verifyInstagramWebhookSignature,
   type ParsedInstagramRoastRequest,
 } from "@/lib/instagram-webhook";
@@ -64,6 +66,19 @@ export async function POST(req: NextRequest) {
           await sendInstagramDm({
             recipientId: message.senderId,
             texts: GROUP_TEMPLATE_MESSAGES[keyword],
+          });
+        } catch (error) {
+          console.error("Failed to send Instagram DM template:", error);
+          Sentry.captureException(error);
+        }
+        continue;
+      }
+
+      if (detectSoloKeyword(message.text)) {
+        try {
+          await sendInstagramDm({
+            recipientId: message.senderId,
+            texts: SOLO_TEMPLATE_MESSAGES,
           });
         } catch (error) {
           console.error("Failed to send Instagram DM template:", error);

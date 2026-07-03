@@ -170,6 +170,33 @@ export function detectGroupKeyword(text: string): "couple" | "family" | null {
   return null;
 }
 
+// The public CTA everywhere is "DM ROAST" — a bare keyword must always get
+// the solo template back, never silence.
+export function detectSoloKeyword(text: string): boolean {
+  const clean = text
+    .trim()
+    .replace(/^[^a-zA-Z]+|[^a-zA-Z]+$/g, "")
+    .toLowerCase();
+  return (
+    clean === "roast" ||
+    clean === "roast me" ||
+    clean === "roast my chart" ||
+    clean === "roast my natal chart"
+  );
+}
+
+export const SOLO_TEMPLATE_MESSAGES: string[] = [
+  `brave. one message, this exact shape:
+
+name: …
+dob: 1994-01-21
+place: city, country
+time: 13:00 (optional)
+gender: …
+
+send it. the chart does the rest.`,
+];
+
 export const GROUP_TEMPLATE_MESSAGES: Record<"couple" | "family", string[]> = {
   couple: [
     `both of you. one message, this exact shape:
