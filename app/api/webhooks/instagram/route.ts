@@ -8,15 +8,13 @@ import {
   extractInstagramTextMessages,
   parseInstagramRoastRequest,
   verifyInstagramWebhookChallenge,
-  detectGroupKeyword,
-  detectSoloKeyword,
   parseInstagramGroupRequest,
-  GROUP_TEMPLATE_MESSAGES,
   SOLO_TEMPLATE_MESSAGES,
   verifyInstagramWebhookSignature,
   type ParsedInstagramRoastRequest,
 } from "@/lib/instagram-webhook";
 import { sendInstagramDm } from "@/lib/instagram";
+import { fetchConversationHistory, runDmAgent } from "@/lib/dm-agent";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -60,130 +58,22 @@ export async function POST(req: NextRequest) {
     const messages = extractInstagramTextMessages(payload);
 
     for (const message of messages) {
-      const keyword = detectGroupKeyword(message.text);
-      if (keyword) {
-        try {
-          await sendInstagramDm({
-            recipientId: message.senderId,
-            texts: GROUP_TEMPLATE_MESSAGES[keyword],
-          });
-        } catch (error) {
-          console.error("Failed to send Instagram DM template:", error);
-          Sentry.captureException(error);
-        }
-        continue;
-      }
-
-      if (detectSoloKeyword(message.text)) {
-        try {
-          await sendInstagramDm({
-            recipientId: message.senderId,
-            texts: SOLO_TEMPLATE_MESSAGES,
-          });
-        } catch (error) {
-          console.error("Failed to send Instagram DM template:", error);
-          Sentry.captureException(error);
-        }
-        continue;
-      }
-
-      const looksLikeGroup = /person\s*\d+\s*:/i.test(message.text);
+      // Deterministic fast paths: a complete structured submission skips the
+      // agent entirely (exact + free).
       const group = parseInstagramGroupRequest(message.text);
       if (group) {
         await handleGroupDmRequest(group, message.senderId);
         continue;
       }
-      if (looksLikeGroup) {
-        // Malformed group submission — re-send the template, never let the
-        // solo parser build a frankenperson from mixed person blocks.
-        try {
-          await sendInstagramDm({
-            recipientId: message.senderId,
-            texts: GROUP_TEMPLATE_MESSAGES.family,
-          });
-        } catch (dmErr) {
-          console.error("Group template resend failed:", dmErr);
-          Sentry.withScope((scope) => {
-            scope.setTag("route", "/api/webhooks/instagram");
-            Sentry.captureException(dmErr);
-          });
-        }
-        continue;
-      }
-
       const request = parseInstagramRoastRequest(message.text);
-      if (!request) {
-        // Catch-all: a delivered DM must never die silently — anything we
-        // can't parse gets the solo template so the funnel always answers.
-        try {
-          await sendInstagramDm({
-            recipientId: message.senderId,
-            texts: SOLO_TEMPLATE_MESSAGES,
-          });
-        } catch (error) {
-          console.error("Catch-all template send failed:", error);
-          Sentry.captureException(error);
-        }
+      if (request && !/person\s*\d+\s*:/i.test(message.text)) {
+        await handleSoloDmRequest(request, message.senderId);
         continue;
       }
 
-      const existing = await db.query.roasts.findFirst({
-        where: (r, { and: dbAnd, eq: dbEq }) =>
-          dbAnd(
-            dbEq(r.source, "instagram_dm"),
-            dbEq(r.mcSubscriberId, message.senderId),
-            dbEq(r.status, "generating"),
-          ),
-      });
-      if (existing) continue;
-
-      const normalizedBirthPlace = normalizeBirthLocation(request.birthPlace);
-      const referralCode = crypto.randomUUID().slice(0, 8);
-
-      const userRows = (await db
-        .insert(users)
-        .values({
-          name: request.name,
-          gender: request.gender,
-          email: null,
-          dob: request.date,
-          birthTime: request.time,
-          birthCity: normalizedBirthPlace,
-          lat: 0,
-          lon: 0,
-          tz: "UTC",
-          referralCode,
-        })
-        .returning()) as (typeof users.$inferSelect)[];
-      const user = userRows[0];
-
-      const roastRows = (await db
-        .insert(roasts)
-        .values({
-          userId: user.id,
-          status: "generating",
-          paid: false,
-          emailSent: false,
-          source: "instagram_dm",
-          mcSubscriberId: message.senderId,
-        })
-        .returning()) as (typeof roasts.$inferSelect)[];
-      const roast = roastRows[0];
-
-      await inngest.send({
-        name: "roast/generate",
-        data: {
-          roastId: roast.id,
-          userId: user.id,
-          name: request.name,
-          gender: request.gender,
-          email: null,
-          date: request.date,
-          time: request.time,
-          city: normalizedBirthPlace,
-          igSenderId: message.senderId,
-        },
-      });
+      // Everything else — keywords, banter, half-details, malformed blocks —
+      // gets a real agent turn in the astroroasted voice.
+      await handleAgentTurn(message.senderId, message.text);
     }
 
     return NextResponse.json({ received: true });
@@ -200,13 +90,77 @@ export async function POST(req: NextRequest) {
   }
 }
 
-async function handleGroupDmRequest(
-  group: {
-    relationship: "couple" | "family";
-    people: ParsedInstagramRoastRequest[];
-  },
+/**
+ * One agent turn: thread history → Hermes-run Claude → reply or generate.
+ * Any failure falls back to the solo template — a delivered DM never dies
+ * silently.
+ */
+async function handleAgentTurn(senderId: string, text: string) {
+  try {
+    const history = await fetchConversationHistory(senderId);
+    const action = await runDmAgent({ history, latestText: text });
+
+    if (action?.action === "reply") {
+      await sendInstagramDm({
+        recipientId: senderId,
+        texts: action.messages,
+      });
+      return;
+    }
+
+    if (action?.action === "generate_solo") {
+      const created = await handleSoloDmRequest(
+        { ...action.person, gender: action.person.gender },
+        senderId,
+      );
+      await sendInstagramDm({
+        recipientId: senderId,
+        texts: [
+          created
+            ? action.confirmMessage
+            : "already cooking one for you. patience.",
+        ],
+      });
+      return;
+    }
+
+    if (action?.action === "generate_group") {
+      const created = await handleGroupDmRequest(
+        { relationship: action.relationship, people: action.people },
+        senderId,
+      );
+      await sendInstagramDm({
+        recipientId: senderId,
+        texts: [
+          created
+            ? action.confirmMessage
+            : "already cooking one for you. patience.",
+        ],
+      });
+      return;
+    }
+
+    // Agent unavailable (runner down / rate-limited / bad output) — template
+    // fallback beats silence.
+    await sendInstagramDm({
+      recipientId: senderId,
+      texts: SOLO_TEMPLATE_MESSAGES,
+    });
+  } catch (error) {
+    console.error("Agent turn failed:", error);
+    Sentry.withScope((scope) => {
+      scope.setTag("route", "/api/webhooks/instagram");
+      scope.setTag("subsystem", "dm-agent");
+      Sentry.captureException(error);
+    });
+  }
+}
+
+/** Returns true when a new roast was created (false = one already generating). */
+async function handleSoloDmRequest(
+  request: ParsedInstagramRoastRequest,
   senderId: string,
-) {
+): Promise<boolean> {
   const existing = await db.query.roasts.findFirst({
     where: (r, { and: dbAnd, eq: dbEq }) =>
       dbAnd(
@@ -215,7 +169,73 @@ async function handleGroupDmRequest(
         dbEq(r.status, "generating"),
       ),
   });
-  if (existing) return;
+  if (existing) return false;
+
+  const normalizedBirthPlace = normalizeBirthLocation(request.birthPlace);
+
+  const userRows = (await db
+    .insert(users)
+    .values({
+      name: request.name,
+      gender: request.gender,
+      email: null,
+      dob: request.date,
+      birthTime: request.time,
+      birthCity: normalizedBirthPlace,
+      lat: 0,
+      lon: 0,
+      tz: "UTC",
+      referralCode: crypto.randomUUID().slice(0, 8),
+    })
+    .returning()) as (typeof users.$inferSelect)[];
+  const user = userRows[0];
+
+  const roastRows = (await db
+    .insert(roasts)
+    .values({
+      userId: user.id,
+      status: "generating",
+      paid: false,
+      emailSent: false,
+      source: "instagram_dm",
+      mcSubscriberId: senderId,
+    })
+    .returning()) as (typeof roasts.$inferSelect)[];
+  const roast = roastRows[0];
+
+  await inngest.send({
+    name: "roast/generate",
+    data: {
+      roastId: roast.id,
+      userId: user.id,
+      name: request.name,
+      gender: request.gender,
+      email: null,
+      date: request.date,
+      time: request.time,
+      city: normalizedBirthPlace,
+      igSenderId: senderId,
+    },
+  });
+  return true;
+}
+
+async function handleGroupDmRequest(
+  group: {
+    relationship: "couple" | "family";
+    people: ParsedInstagramRoastRequest[];
+  },
+  senderId: string,
+): Promise<boolean> {
+  const existing = await db.query.roasts.findFirst({
+    where: (r, { and: dbAnd, eq: dbEq }) =>
+      dbAnd(
+        dbEq(r.source, "instagram_dm"),
+        dbEq(r.mcSubscriberId, senderId),
+        dbEq(r.status, "generating"),
+      ),
+  });
+  if (existing) return false;
 
   const kind = group.relationship;
   const people = group.people.map((p) => ({
@@ -279,4 +299,5 @@ async function handleGroupDmRequest(
       igSenderId: senderId,
     },
   });
+  return true;
 }

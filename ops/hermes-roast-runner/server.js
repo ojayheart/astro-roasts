@@ -25,6 +25,108 @@ if (!SECRET) {
   process.exit(1);
 }
 
+// ─── DM agent: one in-voice conversational turn on the subscription ────────
+// The webhook (Vercel) posts {history, latestText}; we run one fast claude
+// turn and return the raw action JSON. Validation happens on the web side.
+
+const DM_MODEL = process.env.DM_AGENT_MODEL || "claude-sonnet-5";
+const DM_TIMEOUT_MS = Number(process.env.DM_AGENT_TIMEOUT_MS || 45_000);
+
+const DM_SYSTEM_PROMPT = `you are astroroasted — the instagram account that writes savage, scarily accurate comedic natal chart roasts. you are talking in instagram DMs.
+
+voice: lowercase. dry. quick. funny-from-truth, never cruel-for-cruelty. no emoji unless one lands hard. absolutely no AI-slop phrasing ("I'd be happy to", "cosmic bestie", "vibes", "let's dive in", exclamation-mark enthusiasm). you sound like a sharp friend who happens to read charts, not a chatbot.
+
+your one goal: collect what you need for a roast, then fire it.
+- solo roast needs: name, date of birth, place of birth. birth time is optional (better with it). gender/pronouns optional — ask once, casually.
+- "roast us" / partner talk → couple roast: the same details for BOTH people.
+- family → 3-6 people, same details each.
+
+rules:
+- extract details from however they naturally type them ("im sarah, 12 may 94, london" is fine). resolve dates to YYYY-MM-DD when confident; if ambiguous (2/3/94), ask which.
+- ask for AT MOST what's missing, in one short message. never send forms or bullet-point templates.
+- when you have enough for a roast, use a generate action. your confirm message stays in voice ("locked. pulling your chart now — this'll take a couple of minutes. brace.").
+- price only if asked: solo €5, couple €8, family €4 a head after the first two. the link they get shows a free teaser first.
+- if they ask what this is: a personalized comedic roast of their actual natal chart, free teaser, they'll see.
+- keep replies 1-2 short DM messages max. this is instagram, not email.
+- never claim to be human. never break voice to apologise as an assistant.
+
+OUTPUT FORMAT — reply with ONE raw JSON object and NOTHING else (no fences, no commentary):
+  {"action":"reply","messages":["..."]}
+  {"action":"generate_solo","person":{"name":"...","gender":"...","date":"YYYY-MM-DD","time":"HH:MM"|null,"birthPlace":"city, country"},"confirmMessage":"..."}
+  {"action":"generate_group","relationship":"couple"|"family","people":[{...same person shape...}],"confirmMessage":"..."}`;
+
+function buildDmAgentPrompt({ history, latestText }) {
+  const turns = Array.isArray(history) ? history : [];
+  const lines = turns
+    .filter((t) => t && typeof t.text === "string" && t.text.trim())
+    .slice(-12)
+    .map(
+      (t) =>
+        `${t.role === "assistant" ? "astroroasted" : "them"}: ${t.text.trim()}`,
+    );
+  const last = lines[lines.length - 1] || "";
+  if (!last.startsWith("them:") || !last.includes(String(latestText).trim())) {
+    lines.push(`them: ${String(latestText).trim()}`);
+  }
+  return `conversation so far:\n\n${lines.join("\n")}\n\nrespond with your action JSON now.`;
+}
+
+function extractJsonObject(stdout) {
+  const trimmed = stdout.trim().replace(/^```(?:json)?\s*|\s*```$/g, "");
+  const start = trimmed.indexOf("{");
+  const end = trimmed.lastIndexOf("}");
+  if (start === -1 || end === -1 || end <= start) return null;
+  try {
+    return JSON.parse(trimmed.slice(start, end + 1));
+  } catch {
+    return null;
+  }
+}
+
+async function handleDmAgent(body, send) {
+  const { history, latestText } = body || {};
+  if (typeof latestText !== "string" || !latestText.trim()) {
+    return send(400, { error: "missing_fields" });
+  }
+
+  const startedAt = Date.now();
+  const run = await runClaude({
+    userPrompt: buildDmAgentPrompt({ history, latestText }),
+    systemPrompt: DM_SYSTEM_PROMPT,
+    model: DM_MODEL,
+    tools: "",
+    timeoutMs: DM_TIMEOUT_MS,
+  });
+
+  if (run.code !== 0) {
+    if (isRateLimit(run.stderr, run.stdout)) {
+      return send(503, {
+        error: "rate_limited",
+        durationMs: Date.now() - startedAt,
+      });
+    }
+    console.error("dm_agent_failed", {
+      code: run.code,
+      stderr: run.stderr.slice(0, 300),
+    });
+    return send(500, {
+      error: "claude_failed",
+      durationMs: Date.now() - startedAt,
+    });
+  }
+
+  const action = extractJsonObject(run.stdout);
+  if (!action) {
+    console.error("dm_agent_bad_json", { preview: run.stdout.slice(0, 300) });
+    return send(500, {
+      error: "bad_output",
+      durationMs: Date.now() - startedAt,
+    });
+  }
+
+  return send(200, { action, durationMs: Date.now() - startedAt });
+}
+
 // ─── Phase 1: chart computation + the proven bathos write ──────────────────
 
 function buildWriteUserPrompt({ name, date, time, birthPlace, hasBirthTime }) {
@@ -64,7 +166,7 @@ No commentary outside the markers.`;
 
 // ─── claude subprocess ─────────────────────────────────────────────────────
 
-function runClaude({ userPrompt, systemPrompt, model, tools }) {
+function runClaude({ userPrompt, systemPrompt, model, tools, timeoutMs }) {
   return new Promise((resolve) => {
     const args = [
       "-p",
@@ -95,7 +197,7 @@ function runClaude({ userPrompt, systemPrompt, model, tools }) {
     const timer = setTimeout(() => {
       proc.kill("SIGTERM");
       setTimeout(() => proc.kill("SIGKILL"), 5000);
-    }, TIMEOUT_MS);
+    }, timeoutMs || TIMEOUT_MS);
 
     proc.stdout.on("data", (d) => (stdout += d.toString()));
     proc.stderr.on("data", (d) => (stderr += d.toString()));
@@ -191,7 +293,10 @@ const server = createServer(async (req, res) => {
   if (req.method === "GET" && req.url === "/health") {
     return send(200, { ok: true, model: MODEL });
   }
-  if (req.method !== "POST" || req.url !== "/roast") {
+  if (
+    req.method !== "POST" ||
+    (req.url !== "/roast" && req.url !== "/dm-agent")
+  ) {
     return send(404, { error: "not_found" });
   }
   if ((req.headers.authorization || "") !== `Bearer ${SECRET}`) {
@@ -203,6 +308,10 @@ const server = createServer(async (req, res) => {
     body = await readBody(req);
   } catch {
     return send(400, { error: "bad_json" });
+  }
+
+  if (req.url === "/dm-agent") {
+    return handleDmAgent(body, send);
   }
 
   const {
