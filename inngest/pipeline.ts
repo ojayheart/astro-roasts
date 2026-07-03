@@ -56,10 +56,27 @@ function parseRoastOutput(raw: string): {
     const fullMatch = content.match(/FULL:\s*([\s\S]*?)(?=\nCALLOUTS:)/);
     const calloutsMatch = content.match(/CALLOUTS:\s*([\s\S]*?)$/);
 
+    const fullText = fullMatch?.[1]?.trim() || "";
+    if (fullText) {
+      return {
+        title: titleMatch?.[1]?.trim() || "",
+        teaser: teaserMatch?.[1]?.trim() || "",
+        fullText,
+        callouts: calloutsMatch?.[1]?.trim() || "",
+      };
+    }
+
+    // Group runner emits bare prose between the markers without
+    // TITLE:/TEASER:/FULL: labels — treat the whole block as the roast
+    // rather than shipping an empty "ready" roast.
+    const contentParagraphs = content.split("\n\n");
     return {
       title: titleMatch?.[1]?.trim() || "",
-      teaser: teaserMatch?.[1]?.trim() || "",
-      fullText: fullMatch?.[1]?.trim() || "",
+      teaser:
+        contentParagraphs.length > 3
+          ? contentParagraphs.slice(0, 3).join("\n\n")
+          : contentParagraphs[0] || "",
+      fullText: content,
       callouts: calloutsMatch?.[1]?.trim() || "",
     };
   }
@@ -243,6 +260,14 @@ export const generateRoast = inngest.createFunction(
       const { title, teaser, fullText, callouts } = parseRoastOutput(
         runnerOutput.roastOutput,
       );
+
+      // A "ready" roast with no text is worse than a failed run — the buyer
+      // sees a blank page and nothing alerts. Fail loudly instead.
+      if (!fullText.trim()) {
+        throw new Error(
+          `Roast parse produced empty fullText (roast ${roastId}, raw length ${runnerOutput.roastOutput.length})`,
+        );
+      }
 
       const finalTeaser =
         teaser ||
