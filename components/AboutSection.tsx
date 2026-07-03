@@ -171,7 +171,7 @@ export default function AboutSection() {
         </p>
 
         <Link
-          href="#confessional"
+          href="/#confessional"
           className="interactive group inline-flex items-center gap-3 font-syne font-bold text-sm uppercase tracking-[0.15em] text-void bg-ash px-8 py-4 hover:bg-blood hover:text-ash transition-colors duration-300"
         >
           Get your Astro Roast
