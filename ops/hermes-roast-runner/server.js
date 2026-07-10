@@ -284,6 +284,74 @@ function readBody(req) {
   });
 }
 
+// ─── Fast chart endpoint ────────────────────────────────────────────────────
+// Deterministic natal_chart.py --json run — no LLM. ~1s. Used by the site's
+// loading screen to render the d3 wheel while the slow roast generates.
+
+function intIn(v, lo, hi) {
+  return Number.isInteger(v) && v >= lo && v <= hi;
+}
+
+function validateChartInput(b) {
+  if (!intIn(b.year, 1800, 2100)) return "year";
+  if (!intIn(b.month, 1, 12)) return "month";
+  if (!intIn(b.day, 1, 31)) return "day";
+  if (b.hour != null && !intIn(b.hour, 0, 23)) return "hour";
+  if (b.minute != null && !intIn(b.minute, 0, 59)) return "minute";
+  if (typeof b.lat !== "number" || !Number.isFinite(b.lat) || Math.abs(b.lat) > 90) return "lat";
+  if (typeof b.lon !== "number" || !Number.isFinite(b.lon) || Math.abs(b.lon) > 180) return "lon";
+  if (typeof b.tz !== "string" || b.tz.length > 64 || !/^[A-Za-z0-9_+\-/]+$/.test(b.tz)) return "tz";
+  if (b.name != null && (typeof b.name !== "string" || b.name.length > 80)) return "name";
+  return null;
+}
+
+function handleChart(body, send) {
+  const bad = validateChartInput(body);
+  if (bad) {
+    return send(400, { error: "invalid_input", detail: bad });
+  }
+
+  const args = [
+    NATAL_CHART_PATH, "--json",
+    "--name", body.name || "Friend",
+    "--year", String(body.year),
+    "--month", String(body.month),
+    "--day", String(body.day),
+    "--lat", String(body.lat),
+    "--lon", String(body.lon),
+    "--tz", body.tz,
+  ];
+  if (body.hour != null) {
+    args.push("--hour", String(body.hour), "--minute", String(body.minute ?? 0));
+  }
+
+  const proc = spawn(PYTHON_BIN, args, {
+    timeout: 15_000,
+    killSignal: "SIGKILL",
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+
+  let stdout = "";
+  let stderr = "";
+  proc.stdout.on("data", (d) => (stdout += d.toString()));
+  proc.stderr.on("data", (d) => (stderr += d.toString()));
+  proc.on("error", (err) => {
+    send(502, { error: "chart_failed", detail: String(err).slice(0, 500) });
+  });
+  proc.on("close", (code) => {
+    if (code !== 0) {
+      console.error("chart_failed", { code, stderr: stderr.slice(0, 300) });
+      return send(502, { error: "chart_failed", detail: stderr.slice(0, 500) });
+    }
+    try {
+      return send(200, JSON.parse(stdout));
+    } catch {
+      console.error("chart_parse_failed", { stdout: stdout.slice(0, 300) });
+      return send(502, { error: "chart_failed", detail: "bad_json_from_script" });
+    }
+  });
+}
+
 const server = createServer(async (req, res) => {
   const send = (status, body) => {
     res.writeHead(status, { "content-type": "application/json" });
@@ -295,7 +363,7 @@ const server = createServer(async (req, res) => {
   }
   if (
     req.method !== "POST" ||
-    (req.url !== "/roast" && req.url !== "/dm-agent")
+    (req.url !== "/roast" && req.url !== "/dm-agent" && req.url !== "/chart")
   ) {
     return send(404, { error: "not_found" });
   }
@@ -308,6 +376,10 @@ const server = createServer(async (req, res) => {
     body = await readBody(req);
   } catch {
     return send(400, { error: "bad_json" });
+  }
+
+  if (req.url === "/chart") {
+    return handleChart(body, send);
   }
 
   if (req.url === "/dm-agent") {
