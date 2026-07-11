@@ -55,3 +55,8 @@ export const generateRateLimiter = createMemoryRateLimiter({
   limit: 5,
   windowMs: 60 * 60 * 1000,
 });
+
+export const shareUnlockRateLimiter = createMemoryRateLimiter({
+  limit: 5,
+  windowMs: 60 * 60 * 1000,
+});

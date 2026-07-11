@@ -65,6 +65,7 @@ export const roasts = pgTable(
     draft: text("draft"), // first draft text (before validation)
     validationNotes: text("validation_notes"), // what the QA step caught/fixed
     paid: boolean("paid").default(false).notNull(),
+    unlockedVia: text("unlocked_via"), // stripe | share | admin — null on legacy rows
     emailSent: boolean("email_sent").default(false).notNull(),
     source: text("source").default("web").notNull(), // web | instagram_dm
     mcSubscriberId: text("mc_subscriber_id"), // ManyChat subscriber to DM the teaser back to

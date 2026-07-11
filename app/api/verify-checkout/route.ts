@@ -70,7 +70,10 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    await db.update(roasts).set({ paid: true }).where(eq(roasts.id, roastId));
+    await db
+      .update(roasts)
+      .set({ paid: true, unlockedVia: "stripe" })
+      .where(eq(roasts.id, roastId));
   } catch (err) {
     Sentry.withScope((scope) => {
       scope.setTag("route", "/api/verify-checkout");

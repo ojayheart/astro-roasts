@@ -25,6 +25,8 @@ interface TeaserViewProps {
     rising: string | null;
   }[];
   amountMinorUnits?: number;
+  kind?: string;
+  onUnlocked?: () => void;
 }
 
 export default function TeaserView({
@@ -37,6 +39,8 @@ export default function TeaserView({
   subjectNames,
   extraPlacements,
   amountMinorUnits = 500,
+  kind = "solo",
+  onUnlocked,
 }: TeaserViewProps) {
   useEffect(() => {
     gsap.registerPlugin(ScrollTrigger);
@@ -200,7 +204,12 @@ export default function TeaserView({
         </div>
 
         {/* Inline paywall — sits right under the teaser, no scroll trigger */}
-        <PaywallCTA roastId={roastId} amountMinorUnits={amountMinorUnits} />
+        <PaywallCTA
+          roastId={roastId}
+          amountMinorUnits={amountMinorUnits}
+          kind={kind}
+          onUnlocked={onUnlocked}
+        />
 
         {/* Share */}
         <div className="share-wrapper pl-6 md:pl-8">

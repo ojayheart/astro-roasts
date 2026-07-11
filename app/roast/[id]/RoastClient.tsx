@@ -319,7 +319,7 @@ export default function RoastClient({
     );
   }
 
-  // Unpaid -> teaser + scroll-triggered paywall (handled inside TeaserView)
+  // Unpaid -> teaser + inline paywall (handled inside TeaserView)
   return (
     <TeaserView
       name={data.name}
@@ -331,6 +331,8 @@ export default function RoastClient({
       subjectNames={data.subjectNames}
       extraPlacements={data.extraPlacements}
       amountMinorUnits={data.amountMinorUnits}
+      kind={data.kind}
+      onUnlocked={() => setData((prev) => ({ ...prev, paid: true }))}
     />
   );
 }

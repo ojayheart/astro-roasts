@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
   try {
     await db
       .update(roasts)
-      .set({ paid: true })
+      .set({ paid: true, unlockedVia: "stripe" })
       .where(eq(roasts.id, extracted.roastId));
   } catch (err) {
     console.error("Webhook DB update failed:", err);
