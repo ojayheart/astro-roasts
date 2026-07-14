@@ -9,6 +9,7 @@ import { createServer } from "node:http";
 import { spawn } from "node:child_process";
 import { homedir } from "node:os";
 import { join } from "node:path";
+import { handleChartAnnotations } from "./chart-annotations.js";
 
 const PORT = Number(process.env.PORT || 8787);
 const SECRET = process.env.ROAST_RUNNER_SECRET;
@@ -31,6 +32,7 @@ if (!SECRET) {
 
 const DM_MODEL = process.env.DM_AGENT_MODEL || "claude-sonnet-5";
 const DM_TIMEOUT_MS = Number(process.env.DM_AGENT_TIMEOUT_MS || 45_000);
+const ANNOTATION_MODEL = process.env.ANNOTATION_MODEL || DM_MODEL;
 
 const DM_SYSTEM_PROMPT = `you are astroroasted — the instagram account that writes savage, scarily accurate comedic natal chart roasts. you are talking in instagram DMs.
 
@@ -363,7 +365,10 @@ const server = createServer(async (req, res) => {
   }
   if (
     req.method !== "POST" ||
-    (req.url !== "/roast" && req.url !== "/dm-agent" && req.url !== "/chart")
+    (req.url !== "/roast" &&
+      req.url !== "/dm-agent" &&
+      req.url !== "/chart" &&
+      req.url !== "/chart-annotations")
   ) {
     return send(404, { error: "not_found" });
   }
@@ -384,6 +389,10 @@ const server = createServer(async (req, res) => {
 
   if (req.url === "/dm-agent") {
     return handleDmAgent(body, send);
+  }
+
+  if (req.url === "/chart-annotations") {
+    return handleChartAnnotations(body, send, runClaude, ANNOTATION_MODEL);
   }
 
   const {

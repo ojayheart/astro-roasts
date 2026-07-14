@@ -1,4 +1,3 @@
-import Anthropic from "@anthropic-ai/sdk";
 import type { NatalAspect, NatalChart } from "./types";
 
 // Per-element copy for the interactive natal wheel. `facts` is computed
@@ -152,77 +151,65 @@ export function enumerateElements(chart: NatalChart): ElementSpec[] {
   return out;
 }
 
-const SYSTEM = `You write micro-captions for an astrology "roast" — the user taps an element of their birth chart and you give them one genuinely funny, affectionate read of what it says about them, in the roast's own voice.
+interface GenerateChartAnnotationOptions {
+  runnerUrl?: string;
+  runnerSecret?: string;
+  fetchImpl?: typeof fetch;
+}
 
-Make it FUNNY first. The comedy comes from precise, surprising recognition — the oddly specific true thing, the cosmic setup with a mundane punchline, a little twist at the end. Roast them like a friend who adores them and would defend them at the party — teasing, not cutting. Warm underneath. If a line is accurate but just stings, it failed: it's a flat diagnosis of their flaws, not a joke. Find the laugh instead. Never mean for mean's sake.
-
-Voice: second person ("you"/"your"), specific not generic, one sentence, max ~140 characters. Every line needs a real punchline — an absurd-but-true image, an unexpected turn, or a callback to the roast. No astrology jargon-splaining. No emoji, no hashtags, no quotation marks.
-
-Calibrate (same placement, two ways):
-- flat & a bit mean: "You perform warmth so no one ever reaches the real you." — a diagnosis, no joke, lands like a critique.
-- funny & warm: "You greet everyone like the host of a party you're quietly praying wraps by nine." — true, surprising, kind, you laugh.
-
-You'll get the full roast (match its voice and running jokes, never contradict it) and the chart elements with their data. One line per element id. Planets and aspects get the sharpest, most personal jokes; houses and signs can riff on what they hold, or the comedy of an empty room.`;
-
-// One Opus call → a witty line per element. Facts stay deterministic; only the
-// line is model-written. On any failure, callers fall back to facts-only.
+// One Hermes subscription call → a witty line per element. Facts stay
+// deterministic; only the line is model-written. On any failure, callers fall
+// back to facts-only.
 export async function generateChartAnnotations(
   chart: NatalChart,
   roastText: string,
+  options: GenerateChartAnnotationOptions = {},
 ): Promise<ChartAnnotations> {
   const elements = enumerateElements(chart);
   const annotations: ChartAnnotations = {};
   for (const e of elements) annotations[e.id] = { facts: e.facts, line: "" };
 
-  const list = elements
-    .map((e) => `${e.id} — ${e.title} (${e.facts})`)
-    .join("\n");
+  const runnerUrl = options.runnerUrl ?? process.env.ROAST_RUNNER_URL ?? "";
+  const runnerSecret =
+    options.runnerSecret ?? process.env.ROAST_RUNNER_SECRET ?? "";
+  const fetchImpl = options.fetchImpl ?? fetch;
+  if (!runnerUrl || !runnerSecret) {
+    throw new Error("Chart annotation runner not configured");
+  }
 
-  const client = new Anthropic(); // ANTHROPIC_API_KEY from env
-
-  const message = await client.messages.create({
-    model: "claude-opus-4-8",
-    max_tokens: 6000,
-    system: SYSTEM,
-    tools: [
-      {
-        name: "emit_lines",
-        description: "Return one witty roast line per chart element id.",
-        input_schema: {
-          type: "object",
-          properties: {
-            lines: {
-              type: "array",
-              items: {
-                type: "object",
-                properties: {
-                  id: { type: "string" },
-                  line: { type: "string" },
-                },
-                required: ["id", "line"],
-                additionalProperties: false,
-              },
-            },
-          },
-          required: ["lines"],
-          additionalProperties: false,
-        },
+  const response = await fetchImpl(
+    `${runnerUrl.replace(/\/+$/, "")}/chart-annotations`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${runnerSecret}`,
       },
-    ],
-    tool_choice: { type: "tool", name: "emit_lines" },
-    messages: [
-      {
-        role: "user",
-        content: `THE ROAST (for voice + continuity):\n\n${roastText}\n\n─────────\nWrite one line for each of these ${elements.length} elements:\n\n${list}`,
-      },
-    ],
-  });
+      body: JSON.stringify({
+        roastText,
+        elements: elements.map(({ id, title, facts }) => ({ id, title, facts })),
+      }),
+      signal: AbortSignal.timeout(55_000),
+    },
+  );
+  if (!response.ok) {
+    throw new Error(`Chart annotation runner failed (${response.status})`);
+  }
 
-  const block = message.content.find((b) => b.type === "tool_use");
-  const parsed = block?.input as { lines?: { id: string; line: string }[] };
-  for (const { id, line } of parsed?.lines ?? []) {
-    if (annotations[id] && typeof line === "string") {
-      annotations[id].line = line.trim();
+  const body = (await response.json()) as {
+    lines?: Array<{ id?: unknown; line?: unknown }>;
+  };
+  if (!Array.isArray(body.lines)) {
+    throw new Error("Chart annotation runner returned invalid output");
+  }
+  for (const item of body.lines) {
+    if (
+      typeof item.id === "string" &&
+      typeof item.line === "string" &&
+      annotations[item.id]
+    ) {
+      const line = item.line.trim();
+      if (line && line.length <= 300) annotations[item.id].line = line;
     }
   }
   return annotations;
