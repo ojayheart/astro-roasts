@@ -7,6 +7,7 @@ import ShareButton from "./ShareButton";
 import SignGlyph from "./SignGlyph";
 import RoastWheel from "./RoastWheel";
 import { renderEmphasis } from "./Emphasis";
+import { formatPrice } from "@/lib/currency";
 
 interface FullRoastViewProps {
   name: string;
@@ -28,6 +29,7 @@ interface FullRoastViewProps {
     moonSign: string;
     rising: string | null;
   }[];
+  currency?: string;
 }
 
 export default function FullRoastView({
@@ -45,6 +47,7 @@ export default function FullRoastView({
   roastId,
   subjectNames,
   extraPlacements,
+  currency = "usd",
 }: FullRoastViewProps) {
   useEffect(() => {
     gsap.registerPlugin(ScrollTrigger);
@@ -243,8 +246,14 @@ export default function FullRoastView({
             <p className="font-mono text-xs uppercase tracking-[0.2em] text-blood mb-3">
               Next victim
             </p>
-            <p className="font-syne font-bold text-2xl text-ash mb-6">
-              Now do your family. €4 a head.
+            <p className="font-syne font-bold text-2xl text-ash mb-3">
+              Now do your family.
+            </p>
+            <p className="text-ash/60 text-sm leading-relaxed mb-6 max-w-lg">
+              Same treatment, one chart per person, plus the comedy of how the
+              charts collide. Two people {formatPrice(800, currency)}, then{" "}
+              {formatPrice(400, currency)} a head. Free preview first, same as
+              yours.
             </p>
             <a
               href="/?mode=family#confessional"

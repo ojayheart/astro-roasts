@@ -25,8 +25,7 @@ interface TeaserViewProps {
     rising: string | null;
   }[];
   amountMinorUnits?: number;
-  kind?: string;
-  onUnlocked?: () => void;
+  currency?: string;
 }
 
 export default function TeaserView({
@@ -39,8 +38,7 @@ export default function TeaserView({
   subjectNames,
   extraPlacements,
   amountMinorUnits = 500,
-  kind = "solo",
-  onUnlocked,
+  currency = "usd",
 }: TeaserViewProps) {
   useEffect(() => {
     gsap.registerPlugin(ScrollTrigger);
@@ -63,13 +61,16 @@ export default function TeaserView({
         { borderColor: "transparent", duration: 0.8, ease: "power2.out" },
         "-=0.6",
       )
+      // Long stagger on purpose: each paragraph is a joke, and landing all
+      // three inside a second buries the first two. One at a time, with room
+      // to read, beats a wall of funny arriving at once.
       .from(
         ".teaser-p",
         {
           y: 25,
           opacity: 0,
           duration: 1.2,
-          stagger: 0.3,
+          stagger: 1.5,
           ease: "power3.out",
         },
         "-=0.8",
@@ -207,8 +208,7 @@ export default function TeaserView({
         <PaywallCTA
           roastId={roastId}
           amountMinorUnits={amountMinorUnits}
-          kind={kind}
-          onUnlocked={onUnlocked}
+          currency={currency}
         />
 
         {/* Share */}

@@ -2,9 +2,11 @@ import type { Metadata } from "next";
 import { db } from "@/lib/db";
 import { roasts } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import RoastClient from "./RoastClient";
 import { buildRoastPayload, getRoastUser } from "@/lib/roast-response";
+import { pickCurrencyForCountry, readCountryFromHeaders } from "@/lib/currency";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -54,5 +56,15 @@ export default async function RoastPage({ params }: Props) {
     notFound();
   }
 
-  return <RoastClient roastId={id} initialData={buildRoastPayload(roast)} />;
+  const currency = pickCurrencyForCountry(
+    readCountryFromHeaders(await headers()),
+  );
+
+  return (
+    <RoastClient
+      roastId={id}
+      initialData={buildRoastPayload(roast)}
+      currency={currency}
+    />
+  );
 }
