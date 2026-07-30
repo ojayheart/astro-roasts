@@ -10,11 +10,13 @@ import { track } from "@/lib/track";
 interface RoastClientProps {
   roastId: string;
   initialData: RoastData;
+  currency?: string;
 }
 
 export default function RoastClient({
   roastId,
   initialData,
+  currency = "usd",
 }: RoastClientProps) {
   const [data, setData] = useState<RoastData>(initialData);
   const [chart, setChart] = useState<NatalChart | null>(null);
@@ -119,31 +121,20 @@ export default function RoastClient({
     };
     document.addEventListener("visibilitychange", onVisibility);
 
+    // Merge rather than replace: the payload for an unpaid roast omits
+    // fullText/callouts/outer placements, and a wholesale replace also dropped
+    // kind, subjectNames, extraPlacements and amountMinorUnits — which is how
+    // group roasts lost their names and price once the poll landed.
+    const apply = (json: Partial<RoastData>) =>
+      setData((prev) => ({ ...prev, ...json, id: roastId }));
+
     const finalCheck = async () => {
       try {
         const res = await fetch(`/api/roast/${roastId}`);
         const json = await res.json();
         if (json.status === "ready") {
           if (!cancelled) {
-            setData({
-              id: roastId,
-              name: json.name,
-              status: "ready",
-              sunSign: json.sunSign || "",
-              moonSign: json.moonSign || "",
-              rising: json.rising || "",
-              mercurySign: json.mercurySign || "",
-              venusSign: json.venusSign || "",
-              marsSign: json.marsSign || "",
-              jupiterSign: json.jupiterSign || "",
-              saturnSign: json.saturnSign || "",
-              teaser: json.teaser || "",
-              fullText: json.fullText || "",
-              callouts: json.callouts || [],
-              paid: json.paid || false,
-              createdAt: data.createdAt,
-              stagePct: 100,
-            });
+            apply({ ...json, status: "ready", stagePct: 100 });
             return;
           }
         }
@@ -167,23 +158,8 @@ export default function RoastClient({
         const json = await res.json();
 
         if (json.status === "ready" || json.status === "generating") {
-          setData({
-            id: roastId,
-            name: json.name,
-            status: json.status,
-            sunSign: json.sunSign || "",
-            moonSign: json.moonSign || "",
-            rising: json.rising || "",
-            mercurySign: json.mercurySign || "",
-            venusSign: json.venusSign || "",
-            marsSign: json.marsSign || "",
-            jupiterSign: json.jupiterSign || "",
-            saturnSign: json.saturnSign || "",
-            teaser: json.teaser || "",
-            fullText: json.fullText || "",
-            callouts: json.callouts || [],
-            paid: json.paid || false,
-            createdAt: data.createdAt,
+          apply({
+            ...json,
             stagePct:
               json.status === "ready" ? 100 : Number(json.stagePct ?? 0),
           });
@@ -221,10 +197,20 @@ export default function RoastClient({
     const startTime = Date.now();
     const TIMEOUT_MS = 60 * 1000;
 
-    const reveal = () => {
-      if (cancelled) return;
-      setData((prev) => ({ ...prev, paid: true }));
-      track("payment_succeeded", { roastId });
+    // Flipping `paid` locally is NOT enough: the server withholds fullText,
+    // callouts and the outer-planet placements from an unpaid payload, so a
+    // bare `{...prev, paid: true}` renders FullRoastView with an empty body —
+    // header, then straight to the upsell. Refetch, and only reveal once the
+    // prose is actually in hand.
+    const fetchAndReveal = async (): Promise<boolean> => {
+      const res = await fetch(`/api/roast/${roastId}`);
+      const json = await res.json();
+      if (!json?.paid || !json?.fullText) return false;
+      if (!cancelled) {
+        setData((prev) => ({ ...prev, ...json, id: roastId, paid: true }));
+        track("payment_succeeded", { roastId });
+      }
+      return true;
     };
 
     // Webhook-independent confirmation via the Stripe id in the URL.
@@ -237,7 +223,7 @@ export default function RoastClient({
           body: JSON.stringify({ roastId, sessionId, paymentIntentId }),
         });
         const json = await res.json();
-        if (json.paid) reveal();
+        if (json.paid) await fetchAndReveal();
       } catch {
         // Fall back to the poll below.
       }
@@ -249,12 +235,7 @@ export default function RoastClient({
         return;
       }
       try {
-        const res = await fetch(`/api/roast/${roastId}`);
-        const json = await res.json();
-        if (json.paid) {
-          clearInterval(interval);
-          reveal();
-        }
+        if (await fetchAndReveal()) clearInterval(interval);
       } catch {
         // Network error, keep polling
       }
@@ -315,6 +296,7 @@ export default function RoastClient({
         roastId={roastId}
         subjectNames={data.subjectNames}
         extraPlacements={data.extraPlacements}
+        currency={currency}
       />
     );
   }
@@ -331,8 +313,7 @@ export default function RoastClient({
       subjectNames={data.subjectNames}
       extraPlacements={data.extraPlacements}
       amountMinorUnits={data.amountMinorUnits}
-      kind={data.kind}
-      onUnlocked={() => setData((prev) => ({ ...prev, paid: true }))}
+      currency={currency}
     />
   );
 }
