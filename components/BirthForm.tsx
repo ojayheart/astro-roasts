@@ -7,10 +7,11 @@ import PersonFields, {
   EMPTY_PERSON,
   type PersonFormValue,
 } from "./PersonFields";
+import { formatPrice } from "@/lib/currency";
 
 type FormMode = "solo" | "couple" | "family";
 
-export default function BirthForm() {
+export default function BirthForm({ currency = "usd" }: { currency?: string }) {
   const router = useRouter();
   const [mode, setMode] = useState<FormMode>("solo");
   const [people, setPeople] = useState<PersonFormValue[]>([EMPTY_PERSON]);
@@ -161,12 +162,11 @@ export default function BirthForm() {
     }
   };
 
-  const priceHint =
-    mode === "solo"
-      ? "€5"
-      : mode === "couple"
-        ? "€8"
-        : `€${8 + 4 * (people.length - 2)}`;
+  const unlockMinorUnits =
+    mode === "solo" ? 500 : 800 + 400 * Math.max(people.length - 2, 0);
+  // Spell out that generating costs nothing — the price is only for the full
+  // roast, after the free preview. Ambiguity here reads as "click = charged".
+  const priceHint = `Free preview · full roast ${formatPrice(unlockMinorUnits, currency)}`;
 
   const ctaLabel =
     mode === "solo"
@@ -242,7 +242,7 @@ export default function BirthForm() {
             disabled={loading}
             className="interactive text-xs font-mono uppercase tracking-[0.2em] text-blood hover:text-ash transition-colors"
           >
-            Add person (+ €4)
+            Add person (+ {formatPrice(400, currency)})
           </button>
         )}
 

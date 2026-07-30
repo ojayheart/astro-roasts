@@ -49,3 +49,25 @@ export function readCountryFromHeaders(headers: Headers): string | undefined {
 export function isSupportedCurrency(code: string): boolean {
   return SUPPORTED.has(code.toLowerCase());
 }
+
+/**
+ * Format an amount in minor units for display. Locale is pinned to en-US so
+ * the server-rendered string and the client hydration match exactly; only the
+ * currency varies. `narrowSymbol` keeps NZD/AUD/CAD as plain "$5" rather than
+ * "NZ$5" — same number everywhere, local symbol.
+ */
+export function formatPrice(minorUnits: number, currency: string): string {
+  const major = minorUnits / 100;
+  const code = (isSupportedCurrency(currency) ? currency : "usd").toUpperCase();
+  try {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: code,
+      currencyDisplay: "narrowSymbol",
+      minimumFractionDigits: Number.isInteger(major) ? 0 : 2,
+      maximumFractionDigits: 2,
+    }).format(major);
+  } catch {
+    return `${code} ${major.toFixed(Number.isInteger(major) ? 0 : 2)}`;
+  }
+}

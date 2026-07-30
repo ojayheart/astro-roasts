@@ -1,13 +1,23 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import SiteNav from "@/components/SiteNav";
 import SiteFooter from "@/components/SiteFooter";
+import {
+  formatPrice,
+  pickCurrencyForCountry,
+  readCountryFromHeaders,
+} from "@/lib/currency";
 
 export const metadata: Metadata = {
   title: "Pricing | Astro Roasts",
   description: "What it costs to get cosmically roasted.",
 };
 
-export default function PricingPage() {
+export default async function PricingPage() {
+  const currency = pickCurrencyForCountry(
+    readCountryFromHeaders(await headers()),
+  );
+
   return (
     <>
       <SiteNav />
@@ -25,10 +35,17 @@ export default function PricingPage() {
                   The Roast
                 </h2>
                 <span className="font-syne font-extrabold text-3xl md:text-4xl text-blood">
-                  $5
+                  {formatPrice(500, currency)}
                 </span>
               </div>
               <ul className="space-y-3 text-ash/60">
+                <li className="flex items-start gap-3">
+                  <span className="text-blood mt-1">*</span>
+                  <span>
+                    Free preview first — the chart wheel and the opening of the
+                    reading, before you pay anything
+                  </span>
+                </li>
                 <li className="flex items-start gap-3">
                   <span className="text-blood mt-1">*</span>
                   <span>

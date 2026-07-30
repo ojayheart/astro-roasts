@@ -1,10 +1,18 @@
+import { headers } from "next/headers";
 import BirthForm from "@/components/BirthForm";
 import HeroSection from "@/components/HeroSection";
 import ManifestoSection from "@/components/ManifestoSection";
 import SiteNav from "@/components/SiteNav";
 import SiteFooter from "@/components/SiteFooter";
+import { pickCurrencyForCountry, readCountryFromHeaders } from "@/lib/currency";
 
-export default function Home() {
+export default async function Home() {
+  // Same geo → currency mapping the payment routes use, so the price shown
+  // matches the price charged instead of a hardcoded euro symbol.
+  const currency = pickCurrencyForCountry(
+    readCountryFromHeaders(await headers()),
+  );
+
   return (
     <>
       <SiteNav disclaimers />
@@ -43,7 +51,7 @@ export default function Home() {
 
             {/* Right: Form */}
             <div className="lg:pt-4">
-              <BirthForm />
+              <BirthForm currency={currency} />
             </div>
           </div>
         </section>
