@@ -44,26 +44,52 @@ export async function sendRoastEmail(
 
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://astroroast.com";
 
+  // Roast prose marks emphasis with *asterisks*. Escape first, then convert —
+  // otherwise the email leaks raw asterisks the website renders as italics.
   const paragraphs = roastText
     .split("\n\n")
+    .filter((p) => p.trim())
     .map(
       (p) =>
-        `<p style="line-height: 1.7; margin-bottom: 16px;">${escapeHtml(p)}</p>`,
+        `<p style="line-height: 1.7; margin: 0 0 16px;">${escapeHtml(p).replace(
+          /\*([^*\n]+)\*/g,
+          "<em>$1</em>",
+        )}</p>`,
     )
     .join("");
 
   const { error } = await resend.emails.send({
     from: "Astro Roast <roast@astroroast.com>",
     to,
-    subject: `${escapeHtml(name)}, the stars have spoken.`,
+    // Searchable and unambiguous — "Astro Roast" plus the subject's name, so
+    // it can be found again months later by either term.
+    subject: `Your Astro Roast — ${name}'s natal chart, read back to you`,
     html: `
       <div style="font-family: Georgia, serif; max-width: 600px; margin: 0 auto; padding: 40px 20px; color: #E5E5E5; background: #030303;">
-        <h1 style="font-family: sans-serif; font-size: 14px; letter-spacing: 4px; text-transform: uppercase; color: #FF2A00; margin-bottom: 32px;">YOUR ASTRO ROAST</h1>
+        <h1 style="font-family: sans-serif; font-size: 14px; letter-spacing: 4px; text-transform: uppercase; color: #FF2A00; margin: 0 0 24px;">YOUR ASTRO ROAST</h1>
+        <p style="font-family: sans-serif; font-size: 14px; line-height: 1.6; color: #999; margin: 0 0 32px;">
+          Here it is in full, ${escapeHtml(name)} — every planet, house and
+          aspect from your chart, held against you. Keep this email: it&rsquo;s
+          your copy. The
+          <a href="${baseUrl}/roast/${roastId}" style="color: #FF2A00;">live version</a>
+          has the chart wheel too.
+        </p>
         ${paragraphs}
         <hr style="border: none; border-top: 1px solid #333; margin: 40px 0;" />
-        <p style="font-size: 13px; color: #666;">
+        <p style="font-family: sans-serif; font-size: 15px; line-height: 1.6; color: #E5E5E5; margin: 0 0 16px;">
+          <strong>So who&rsquo;s next?</strong>
+        </p>
+        <p style="font-family: sans-serif; font-size: 14px; line-height: 1.6; color: #999; margin: 0 0 24px;">
+          Forward this to whoever came to mind while you were reading it, then
+          put their birth details in and let them find out how it feels.
+        </p>
+        <p style="margin: 0 0 32px;">
+          <a href="${baseUrl}#confessional" style="display: inline-block; background: #FF2A00; color: #030303; font-family: sans-serif; font-size: 13px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase; text-decoration: none; padding: 14px 24px;">Roast someone else</a>
+        </p>
+        <p style="font-family: sans-serif; font-size: 12px; color: #666; margin: 0;">
           <a href="${baseUrl}/roast/${roastId}" style="color: #FF2A00;">View online</a> &middot;
-          <a href="${baseUrl}" style="color: #FF2A00;">Get another roast</a>
+          <a href="${baseUrl}/pricing" style="color: #FF2A00;">Pricing</a><br /><br />
+          Entertainment only &middot; satire &middot; not advice.
         </p>
       </div>
     `,
