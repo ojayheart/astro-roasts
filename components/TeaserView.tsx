@@ -26,6 +26,7 @@ interface TeaserViewProps {
   }[];
   amountMinorUnits?: number;
   currency?: string;
+  onUnlocked?: () => void;
 }
 
 export default function TeaserView({
@@ -39,6 +40,7 @@ export default function TeaserView({
   extraPlacements,
   amountMinorUnits = 500,
   currency = "usd",
+  onUnlocked,
 }: TeaserViewProps) {
   useEffect(() => {
     gsap.registerPlugin(ScrollTrigger);
@@ -61,8 +63,8 @@ export default function TeaserView({
         { borderColor: "transparent", duration: 0.8, ease: "power2.out" },
         "-=0.6",
       )
-      // Long stagger on purpose: each paragraph is a joke, and landing all
-      // three inside a second buries the first two. One at a time, with room
+      // Long stagger on purpose: each paragraph is a joke, and landing them
+      // all inside a second buries the earlier ones. One at a time, with room
       // to read, beats a wall of funny arriving at once.
       .from(
         ".teaser-p",
@@ -87,9 +89,10 @@ export default function TeaserView({
     };
   }, []);
 
-  // Split teaser into paragraphs — show first 2 clear + 1 short blurred tease
+  // Three readable paragraphs, then a short redacted 4th as the tease.
+  const CLEAR_PARAGRAPHS = 3;
   const allParagraphs = teaser.split("\n\n").filter((p) => p.trim());
-  const teaserParagraphs = allParagraphs.slice(0, 3);
+  const teaserParagraphs = allParagraphs.slice(0, CLEAR_PARAGRAPHS + 1);
 
   return (
     <>
@@ -184,17 +187,20 @@ export default function TeaserView({
           The warm-up
         </h1>
 
-        {/* Free Teaser: 2 clear paragraphs + 1 short blurred tease, then inline paywall */}
+        {/* Free teaser: 3 clear paragraphs + 1 redacted tease, then inline paywall */}
         <div className="teaser-block pl-6 md:pl-8 py-2 mb-4 space-y-8 text-lg md:text-xl text-ash/90 font-light leading-relaxed relative">
           {teaserParagraphs.map((p, i) => {
-            // Clamp the 3rd paragraph to ~160 chars; it renders FOIA-redacted
-            // as the tease — bars read as "locked", unlike a blur.
+            // Clamp the redacted paragraph to ~160 chars; bars read as
+            // "locked" in a way a blur doesn't.
+            const isRedacted = i === CLEAR_PARAGRAPHS;
             const display =
-              i === 2 && p.length > 160 ? p.slice(0, 160).trimEnd() + "…" : p;
+              isRedacted && p.length > 160
+                ? p.slice(0, 160).trimEnd() + "…"
+                : p;
 
             return (
               <p key={i} className="teaser-p">
-                {i === 2 ? (
+                {isRedacted ? (
                   <Redacted text={stripEmphasis(display)} />
                 ) : (
                   renderEmphasis(display)
@@ -209,6 +215,7 @@ export default function TeaserView({
           roastId={roastId}
           amountMinorUnits={amountMinorUnits}
           currency={currency}
+          onUnlocked={onUnlocked}
         />
 
         {/* Share */}

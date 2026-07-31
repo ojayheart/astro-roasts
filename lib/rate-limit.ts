@@ -60,3 +60,10 @@ export const shareUnlockRateLimiter = createMemoryRateLimiter({
   limit: 5,
   windowMs: 60 * 60 * 1000,
 });
+
+// Promo codes are a shared secret, so redemption is the one endpoint worth
+// brute-forcing. Tighter than the others on purpose.
+export const promoCodeRateLimiter = createMemoryRateLimiter({
+  limit: 10,
+  windowMs: 60 * 60 * 1000,
+});

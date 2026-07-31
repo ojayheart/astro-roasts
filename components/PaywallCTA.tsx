@@ -9,6 +9,7 @@ interface PaywallCTAProps {
   roastId: string;
   amountMinorUnits?: number;
   currency?: string;
+  onUnlocked?: () => void;
 }
 
 /**
@@ -21,6 +22,7 @@ export default function PaywallCTA({
   roastId,
   amountMinorUnits = 500,
   currency = "usd",
+  onUnlocked,
 }: PaywallCTAProps) {
   const price = formatPrice(amountMinorUnits, currency);
   const [open, setOpen] = useState(false);
@@ -59,6 +61,7 @@ export default function PaywallCTA({
         roastId={roastId}
         open={open}
         onClose={() => setOpen(false)}
+        onUnlocked={onUnlocked}
       />
     </>
   );

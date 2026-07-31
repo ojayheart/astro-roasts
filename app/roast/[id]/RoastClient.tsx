@@ -314,6 +314,19 @@ export default function RoastClient({
       extraPlacements={data.extraPlacements}
       amountMinorUnits={data.amountMinorUnits}
       currency={currency}
+      onUnlocked={async () => {
+        // Refetch rather than flipping `paid` locally — the unpaid payload
+        // has no fullText, so a bare flag flip renders an empty roast.
+        try {
+          const res = await fetch(`/api/roast/${roastId}`);
+          const json = await res.json();
+          if (json?.paid && json?.fullText) {
+            setData((prev) => ({ ...prev, ...json, id: roastId, paid: true }));
+          }
+        } catch {
+          // Leave the teaser up; the user can retry.
+        }
+      }}
     />
   );
 }

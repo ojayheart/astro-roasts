@@ -44,6 +44,9 @@ export interface EventMap {
   share_to_unlock_shared: { roastId: string; method: string };
   unlock_via_share_succeeded: { roastId: string };
   unlock_via_share_failed: { roastId: string; reason: string };
+  promo_code_submitted: { roastId: string };
+  promo_code_unlocked: { roastId: string };
+  promo_code_discounted: { roastId: string; percentOff: number };
 }
 
 type EventName = keyof EventMap;

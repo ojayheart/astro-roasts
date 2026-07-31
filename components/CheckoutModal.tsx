@@ -13,6 +13,8 @@ interface CheckoutModalProps {
   roastId: string;
   open: boolean;
   onClose: () => void;
+  /** Called when a 100%-off code unlocked the roast without a card. */
+  onUnlocked?: () => void;
 }
 
 interface IntentState {
@@ -20,6 +22,8 @@ interface IntentState {
   amount: number;
   currency: string;
 }
+
+type CodeState = "idle" | "checking" | "applied" | "unlocked";
 
 const APPEARANCE: Appearance = {
   theme: "night",
@@ -85,10 +89,69 @@ export default function CheckoutModal({
   roastId,
   open,
   onClose,
+  onUnlocked,
 }: CheckoutModalProps) {
   const [intent, setIntent] = useState<IntentState | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [code, setCode] = useState("");
+  const [codeState, setCodeState] = useState<CodeState>("idle");
+  const [codeError, setCodeError] = useState<string | null>(null);
+  const [appliedPercent, setAppliedPercent] = useState<number | null>(null);
+
+  // Codes are resolved server-side. A 100%-off code never reaches Stripe —
+  // /api/redeem-code flips the roast and we reveal it straight away. Anything
+  // less rebuilds the PaymentIntent at the discounted amount.
+  const applyCode = async () => {
+    const entered = code.trim();
+    if (!entered || codeState === "checking") return;
+    setCodeState("checking");
+    setCodeError(null);
+    track("promo_code_submitted", { roastId });
+
+    try {
+      const res = await fetch("/api/redeem-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ roastId, code: entered }),
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        unlocked?: boolean;
+        requiresPayment?: boolean;
+        percentOff?: number;
+        error?: string;
+      };
+
+      if (res.ok && data.unlocked) {
+        track("promo_code_unlocked", { roastId });
+        setCodeState("unlocked");
+        onUnlocked?.();
+        onClose();
+        return;
+      }
+
+      if (res.ok && data.requiresPayment && data.percentOff) {
+        track("promo_code_discounted", {
+          roastId,
+          percentOff: data.percentOff,
+        });
+        setAppliedPercent(data.percentOff);
+        setCodeState("applied");
+        setIntent(null);
+        return;
+      }
+
+      setCodeState("idle");
+      setCodeError(
+        res.status === 429
+          ? "Too many tries. Give it an hour."
+          : "That code doesn't work.",
+      );
+    } catch {
+      setCodeState("idle");
+      setCodeError("Couldn't check that code. Try again.");
+    }
+  };
 
   useEffect(() => {
     if (!open || intent || loading) return;
@@ -99,7 +162,10 @@ export default function CheckoutModal({
     fetch("/api/payment-intent", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ roastId }),
+      body: JSON.stringify({
+        roastId,
+        ...(appliedPercent ? { code: code.trim() } : {}),
+      }),
     })
       .then(async (res) => {
         const data = (await res.json().catch(() => ({}))) as {
@@ -134,7 +200,7 @@ export default function CheckoutModal({
         });
       })
       .finally(() => setLoading(false));
-  }, [open, intent, loading, roastId]);
+  }, [open, intent, loading, roastId, appliedPercent, code]);
 
   // Reset on close so re-opening creates a fresh intent (price geo can change,
   // or the user might have abandoned mid-flow with an expired client_secret).
@@ -142,6 +208,10 @@ export default function CheckoutModal({
     if (!open) {
       setIntent(null);
       setLoadError(null);
+      setCode("");
+      setCodeState("idle");
+      setCodeError(null);
+      setAppliedPercent(null);
     }
   }, [open]);
 
@@ -285,6 +355,63 @@ export default function CheckoutModal({
               </span>
             </div>
           )}
+
+          {/* Promo code */}
+          <div className="mt-8 pt-6 border-t border-ash/10">
+            {appliedPercent ? (
+              <p className="font-mono text-[11px] uppercase tracking-[0.15em] text-blood">
+                {appliedPercent}% off applied
+              </p>
+            ) : (
+              <>
+                <label
+                  htmlFor="promo-code"
+                  className="block font-mono text-[10px] uppercase tracking-[0.2em] text-ash/50 mb-2"
+                >
+                  Got a code?
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    id="promo-code"
+                    name="promo-code"
+                    value={code}
+                    onChange={(e) => {
+                      setCode(e.target.value);
+                      setCodeError(null);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        void applyCode();
+                      }
+                    }}
+                    disabled={codeState === "checking"}
+                    autoCapitalize="characters"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    placeholder="CODE"
+                    className="flex-1 min-w-0 bg-void border border-ash/15 text-ash font-mono text-sm uppercase tracking-[0.1em] px-3 py-3 focus:border-blood focus-visible:outline-none transition-colors placeholder:text-ash/25 disabled:opacity-50"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => void applyCode()}
+                    disabled={!code.trim() || codeState === "checking"}
+                    className="interactive px-5 min-h-[44px] border border-ash/20 text-ash font-mono text-xs uppercase tracking-[0.15em] hover:border-blood hover:text-blood focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blood transition-colors disabled:opacity-40 disabled:pointer-events-none"
+                  >
+                    {codeState === "checking" ? "…" : "Apply"}
+                  </button>
+                </div>
+                {codeError && (
+                  <p
+                    role="alert"
+                    className="font-mono text-[10px] uppercase tracking-[0.1em] text-blood mt-2"
+                  >
+                    {codeError}
+                  </p>
+                )}
+              </>
+            )}
+          </div>
         </div>
       </div>
     </div>,
