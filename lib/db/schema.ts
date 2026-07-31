@@ -70,6 +70,7 @@ export const roasts = pgTable(
     source: text("source").default("web").notNull(), // web | instagram_dm
     mcSubscriberId: text("mc_subscriber_id"), // ManyChat subscriber to DM the teaser back to
     kind: text("kind").default("solo").notNull(), // solo | couple | family
+    relationship: text("relationship"), // partners | lovers | siblings | friends | ... — null on solo/legacy
     goldLine: text("gold_line"), // most savage standalone quote — story card
     extraPlacements: jsonb("extra_placements"), // ExtraPlacement[] for persons 2..N
     createdAt: timestamp("created_at").defaultNow().notNull(),

@@ -244,19 +244,20 @@ export default function FullRoastView({
               Pass the mic
             </p>
             <p className="font-syne font-bold text-2xl text-ash mb-3">
-              Put the whole table up there.
+              Now put someone else up there with you.
             </p>
             <p className="text-ash/60 text-sm leading-relaxed mb-6 max-w-lg">
-              Everyone gets their own chart, and then they get each other. The
-              best part of any roast is the cutaway to the person being talked
-              about. Two people {formatPrice(800, currency)}, then{" "}
-              {formatPrice(400, currency)} a head, warm-up free like yours was.
+              Two charts, and then they get each other. Partners, exes,
+              siblings, the friend who knows too much — you say what you are to
+              each other and the roast goes after exactly that.{" "}
+              {formatPrice(800, currency)} for the pair, warm-up free like yours
+              was.
             </p>
             <a
-              href="/?mode=family#mic"
+              href="/?mode=couple#mic"
               className="interactive inline-block bg-ash text-void font-syne font-bold uppercase px-8 py-4 hover:bg-blood hover:text-ash transition-colors duration-300"
             >
-              Roast my family
+              Roast us both
             </a>
           </div>
         )}

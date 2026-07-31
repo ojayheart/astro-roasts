@@ -240,7 +240,7 @@ add person 4-6 the same way. send it. nobody is safe.`,
 };
 
 export function parseInstagramGroupRequest(text: string): {
-  relationship: "couple" | "family";
+  relationship: string;
   people: ParsedInstagramRoastRequest[];
 } | null {
   const blocks = text

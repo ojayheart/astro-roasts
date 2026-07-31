@@ -107,13 +107,13 @@ export function extractChartPlacements(chartData: string): ChartPlacements {
 export interface GroupRoastRunnerPayload {
   roastId: string;
   mode: "group";
-  relationship: "couple" | "family";
+  relationship: string;
   people: Array<PersonInput & { hasBirthTime: boolean }>;
 }
 
 export function buildGroupRunnerPayload(input: {
   roastId: string;
-  relationship: "couple" | "family";
+  relationship: string;
   people: PersonInput[];
 }): GroupRoastRunnerPayload {
   return {

@@ -17,7 +17,7 @@ export type RoastGenerateEvent = {
     time?: string | null;
     city?: string;
     kind?: "solo" | "couple" | "family";
-    relationship?: "couple" | "family";
+    relationship?: string;
     people?: Array<{
       name: string;
       gender: string;

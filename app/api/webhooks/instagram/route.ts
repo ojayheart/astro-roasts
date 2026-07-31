@@ -222,7 +222,7 @@ async function handleSoloDmRequest(
 
 async function handleGroupDmRequest(
   group: {
-    relationship: "couple" | "family";
+    relationship: string;
     people: ParsedInstagramRoastRequest[];
   },
   senderId: string,

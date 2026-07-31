@@ -1,6 +1,11 @@
 import { test } from "node:test";
 import assert from "node:assert";
-import { groupAmountMinorUnits, validateGroupRequest } from "../lib/group.ts";
+import {
+  groupAmountMinorUnits,
+  isRelationshipType,
+  normalizeRelationship,
+  validateGroupRequest,
+} from "../lib/group.ts";
 
 const p = (name: string) => ({
   name,
@@ -80,4 +85,20 @@ test("time field: oversize rejected, whitespace coerced to null", () => {
   ]);
   assert.equal(result.ok, true);
   if (result.ok) assert.strictEqual(result.people[1].time, null);
+});
+
+test("relationship allowlist accepts known types, rejects junk", () => {
+  assert.equal(isRelationshipType("siblings"), true);
+  assert.equal(isRelationshipType("lovers"), true);
+  assert.equal(isRelationshipType("Siblings"), false); // exact match only
+  assert.equal(isRelationshipType("nemeses"), false);
+  assert.equal(isRelationshipType(undefined), false);
+  assert.equal(isRelationshipType(7), false);
+});
+
+test("relationship falls back to kind when absent or invalid", () => {
+  assert.equal(normalizeRelationship("friends", "couple"), "friends");
+  assert.equal(normalizeRelationship(undefined, "couple"), "couple");
+  assert.equal(normalizeRelationship("<script>", "couple"), "couple");
+  assert.equal(normalizeRelationship(null, "family"), "family");
 });

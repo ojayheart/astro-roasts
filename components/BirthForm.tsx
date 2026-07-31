@@ -7,15 +7,17 @@ import PersonFields, {
   EMPTY_PERSON,
   type PersonFormValue,
 } from "./PersonFields";
-import { formatPrice } from "@/lib/currency";
+import { RELATIONSHIP_TYPES } from "@/lib/group";
 
-type FormMode = "solo" | "couple" | "family";
+type FormMode = "solo" | "couple";
 
 export default function BirthForm({ currency = "usd" }: { currency?: string }) {
   const router = useRouter();
   const [mode, setMode] = useState<FormMode>("solo");
   const [people, setPeople] = useState<PersonFormValue[]>([EMPTY_PERSON]);
-  const [familyUnlocked, setFamilyUnlocked] = useState(false);
+  const [relationship, setRelationship] = useState<string>(
+    RELATIONSHIP_TYPES[0],
+  );
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -23,25 +25,21 @@ export default function BirthForm({ currency = "usd" }: { currency?: string }) {
   useEffect(() => {
     track("birth_form_opened", {});
     const params = new URLSearchParams(window.location.search);
-    const unlocked =
-      localStorage.getItem("ar_has_roast") === "1" ||
-      params.get("mode") === "family";
-    setFamilyUnlocked(unlocked);
-    if (params.get("mode") === "family") switchMode("family");
-    if (params.get("mode") === "couple") switchMode("couple");
+    // ?mode=family used to deep-link the family form; it now lands on couple.
+    const requested = params.get("mode");
+    if (requested === "couple" || requested === "family") switchMode("couple");
   }, []);
 
   const PEOPLE_BY_MODE: Record<FormMode, number> = {
     solo: 1,
     couple: 2,
-    family: 3,
   };
 
   function switchMode(next: FormMode) {
     setMode(next);
     setPeople((prev) => {
       const target = PEOPLE_BY_MODE[next];
-      const copy = prev.slice(0, next === "family" ? 6 : target);
+      const copy = prev.slice(0, target);
       while (copy.length < target) copy.push(EMPTY_PERSON);
       return copy;
     });
@@ -124,6 +122,7 @@ export default function BirthForm({ currency = "usd" }: { currency?: string }) {
         // Couple/family: group body
         body = {
           kind: mode,
+          relationship,
           email: email || undefined,
           people: people.map((p) => ({
             name: p.name,
@@ -162,12 +161,7 @@ export default function BirthForm({ currency = "usd" }: { currency?: string }) {
     }
   };
 
-  const ctaLabel =
-    mode === "solo"
-      ? "Generate my roast"
-      : mode === "couple"
-        ? "Roast us both"
-        : "Roast the whole family";
+  const ctaLabel = mode === "solo" ? "Generate my roast" : "Roast us both";
 
   return (
     <form
@@ -178,13 +172,7 @@ export default function BirthForm({ currency = "usd" }: { currency?: string }) {
     >
       {/* Mode tabs */}
       <div className="flex gap-6 font-mono text-xs uppercase tracking-[0.2em]">
-        {(
-          [
-            "solo",
-            "couple",
-            ...(familyUnlocked ? ["family"] : []),
-          ] as FormMode[]
-        ).map((m) => (
+        {(["solo", "couple"] as FormMode[]).map((m) => (
           <button
             key={m}
             type="button"
@@ -195,7 +183,7 @@ export default function BirthForm({ currency = "usd" }: { currency?: string }) {
                 : "border-transparent text-ash/50 hover:text-ash"
             }`}
           >
-            {m === "solo" ? "Just me" : m === "couple" ? "Us" : "My family"}
+            {m === "solo" ? "Just me" : "Us"}
           </button>
         ))}
       </div>
@@ -215,29 +203,30 @@ export default function BirthForm({ currency = "usd" }: { currency?: string }) {
               }}
               disabled={loading}
             />
-            {mode === "family" && i >= 3 && (
-              <button
-                type="button"
-                onClick={() => setPeople(people.filter((_, idx) => idx !== i))}
-                disabled={loading}
-                className="interactive text-xs font-mono uppercase tracking-[0.2em] text-ash/50 hover:text-blood transition-colors"
-              >
-                Remove person {i + 1}
-              </button>
-            )}
           </div>
         ))}
 
-        {/* Family mode: add person button */}
-        {mode === "family" && people.length < 6 && (
-          <button
-            type="button"
-            onClick={() => setPeople([...people, EMPTY_PERSON])}
-            disabled={loading}
-            className="interactive text-xs font-mono uppercase tracking-[0.2em] text-blood hover:text-ash transition-colors"
-          >
-            Add person (+ {formatPrice(400, currency)})
-          </button>
+        {/* What they are to each other — changes the whole piece of writing */}
+        {mode === "couple" && (
+          <div className="relative group interactive">
+            <label htmlFor="relationship" className={labelClass}>
+              What are you to each other?
+            </label>
+            <select
+              id="relationship"
+              name="relationship"
+              value={relationship}
+              onChange={(e) => setRelationship(e.target.value)}
+              disabled={loading}
+              className={`${inputClass} appearance-none cursor-pointer capitalize`}
+            >
+              {RELATIONSHIP_TYPES.map((r) => (
+                <option key={r} value={r} className="bg-void capitalize">
+                  {r}
+                </option>
+              ))}
+            </select>
+          </div>
         )}
 
         {/* Email */}
