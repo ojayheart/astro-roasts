@@ -177,11 +177,11 @@ export default function TeaserView({
         </header>
 
         {/* The subject's actual wheel — exhibit before testimony */}
-        <RoastWheel roastId={roastId} caption="Exhibit A — the chart itself" />
+        <RoastWheel roastId={roastId} caption="The material — your chart" />
 
         {/* Title */}
         <h1 className="main-title font-syne text-4xl md:text-5xl font-extrabold uppercase tracking-tighter mb-12 text-outline">
-          The first findings
+          The warm-up
         </h1>
 
         {/* Free Teaser: 2 clear paragraphs + 1 short blurred tease, then inline paywall */}

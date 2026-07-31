@@ -290,7 +290,7 @@ export default function LoadingAnimation({
         aria-hidden="true"
       >
         <p className="text-[10px] md:text-xs tracking-[0.3em] text-ash/40 uppercase">
-          Built from chart data. Delivered without padding.
+          Written from your chart. Delivered without a warm-up.
         </p>
       </footer>
 

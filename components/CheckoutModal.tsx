@@ -239,7 +239,7 @@ export default function CheckoutModal({
 
         <div className="px-6 pt-8 pb-6 border-b border-ash/10">
           <span className="text-[10px] font-mono uppercase tracking-[0.25em] text-blood">
-            Unlock the dossier
+            Unlock the full set
           </span>
           <h2 className="font-syne text-2xl md:text-3xl font-extrabold uppercase tracking-tighter mt-2">
             Full roast.

@@ -128,21 +128,18 @@ export default function FullRoastView({
         <header className="mb-32 gs-reveal">
           <p className="font-mono text-[10px] md:text-xs uppercase tracking-[0.15em] text-blood mb-6 flex items-center gap-4">
             <span className="w-12 h-px bg-blood" />
-            Full roast unlocked — proceed carefully
+            The full set — no survivors
           </p>
           <h1 className="font-syne font-extrabold text-5xl sm:text-6xl md:text-7xl tracking-tighter uppercase mb-12 text-ash leading-none">
-            Subject:
+            Tonight:
             <br />
             <span className="[overflow-wrap:anywhere]">{name}</span>
           </h1>
 
           {/* The wheel — the evidence everything below cites */}
-          <RoastWheel
-            roastId={roastId}
-            caption="Exhibit A — the chart itself"
-          />
+          <RoastWheel roastId={roastId} caption="The material — your chart" />
 
-          <h2 className="sr-only">Dossier</h2>
+          <h2 className="sr-only">Placements</h2>
           <div className="border-y border-ash/10 py-8 relative bg-void">
             <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-bruise/30 to-transparent pointer-events-none" />
             <div className="space-y-8 relative z-10">
@@ -212,7 +209,7 @@ export default function FullRoastView({
           className="border-t border-ash/10 pt-20 mt-20 gs-reveal relative"
         >
           <h2 id="reading-heading" className="sr-only">
-            The reading
+            The set
           </h2>
           <div className="space-y-8 text-ash/85 text-lg leading-[1.8]">
             {paragraphs.map((p, i) => {
@@ -244,19 +241,19 @@ export default function FullRoastView({
         {!extraPlacements?.length && (
           <div className="mt-16 border-t border-ash/15 pt-10 gs-reveal">
             <p className="font-mono text-xs uppercase tracking-[0.2em] text-blood mb-3">
-              Next victim
+              Pass the mic
             </p>
             <p className="font-syne font-bold text-2xl text-ash mb-3">
-              Now do your family.
+              Put the whole table up there.
             </p>
             <p className="text-ash/60 text-sm leading-relaxed mb-6 max-w-lg">
-              Same treatment, one chart per person, plus the comedy of how the
-              charts collide. Two people {formatPrice(800, currency)}, then{" "}
-              {formatPrice(400, currency)} a head. Free preview first, same as
-              yours.
+              Everyone gets their own chart, and then they get each other. The
+              best part of any roast is the cutaway to the person being talked
+              about. Two people {formatPrice(800, currency)}, then{" "}
+              {formatPrice(400, currency)} a head, warm-up free like yours was.
             </p>
             <a
-              href="/?mode=family#confessional"
+              href="/?mode=family#mic"
               className="interactive inline-block bg-ash text-void font-syne font-bold uppercase px-8 py-4 hover:bg-blood hover:text-ash transition-colors duration-300"
             >
               Roast my family
@@ -272,7 +269,8 @@ export default function FullRoastView({
                 Still standing?
               </h3>
               <p className="text-ash/50 text-sm">
-                Share the link, or generate a fresh chart for someone else.
+                Send it to whoever you were thinking about the whole way
+                through.
               </p>
             </div>
 

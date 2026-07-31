@@ -63,28 +63,27 @@ export async function sendRoastEmail(
     to,
     // Searchable and unambiguous — "Astro Roast" plus the subject's name, so
     // it can be found again months later by either term.
-    subject: `Your Astro Roast — ${name}'s natal chart, read back to you`,
+    subject: `Your Astro Roast — ${name}'s set, in full`,
     html: `
       <div style="font-family: Georgia, serif; max-width: 600px; margin: 0 auto; padding: 40px 20px; color: #E5E5E5; background: #030303;">
-        <h1 style="font-family: sans-serif; font-size: 14px; letter-spacing: 4px; text-transform: uppercase; color: #FF2A00; margin: 0 0 24px;">YOUR ASTRO ROAST</h1>
+        <h1 style="font-family: sans-serif; font-size: 14px; letter-spacing: 4px; text-transform: uppercase; color: #FF2A00; margin: 0 0 24px;">YOUR SET</h1>
         <p style="font-family: sans-serif; font-size: 14px; line-height: 1.6; color: #999; margin: 0 0 32px;">
-          Here it is in full, ${escapeHtml(name)} — every planet, house and
-          aspect from your chart, held against you. Keep this email: it&rsquo;s
-          your copy. The
+          The whole set, ${escapeHtml(name)} — every planet, house and aspect,
+          said out loud. Keep this email, it&rsquo;s your copy. The
           <a href="${baseUrl}/roast/${roastId}" style="color: #FF2A00;">live version</a>
           has the chart wheel too.
         </p>
         ${paragraphs}
         <hr style="border: none; border-top: 1px solid #333; margin: 40px 0;" />
         <p style="font-family: sans-serif; font-size: 15px; line-height: 1.6; color: #E5E5E5; margin: 0 0 16px;">
-          <strong>So who&rsquo;s next?</strong>
+          <strong>Who&rsquo;s next on the mic?</strong>
         </p>
         <p style="font-family: sans-serif; font-size: 14px; line-height: 1.6; color: #999; margin: 0 0 24px;">
-          Forward this to whoever came to mind while you were reading it, then
-          put their birth details in and let them find out how it feels.
+          Forward this to whoever you were thinking about the whole way through,
+          then put their birth details in and let them have a turn.
         </p>
         <p style="margin: 0 0 32px;">
-          <a href="${baseUrl}#confessional" style="display: inline-block; background: #FF2A00; color: #030303; font-family: sans-serif; font-size: 13px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase; text-decoration: none; padding: 14px 24px;">Roast someone else</a>
+          <a href="${baseUrl}#mic" style="display: inline-block; background: #FF2A00; color: #030303; font-family: sans-serif; font-size: 13px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase; text-decoration: none; padding: 14px 24px;">Pass the mic</a>
         </p>
         <p style="font-family: sans-serif; font-size: 12px; color: #666; margin: 0;">
           <a href="${baseUrl}/roast/${roastId}" style="color: #FF2A00;">View online</a> &middot;

@@ -162,12 +162,6 @@ export default function BirthForm({ currency = "usd" }: { currency?: string }) {
     }
   };
 
-  const unlockMinorUnits =
-    mode === "solo" ? 500 : 800 + 400 * Math.max(people.length - 2, 0);
-  // Spell out that generating costs nothing — the price is only for the full
-  // roast, after the free preview. Ambiguity here reads as "click = charged".
-  const priceHint = `Free preview · full roast ${formatPrice(unlockMinorUnits, currency)}`;
-
   const ctaLabel =
     mode === "solo"
       ? "Generate my roast"
@@ -293,9 +287,6 @@ export default function BirthForm({ currency = "usd" }: { currency?: string }) {
           </span>
           <div className="absolute inset-0 bg-blood transform scale-y-0 origin-bottom group-hover:scale-y-100 transition-transform duration-300 ease-in-out z-0" />
         </button>
-        <p className="text-xs font-mono tracking-[0.15em] text-ash/40 mt-3 uppercase text-center">
-          {priceHint}
-        </p>
       </div>
     </form>
   );

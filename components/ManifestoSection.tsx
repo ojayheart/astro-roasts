@@ -122,16 +122,16 @@ export default function ManifestoSection() {
         }
       });
 
-      gsap.from("#confessional h2", {
-        scrollTrigger: { trigger: "#confessional", start: "top 70%" },
+      gsap.from("#mic h2", {
+        scrollTrigger: { trigger: "#mic", start: "top 70%" },
         y: 50,
         opacity: 0,
         duration: 1,
         ease: "power3.out",
       });
 
-      gsap.from("#confessional p", {
-        scrollTrigger: { trigger: "#confessional", start: "top 60%" },
+      gsap.from("#mic p", {
+        scrollTrigger: { trigger: "#mic", start: "top 60%" },
         y: 30,
         opacity: 0,
         duration: 1,
@@ -139,8 +139,8 @@ export default function ManifestoSection() {
         ease: "power3.out",
       });
 
-      gsap.from("#confessional form > div", {
-        scrollTrigger: { trigger: "#confessional form", start: "top 70%" },
+      gsap.from("#mic form > div", {
+        scrollTrigger: { trigger: "#mic form", start: "top 70%" },
         y: 40,
         opacity: 0,
         duration: 1,

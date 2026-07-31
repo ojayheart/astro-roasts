@@ -30,7 +30,7 @@ export default function ShareButton({ roastId }: { roastId: string }) {
       ? "Link copied"
       : state === "shared"
         ? "Shared"
-        : "Share roast";
+        : "Send it on";
 
   return (
     <button

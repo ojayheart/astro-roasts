@@ -76,8 +76,8 @@ export default function HeroSection() {
           </h1>
 
           <p className="hero-fade absolute top-full left-1/2 -translate-x-1/2 mt-6 md:mt-8 w-full max-w-md text-sm md:text-base opacity-0 font-light text-ash/70 leading-relaxed">
-            A radically honest, surgically precise teardown of your exact natal
-            chart. We see your patterns. We know your delusions.
+            Your birth chart, read back to you by someone who isn&apos;t being
+            polite about it. Five minutes. No warm-up.
           </p>
         </div>
       </div>
