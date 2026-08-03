@@ -20,6 +20,7 @@ export default function RoastClient({
 }: RoastClientProps) {
   const [data, setData] = useState<RoastData>(initialData);
   const [chart, setChart] = useState<NatalChart | null>(null);
+  const [partnerChart, setPartnerChart] = useState<NatalChart | null>(null);
   const loadingStartedAt = useRef<number>(0);
   const finishedFiredRef = useRef(false);
   const teaserFiredRef = useRef(false);
@@ -39,8 +40,13 @@ export default function RoastClient({
       body: JSON.stringify({ roastId }),
     })
       .then((res) => res.json())
-      .then((json: { chart?: NatalChart | null }) => {
+      .then((json: { chart?: NatalChart | null; charts?: NatalChart[] }) => {
         if (json.chart) setChart(json.chart);
+        // A duo roast returns both, so the wait shows the pair, not one of them.
+        if (json.charts?.length === 2) {
+          setChart(json.charts[0]);
+          setPartnerChart(json.charts[1]);
+        }
       })
       .catch(() => {
         // Fallback layout handles it.
@@ -254,6 +260,7 @@ export default function RoastClient({
         placements={placements}
         targetPct={data.stagePct ?? 0}
         chart={chart}
+        partnerChart={partnerChart}
         mode={data.kind && data.kind !== "solo" ? "duo" : "solo"}
         names={data.subjectNames ?? []}
         relationship={data.relationship || "a pair"}

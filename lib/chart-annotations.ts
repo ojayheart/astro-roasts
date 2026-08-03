@@ -164,6 +164,16 @@ export function enumerateElements(chart: NatalChart): ElementSpec[] {
   return out;
 }
 
+/**
+ * Cached annotations written before this roast became a bi-wheel are keyed by
+ * solo ids ("planet:Sun"), which match nothing the duo wheel draws — every tap
+ * would come back blank. Detect that and regenerate rather than serve a wheel
+ * that silently says nothing.
+ */
+export function annotationsMatchDuo(annotations: ChartAnnotations): boolean {
+  return Object.keys(annotations).some((k) => k.startsWith("synastry:"));
+}
+
 /** Prefix a solo element id with the person it belongs to on a duo roast. */
 export const personElementId = (slot: PersonSlot, id: string) =>
   `${slot}:${id}`;

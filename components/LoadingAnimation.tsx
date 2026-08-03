@@ -2,9 +2,10 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import NatalWheel from "@/components/NatalWheel";
+import { computeSynastry } from "@/lib/synastry";
 import type { ChartPlacement, NatalChart } from "@/lib/types";
 
-const STATUSES = [
+const SOLO_STATUSES = [
   "Locating your planets. Bracing for impact...",
   "Calculating exactly where it went wrong...",
   "Cross-referencing your delusions...",
@@ -29,6 +30,32 @@ const STATUSES = [
   "Finding the part you hoped we'd miss...",
   "Sealing the chart. The universe signs in red...",
   "Almost done. You're not going to love this...",
+];
+
+/**
+ * Two-chart path. The solo deck talks to one person about themselves; this one
+ * talks to two people about each other, which is the thing they actually paid
+ * for. `{a}` / `{b}` take the two names, `{rel}` the relationship they picked.
+ */
+const DUO_STATUSES = [
+  "Laying the two charts on top of each other. Something is already grinding...",
+  "Measuring the distance between {a} and {b}. In degrees, then in years...",
+  "Finding the aspect that explains the same argument every time...",
+  "Cross-referencing {a}'s Moon against {b}'s Mars. Standing back...",
+  "Confirming you two are {rel}. The charts had guesses...",
+  "Counting the squares between you. Running out of fingers...",
+  "Locating who apologises first. It's structural...",
+  "Checking whose Saturn is sitting on whose Sun. One of you knew...",
+  "Reading the Venus overlay. This is where it gets specific...",
+  "Timing the silence after {a} says the thing...",
+  "Asking Mercury how you two communicate. Mercury is choosing words...",
+  "Working out which of you is the weather and which is the barometer...",
+  "Tracing the pattern back to the third week. It was always there...",
+  "Weighing {b}'s side of it. Then weighing it again...",
+  "Finding the trine you both lean on when it gets bad...",
+  "Deciding how much of this to say out loud. All of it...",
+  "Sealing both charts. Neither of you comes out of this clean...",
+  "Almost done. One of you is going to screenshot this...",
 ];
 
 const STATUS_ROTATION_MS = 6500;
@@ -112,9 +139,31 @@ function buildFacts(chart: NatalChart): string[] {
   return facts;
 }
 
+/** Fill {a}/{b}/{rel} and drop any placeholder we have no value for. */
+function fillDuoStatus(
+  line: string,
+  names: string[],
+  relationship: string,
+): string {
+  const [a, b] = names;
+  return line
+    .replace(/\{a\}/g, a || "person one")
+    .replace(/\{b\}/g, b || "person two")
+    .replace(/\{rel\}/g, relationship);
+}
+
 interface LoadingAnimationProps {
   placements?: ChartPlacement[];
   onComplete?: () => void;
+  /**
+   * Which loading screen to run. "duo" is the two-chart path — different
+   * status deck, different footer, and the readout says which chart it's on.
+   */
+  mode?: "solo" | "duo";
+  /** Subject names, in position order. Used by the duo statuses. */
+  names?: string[];
+  /** What they are to each other — free text from the form's "other". */
+  relationship?: string;
   /**
    * 0-100 target reported from the server. Bar smooth-tweens toward this
    * each frame so big jumps don't snap. Defaults to a 0→88 background creep
@@ -123,12 +172,21 @@ interface LoadingAnimationProps {
   targetPct?: number;
   /** Fast-call natal chart. null/undefined → chart-less fallback layout. */
   chart?: NatalChart | null;
+  /**
+   * Person 2's chart on the duo path. Present → the wheel draws the pair while
+   * they wait, which is what they bought; absent → chart 1 alone.
+   */
+  partnerChart?: NatalChart | null;
 }
 
 export default function LoadingAnimation({
   onComplete,
   targetPct = 0,
   chart,
+  partnerChart,
+  mode = "solo",
+  names = [],
+  relationship = "a pair",
 }: LoadingAnimationProps) {
   const [progress, setProgress] = useState(0);
   const [statusIndex, setStatusIndex] = useState(0);
@@ -138,14 +196,48 @@ export default function LoadingAnimation({
   const completedRef = useRef(false);
   const startedAtRef = useRef<number>(0);
 
-  const facts = useMemo(() => (chart ? buildFacts(chart) : []), [chart]);
+  const statuses = useMemo(
+    () =>
+      mode === "duo"
+        ? DUO_STATUSES.map((line) => fillDuoStatus(line, names, relationship))
+        : SOLO_STATUSES,
+    // names is a fresh array each render from the parent; key on its content.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [mode, names.join("|"), relationship],
+  );
+
+  const facts = useMemo(() => {
+    if (!chart) return [];
+    const base = buildFacts(chart);
+    if (mode !== "duo") return base;
+
+    const [a, b] = names;
+    const head = [
+      `SYNASTRY · ${(a || chart.name).toUpperCase()} × ${(b || partnerChart?.name || "CHART 2").toUpperCase()}`,
+    ];
+    // Both charts land on the same fast call, so the readout can count the
+    // contacts between them rather than announcing chart 2 as pending.
+    if (partnerChart) {
+      const contacts = computeSynastry(chart, partnerChart);
+      const tight = contacts.filter((s) => s.strength >= 4).length;
+      head.push(
+        `${contacts.length} CONTACTS BETWEEN YOU · ${tight} INSIDE 2°`,
+        ...(contacts[0]
+          ? [
+              `TIGHTEST · ${(a || "ONE").toUpperCase()}'S ${contacts[0].a.toUpperCase()} ${contacts[0].type.toUpperCase()} ${(b || "TWO").toUpperCase()}'S ${contacts[0].b.toUpperCase()}`,
+            ]
+          : []),
+      );
+    }
+    return [...head, ...base.slice(1)];
+  }, [chart, partnerChart, mode, names]);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setStatusIndex((prev) => (prev + 1) % STATUSES.length);
+      setStatusIndex((prev) => (prev + 1) % statuses.length);
     }, STATUS_ROTATION_MS);
     return () => clearInterval(interval);
-  }, []);
+  }, [statuses.length]);
 
   // Reveal readout lines one by one once the chart lands.
   useEffect(() => {
@@ -230,7 +322,15 @@ export default function LoadingAnimation({
           aria-hidden="true"
         >
           <div className="w-[min(72vmin,560px)] h-[min(72vmin,560px)] -translate-y-14 md:-translate-y-12">
-            <NatalWheel chart={chart} />
+            <NatalWheel
+              chart={chart}
+              partner={mode === "duo" ? partnerChart : null}
+              names={
+                mode === "duo" && partnerChart
+                  ? [names[0] || chart.name, names[1] || partnerChart.name]
+                  : undefined
+              }
+            />
           </div>
         </div>
       ) : null}
@@ -266,12 +366,14 @@ export default function LoadingAnimation({
             key={statusIndex}
             className="status-line font-syne font-extrabold text-xl md:text-3xl tracking-tight text-ash uppercase leading-tight"
           >
-            {STATUSES[statusIndex]}
+            {statuses[statusIndex % statuses.length]}
           </span>
         </div>
         <div
           role="progressbar"
-          aria-label="Calculating chart"
+          aria-label={
+            mode === "duo" ? "Calculating charts" : "Calculating chart"
+          }
           aria-valuemin={0}
           aria-valuemax={100}
           aria-valuenow={clampedProgress}
@@ -290,7 +392,9 @@ export default function LoadingAnimation({
         aria-hidden="true"
       >
         <p className="text-[10px] md:text-xs tracking-[0.3em] text-ash/40 uppercase">
-          Written from your chart. Delivered without a warm-up.
+          {mode === "duo"
+            ? "Written from both charts. Neither of you is the reasonable one."
+            : "Written from your chart. Delivered without a warm-up."}
         </p>
       </footer>
 

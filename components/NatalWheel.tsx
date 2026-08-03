@@ -584,8 +584,10 @@ export default function NatalWheel({
       });
 
       // Legend in the bottom corners — outside the r=300 circle, the only
-      // space on a 24-glyph wheel where text doesn't land on a planet.
-      if (names) {
+      // space on a 24-glyph wheel where text doesn't land on a planet. Only on
+      // the interactive wheel: the loading screen sits its copy over the same
+      // corners, and its readout already names both people.
+      if (names && interactive) {
         const [innerName, outerName] = names;
         const legend = (
           text: string,
@@ -899,7 +901,11 @@ export default function NatalWheel({
       svg.on("click", null);
       svg.selectAll("*").interrupt().remove();
     };
-  }, [chart, partner, names, onSelect]);
+    // `names` is a fresh array on every parent render — key on its content, or
+    // the loading screen's per-frame progress tick wipes and restarts the whole
+    // draw each time and no transition ever completes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chart, partner, names?.join("|"), onSelect]);
 
   // Selection highlight — dim the wheel, light the selected element (and, for
   // an aspect, the two planets it joins). Independent of the heavy draw effect.

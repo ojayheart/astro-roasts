@@ -6,6 +6,8 @@ import { roasts } from "@/lib/db/schema";
 import {
   generateChartAnnotations,
   enumerateDuoElements,
+  annotationsMatchDuo,
+  type ChartAnnotations,
 } from "@/lib/chart-annotations";
 import type { NatalChart } from "@/lib/types";
 
@@ -65,7 +67,6 @@ export const generateAnnotations = inngest.createFunction(
       if (!roast?.chartJson) return { roastId, skipped: "no_chart" };
       if (!roast.paid) return { roastId, skipped: "unpaid" };
       if (!roast.fullText) return { roastId, skipped: "no_text" };
-      if (roast.chartAnnotations) return { roastId, skipped: "cached" };
 
       // A duo roast writes copy for both charts plus the contacts between
       // them — the cross-aspects are the relationship, and a wheel where only
@@ -75,6 +76,13 @@ export const generateAnnotations = inngest.createFunction(
         .sort((a, b) => a.position - b.position)
         .map((s) => s.user.name);
       const duo = charts?.length === 2 ? charts : null;
+
+      // Solo-keyed annotations on a duo roast match nothing the bi-wheel draws,
+      // so they count as absent rather than cached.
+      const cached = roast.chartAnnotations as ChartAnnotations | null;
+      if (cached && (!duo || annotationsMatchDuo(cached))) {
+        return { roastId, skipped: "cached" };
+      }
 
       const annotations = await generateChartAnnotations(
         roast.chartJson as NatalChart,

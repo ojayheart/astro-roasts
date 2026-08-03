@@ -2,6 +2,10 @@ import * as Sentry from "@sentry/nextjs";
 import { eq } from "drizzle-orm";
 import { db } from "./db";
 import { roasts } from "./db/schema";
+import {
+  annotationsMatchDuo,
+  type ChartAnnotations,
+} from "./chart-annotations";
 import { inngest } from "@/inngest/client";
 
 /**
@@ -9,7 +13,8 @@ import { inngest } from "@/inngest/client";
  * - The roast exists and has a cached chart.
  * - paid is true (the lines echo the full roast, so unpaid stays facts-only).
  * - fullText is non-empty (the lines are written in the roast's voice).
- * - chartAnnotations is still null (already generated → nothing to do).
+ * - chartAnnotations is still missing, or is stale: a duo roast keyed by solo
+ *   ids predates the bi-wheel and matches nothing it draws.
  *
  * Called from BOTH the inngest pipeline (when generation completes) and every
  * path that flips paid. Either order is valid; whichever fires last wins, and
@@ -28,6 +33,7 @@ export async function queueChartAnnotationsIfReady(
         fullText: roasts.fullText,
         chartJson: roasts.chartJson,
         chartAnnotations: roasts.chartAnnotations,
+        subjectCharts: roasts.subjectCharts,
       })
       .from(roasts)
       .where(eq(roasts.id, roastId))
@@ -37,7 +43,11 @@ export async function queueChartAnnotationsIfReady(
     if (!row.paid) return false;
     if (!row.fullText) return false;
     if (!row.chartJson) return false;
-    if (row.chartAnnotations) return false;
+
+    const isDuo = (row.subjectCharts as unknown[] | null)?.length === 2;
+    const cached = row.chartAnnotations as ChartAnnotations | null;
+    // A duo roast holding solo-keyed annotations is stale, not done.
+    if (cached && (!isDuo || annotationsMatchDuo(cached))) return false;
 
     await inngest.send({ name: "roast/annotate", data: { roastId } });
     return true;
