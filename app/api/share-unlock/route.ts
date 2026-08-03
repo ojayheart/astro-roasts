@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { roasts } from "@/lib/db/schema";
 import { sendRoastEmailIfReady } from "@/lib/send-roast-email-if-ready";
+import { queueChartAnnotationsIfReady } from "@/lib/queue-chart-annotations";
 import { getClientIp, shareUnlockRateLimiter } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
@@ -66,6 +67,8 @@ export async function POST(req: NextRequest) {
         Sentry.captureException(emailErr);
       });
     }
+
+    await queueChartAnnotationsIfReady(roastId);
 
     return NextResponse.json({ unlocked: true });
   } catch (err) {

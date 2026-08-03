@@ -21,9 +21,15 @@ const body = {
 
 test("validates bounded annotation payloads", () => {
   assert.equal(validateAnnotationInput(body), null);
-  assert.equal(validateAnnotationInput({ ...body, roastText: "" }), "roastText");
   assert.equal(
-    validateAnnotationInput({ ...body, elements: Array(101).fill(body.elements[0]) }),
+    validateAnnotationInput({ ...body, roastText: "" }),
+    "roastText",
+  );
+  assert.equal(
+    validateAnnotationInput({
+      ...body,
+      elements: Array(101).fill(body.elements[0]),
+    }),
     "elements",
   );
   assert.equal(
@@ -58,8 +64,7 @@ test("parses fenced JSON and keeps only safe known lines", () => {
 
 test("handles a successful Claude runner response", async () => {
   let sent:
-    | { tools: string; systemPrompt: string; [key: string]: unknown }
-    | undefined;
+    { tools: string; systemPrompt: string; [key: string]: unknown } | undefined;
   let response: { status: number; payload: unknown } | undefined;
   await handleChartAnnotations(
     body,
@@ -74,7 +79,8 @@ test("handles a successful Claude runner response", async () => {
       sent = input;
       return {
         code: 0,
-        stdout: '{"lines":[{"id":"planet:Sun","line":"Your calendar has a calendar."}]}',
+        stdout:
+          '{"lines":[{"id":"planet:Sun","line":"Your calendar has a calendar."}]}',
         stderr: "",
       };
     },
@@ -85,9 +91,7 @@ test("handles a successful Claude runner response", async () => {
   assert.deepEqual(response, {
     status: 200,
     payload: {
-      lines: [
-        { id: "planet:Sun", line: "Your calendar has a calendar." },
-      ],
+      lines: [{ id: "planet:Sun", line: "Your calendar has a calendar." }],
     },
   });
 });
@@ -120,4 +124,89 @@ test("Hermes server wires the authenticated chart-annotations route", async () =
   );
   assert.match(source, /req\.url !== "\/chart-annotations"/);
   assert.match(source, /handleChartAnnotations\(body, send, runClaude/);
+});
+
+const bigBody = {
+  roastText: "You schedule spontaneity three weeks ahead.",
+  elements: Array.from({ length: 30 }, (_, i) => ({
+    id: `planet:${i}`,
+    title: `Body ${i}`,
+    facts: "Aquarius · 01°00′ · House 9",
+  })),
+};
+
+test("splits a full chart into chunks and merges the lines", async () => {
+  const sizes: number[] = [];
+  let response: { status: number; payload: any } | undefined;
+
+  await handleChartAnnotations(
+    bigBody,
+    (status: number, payload: unknown) => {
+      response = { status, payload: payload as any };
+    },
+    async (input: { userPrompt: string; [key: string]: unknown }) => {
+      const ids = [...input.userPrompt.matchAll(/^(planet:\d+) —/gm)].map(
+        (m) => m[1],
+      );
+      sizes.push(ids.length);
+      return {
+        code: 0,
+        stdout: JSON.stringify({
+          lines: ids.map((id) => ({ id, line: `line for ${id}` })),
+        }),
+        stderr: "",
+      };
+    },
+  );
+
+  assert.deepEqual(sizes, [20, 10]);
+  assert.equal(response?.status, 200);
+  assert.equal(response?.payload.lines.length, 30);
+});
+
+test("keeps the lines from chunks that survive when one chunk dies", async () => {
+  let call = 0;
+  let response: { status: number; payload: any } | undefined;
+
+  await handleChartAnnotations(
+    bigBody,
+    (status: number, payload: unknown) => {
+      response = { status, payload: payload as any };
+    },
+    async (input: { userPrompt: string; [key: string]: unknown }) => {
+      const ids = [...input.userPrompt.matchAll(/^(planet:\d+) —/gm)].map(
+        (m) => m[1],
+      );
+      // First chunk (20 elements) times out the way a SIGTERM'd `claude -p`
+      // does; the surviving 10-element chunk still gives the wheel its lines.
+      if (call++ === 0) return { code: 143, stdout: "", stderr: "" };
+      return {
+        code: 0,
+        stdout: JSON.stringify({
+          lines: ids.map((id) => ({ id, line: `line for ${id}` })),
+        }),
+        stderr: "",
+      };
+    },
+  );
+
+  assert.equal(response?.status, 200);
+  assert.equal(response?.payload.lines.length, 10);
+});
+
+test("reports rate limiting only when every chunk fails", async () => {
+  let response: { status: number; payload: unknown } | undefined;
+
+  await handleChartAnnotations(
+    bigBody,
+    (status: number, payload: unknown) => {
+      response = { status, payload };
+    },
+    async () => ({ code: 1, stdout: "", stderr: "429 rate limit exceeded" }),
+  );
+
+  assert.deepEqual(response, {
+    status: 503,
+    payload: { error: "rate_limited" },
+  });
 });

@@ -31,3 +31,10 @@ export type RoastGenerateEvent = {
     igSenderId?: string;
   };
 };
+
+export type RoastAnnotateEvent = {
+  name: "roast/annotate";
+  data: {
+    roastId: string;
+  };
+};

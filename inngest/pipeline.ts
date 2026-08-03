@@ -11,6 +11,7 @@ import { inngest } from "./client";
 import { db } from "@/lib/db";
 import { roasts } from "@/lib/db/schema";
 import { sendRoastEmailIfReady } from "@/lib/send-roast-email-if-ready";
+import { queueChartAnnotationsIfReady } from "@/lib/queue-chart-annotations";
 import {
   buildRoastRunnerPayload,
   buildGroupRunnerPayload,
@@ -306,6 +307,10 @@ export const generateRoast = inngest.createFunction(
           Sentry.captureException(emailErr);
         });
       }
+
+      // Same gating as the email: no-op until payment lands, in which case the
+      // paid path queues it instead.
+      await queueChartAnnotationsIfReady(roastId);
 
       return { title, teaser: finalTeaser };
     });

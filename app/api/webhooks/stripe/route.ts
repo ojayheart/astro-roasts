@@ -5,6 +5,7 @@ import { roasts } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { verifyStripeEvent, extractCompletedRoastId } from "@/lib/stripe";
 import { sendRoastEmailIfReady } from "@/lib/send-roast-email-if-ready";
+import { queueChartAnnotationsIfReady } from "@/lib/queue-chart-annotations";
 
 export const runtime = "nodejs";
 
@@ -68,6 +69,10 @@ export async function POST(req: NextRequest) {
       Sentry.captureException(emailErr);
     });
   }
+
+  // Paid now, so the natal wheel earns its witty lines. No-op if the pipeline
+  // hasn't written the roast yet — it queues them itself when it finishes.
+  await queueChartAnnotationsIfReady(extracted.roastId);
 
   return NextResponse.json({ received: true });
 }

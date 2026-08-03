@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { roasts, roastSubjects } from "@/lib/db/schema";
 import { sendRoastEmailIfReady } from "@/lib/send-roast-email-if-ready";
+import { queueChartAnnotationsIfReady } from "@/lib/queue-chart-annotations";
 import { getClientIp, promoCodeRateLimiter } from "@/lib/rate-limit";
 import { isFreeAfterDiscount, lookupPromo } from "@/lib/promo";
 import { groupAmountMinorUnits } from "@/lib/group";
@@ -95,6 +96,8 @@ export async function POST(req: NextRequest) {
         Sentry.captureException(emailErr);
       });
     }
+
+    await queueChartAnnotationsIfReady(roastId);
 
     return NextResponse.json({ unlocked: true });
   } catch (err) {

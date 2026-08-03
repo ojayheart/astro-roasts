@@ -6,12 +6,11 @@ import { roasts } from "@/lib/db/schema";
 import type { NatalChart } from "@/lib/types";
 import {
   enumerateElements,
-  generateChartAnnotations,
   type ChartAnnotations,
 } from "@/lib/chart-annotations";
+import { queueChartAnnotationsIfReady } from "@/lib/queue-chart-annotations";
 
 export const runtime = "nodejs";
-export const maxDuration = 60;
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -20,11 +19,14 @@ const UUID_RE =
  * Per-element copy for the interactive natal wheel.
  *
  * - `facts` (deterministic) is always returned, computed from the cached chart.
- * - `line` (witty, roast-tied) is generated once via one Opus call and cached
- *   on roasts.chart_annotations — only for PAID roasts, since the lines echo the
- *   full roast text. Unpaid roasts get facts-only (no model call, no leak).
+ * - `line` (witty, roast-tied) is written out of band by the roast/annotate
+ *   Inngest function and cached on roasts.chart_annotations — only for PAID
+ *   roasts, since the lines echo the full roast text.
  *
- * Every failure path still returns facts-only so the wheel stays interactive.
+ * This route never calls a model. Generating all ~59 lines takes ~100s, which
+ * never fit in the request and timed out on every paid roast from 14 Jul 2026
+ * until this was made async. If the cache is cold, the wheel gets facts and
+ * this queues the job, so the next load has the lines.
  */
 export async function POST(req: NextRequest) {
   const factsOnly = (chart: NatalChart): ChartAnnotations => {
@@ -62,29 +64,10 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // Unpaid, or no roast text yet → facts only, no model call.
-    if (!roast.paid || !roast.fullText) {
-      return NextResponse.json({ annotations: factsOnly(chart) });
-    }
-
-    // Generate the witty lines once and cache them.
-    try {
-      const annotations = await generateChartAnnotations(chart, roast.fullText);
-      await db
-        .update(roasts)
-        .set({ chartAnnotations: annotations })
-        .where(eq(roasts.id, roastId));
-      return NextResponse.json({ annotations });
-    } catch (genErr) {
-      Sentry.withScope((scope) => {
-        scope.setTag("route", "/api/chart-annotations");
-        scope.setTag("subsystem", "chart-annotations");
-        scope.setContext("chart_annotations", { roastId });
-        Sentry.captureException(genErr);
-      });
-      // Non-fatal — return facts so the wheel is still interactive.
-      return NextResponse.json({ annotations: factsOnly(chart) });
-    }
+    // Cache cold. Facts keep the wheel interactive now; queueing self-heals a
+    // roast whose paid/ready transition missed its trigger. No-op when unpaid.
+    await queueChartAnnotationsIfReady(roastId);
+    return NextResponse.json({ annotations: factsOnly(chart) });
   } catch (err) {
     Sentry.withScope((scope) => {
       scope.setTag("route", "/api/chart-annotations");

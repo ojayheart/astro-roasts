@@ -155,7 +155,12 @@ interface GenerateChartAnnotationOptions {
   runnerUrl?: string;
   runnerSecret?: string;
   fetchImpl?: typeof fetch;
+  timeoutMs?: number;
 }
+
+// The runner writes ~59 lines in chunks and takes ~100s end to end. Only the
+// async Inngest step waits on it, so the budget is generous.
+const RUNNER_TIMEOUT_MS = 300_000;
 
 // One Hermes subscription call → a witty line per element. Facts stay
 // deterministic; only the line is model-written. On any failure, callers fall
@@ -187,9 +192,13 @@ export async function generateChartAnnotations(
       },
       body: JSON.stringify({
         roastText,
-        elements: elements.map(({ id, title, facts }) => ({ id, title, facts })),
+        elements: elements.map(({ id, title, facts }) => ({
+          id,
+          title,
+          facts,
+        })),
       }),
-      signal: AbortSignal.timeout(55_000),
+      signal: AbortSignal.timeout(options.timeoutMs ?? RUNNER_TIMEOUT_MS),
     },
   );
   if (!response.ok) {

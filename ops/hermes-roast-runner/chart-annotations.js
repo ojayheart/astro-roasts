@@ -4,6 +4,13 @@ const MAX_ID_CHARS = 200;
 const MAX_TITLE_CHARS = 200;
 const MAX_FACTS_CHARS = 500;
 const MAX_LINE_CHARS = 300;
+// A full natal chart enumerates ~59 elements, and one call covering all of them
+// runs ~100s with the tail lines getting lazy. Chunks are for quality and
+// blast radius, not speed — the subscription serializes concurrent `claude -p`
+// calls, so these run back to back. Only the async Inngest path calls this, so
+// there is no request deadline to fit inside.
+const CHUNK_SIZE = 20;
+const CHUNK_TIMEOUT_MS = 150_000;
 
 export const ANNOTATION_SYSTEM_PROMPT = `You write micro-captions for an astrology "roast" — the user taps an element of their birth chart and you give them one genuinely funny, affectionate read of what it says about them, in the roast's own voice.
 
@@ -107,6 +114,14 @@ function isUsageLimit(stderr, stdout) {
   );
 }
 
+export function chunkElements(elements, size = CHUNK_SIZE) {
+  const chunks = [];
+  for (let i = 0; i < elements.length; i += size) {
+    chunks.push(elements.slice(i, i + size));
+  }
+  return chunks;
+}
+
 export async function handleChartAnnotations(
   body,
   send,
@@ -118,36 +133,72 @@ export async function handleChartAnnotations(
     return send(400, { error: "invalid_input", detail: invalid });
   }
 
-  let run;
-  try {
-    run = await runClaude({
-      userPrompt: buildAnnotationPrompt(body),
-      systemPrompt: ANNOTATION_SYSTEM_PROMPT,
-      model,
-      tools: "",
-      timeoutMs: 50_000,
-    });
-  } catch (error) {
-    console.error("chart_annotations_runner_failed", String(error).slice(0, 300));
-    return send(500, { error: "claude_failed" });
-  }
-
-  if (run.code !== 0) {
-    const limited = isUsageLimit(run.stderr, run.stdout);
-    console.error("chart_annotations_claude_failed", {
-      code: run.code,
-      stderr: String(run.stderr).slice(0, 300),
-    });
-    return send(limited ? 503 : 500, {
-      error: limited ? "rate_limited" : "claude_failed",
-    });
-  }
-
+  // A chunk that dies only costs its own elements — the wheel falls back to
+  // facts for those instead of losing every line.
+  const chunks = chunkElements(body.elements);
   const allowedIds = new Set(body.elements.map((element) => element.id));
-  const lines = parseAnnotationOutput(run.stdout, allowedIds);
+
+  const results = await Promise.all(
+    chunks.map(async (elements) => {
+      let run;
+      try {
+        run = await runClaude({
+          userPrompt: buildAnnotationPrompt({
+            roastText: body.roastText,
+            elements,
+          }),
+          systemPrompt: ANNOTATION_SYSTEM_PROMPT,
+          model,
+          tools: "",
+          timeoutMs: CHUNK_TIMEOUT_MS,
+        });
+      } catch (error) {
+        console.error(
+          "chart_annotations_runner_failed",
+          String(error).slice(0, 300),
+        );
+        return { lines: [], limited: false };
+      }
+
+      if (run.code !== 0) {
+        const limited = isUsageLimit(run.stderr, run.stdout);
+        console.error("chart_annotations_claude_failed", {
+          code: run.code,
+          count: elements.length,
+          stderr: String(run.stderr).slice(0, 300),
+        });
+        return { lines: [], limited };
+      }
+
+      return {
+        lines: parseAnnotationOutput(run.stdout, allowedIds),
+        limited: false,
+        stdout: run.stdout,
+      };
+    }),
+  );
+
+  const lines = [];
+  const seen = new Set();
+  for (const result of results) {
+    for (const item of result.lines) {
+      if (seen.has(item.id)) continue;
+      seen.add(item.id);
+      lines.push(item);
+    }
+  }
+
   if (lines.length === 0) {
+    if (results.some((result) => result.limited)) {
+      return send(503, { error: "rate_limited" });
+    }
+    if (results.every((result) => result.stdout === undefined)) {
+      return send(500, { error: "claude_failed" });
+    }
     console.error("chart_annotations_bad_output", {
-      preview: String(run.stdout).slice(0, 300),
+      preview: String(
+        results.find((r) => r.stdout !== undefined)?.stdout,
+      ).slice(0, 300),
     });
     return send(502, { error: "bad_output" });
   }
