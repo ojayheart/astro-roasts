@@ -22,6 +22,10 @@ export const generateAnnotations = inngest.createFunction(
   {
     id: "generate-chart-annotations",
     retries: 2,
+    // The subscription serializes concurrent `claude -p` calls anyway, so
+    // parallel runs would only time each other out and starve the roast
+    // pipeline, which paying customers are actively waiting on.
+    concurrency: { limit: 1 },
     triggers: [{ event: "roast/annotate" }],
     onFailure: async ({ event, error }) => {
       const roastId = (
