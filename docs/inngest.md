@@ -19,8 +19,11 @@ After any deploy that adds, renames, or removes a function:
 curl -X PUT https://astroroast.com/api/inngest
 ```
 
-`{"modified":true}` means the sync was needed. `{"modified":false}` means it was
-already current. Safe to run any time; idempotent.
+It always answers `{"message":"Successfully registered","modified":true}`, even
+back to back with no deploy in between — `modified` is not a signal about
+whether the sync was needed, so don't read anything into it. Safe to run any
+time; idempotent. To confirm a function is actually live, send its event and
+watch for the work, not this response.
 
 This cost ~15 minutes of debugging on 3 Aug 2026 when the backfill for
 `roast/annotate` sat dead with every event returning HTTP 200.
