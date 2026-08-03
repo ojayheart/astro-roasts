@@ -180,7 +180,19 @@ export default function TeaserView({
         </header>
 
         {/* The subject's actual wheel — exhibit before testimony */}
-        <RoastWheel roastId={roastId} caption="The material — your chart" />
+        <RoastWheel
+          roastId={roastId}
+          caption={
+            extraPlacements?.length
+              ? "The material — both charts, and what they do to each other"
+              : "The material — your chart"
+          }
+          names={
+            extraPlacements?.length
+              ? [subjectNames?.[0] || name, extraPlacements[0].name]
+              : undefined
+          }
+        />
 
         {/* Title */}
         <h1 className="main-title font-syne text-4xl md:text-5xl font-extrabold uppercase tracking-tighter mb-12 text-outline">

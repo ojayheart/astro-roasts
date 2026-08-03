@@ -8,6 +8,7 @@ import SignGlyph from "./SignGlyph";
 import RoastWheel from "./RoastWheel";
 import { renderEmphasis } from "./Emphasis";
 import { formatPrice } from "@/lib/currency";
+import { useRoastCharts } from "@/lib/use-roast-charts";
 
 interface FullRoastViewProps {
   name: string;
@@ -29,6 +30,8 @@ interface FullRoastViewProps {
     moonSign: string;
     rising: string | null;
   }[];
+  /** What the two of them are to each other — free text, absent on solo. */
+  relationship?: string;
   currency?: string;
 }
 
@@ -47,8 +50,14 @@ export default function FullRoastView({
   roastId,
   subjectNames,
   extraPlacements,
+  relationship,
   currency = "usd",
 }: FullRoastViewProps) {
+  const charts = useRoastCharts(roastId);
+  const isDuo = (extraPlacements?.length ?? 0) > 0;
+  const pairNames = isDuo
+    ? [subjectNames?.[0] || name, extraPlacements![0].name]
+    : null;
   useEffect(() => {
     gsap.registerPlugin(ScrollTrigger);
 
@@ -108,6 +117,39 @@ export default function FullRoastView({
     { label: "SATURN", value: saturn },
   ];
 
+  // Person 2's full set, read off their real chart. The stored
+  // extra_placements only ever held sun/moon/rising, which rendered them as a
+  // footnote to person 1 rather than half the roast.
+  const PLACEMENT_BODIES = [
+    ["SUN", "Sun"],
+    ["MOON", "Moon"],
+    ["MERCURY", "Mercury"],
+    ["VENUS", "Venus"],
+    ["MARS", "Mars"],
+    ["JUPITER", "Jupiter"],
+    ["SATURN", "Saturn"],
+  ] as const;
+
+  const partnerPlacements = (() => {
+    const partner = charts.charts?.[1];
+    if (!partner) return null;
+    const signOf = (body: string) =>
+      partner.planets.find((p) => p.name === body)?.sign ?? "";
+    const rows = [
+      { label: "SUN", value: signOf("Sun") },
+      { label: "MOON", value: signOf("Moon") },
+      {
+        label: "RISING",
+        value: partner.angles?.ascendant.sign ?? "",
+      },
+      ...PLACEMENT_BODIES.slice(2).map(([label, body]) => ({
+        label,
+        value: signOf(body),
+      })),
+    ];
+    return rows.filter((r) => r.value);
+  })();
+
   // Split prose into paragraphs
   const paragraphs = fullText.split("\n\n").filter((p) => p.trim());
 
@@ -128,16 +170,35 @@ export default function FullRoastView({
         <header className="mb-32 gs-reveal">
           <p className="font-mono text-[10px] md:text-xs uppercase tracking-[0.15em] text-blood mb-6 flex items-center gap-4">
             <span className="w-12 h-px bg-blood" />
-            The full set — no survivors
+            {isDuo
+              ? `Both charts — ${relationship || "the pair"}, no survivors`
+              : "The full set — no survivors"}
           </p>
           <h1 className="font-syne font-extrabold text-5xl sm:text-6xl md:text-7xl tracking-tighter uppercase mb-12 text-ash leading-none">
             Tonight:
             <br />
-            <span className="[overflow-wrap:anywhere]">{name}</span>
+            {pairNames ? (
+              <span className="[overflow-wrap:anywhere]">
+                {pairNames[0]}
+                <span className="text-blood mx-3">&times;</span>
+                {pairNames[1]}
+              </span>
+            ) : (
+              <span className="[overflow-wrap:anywhere]">{name}</span>
+            )}
           </h1>
 
           {/* The wheel — the evidence everything below cites */}
-          <RoastWheel roastId={roastId} caption="The material — your chart" />
+          <RoastWheel
+            roastId={roastId}
+            caption={
+              isDuo
+                ? "The material — both charts, and what they do to each other"
+                : "The material — your chart"
+            }
+            names={pairNames ?? undefined}
+            charts={charts}
+          />
 
           <h2 className="sr-only">Placements</h2>
           <div className="border-y border-ash/10 py-8 relative bg-void">
@@ -164,41 +225,39 @@ export default function FullRoastView({
                 </div>
               </div>
 
-              {/* Extra people */}
-              {extraPlacements?.map((ep, i) => (
-                <div key={i} className="border-t border-ash/10 pt-8">
-                  <p className="font-mono text-xs uppercase tracking-[0.15em] text-blood mb-4">
-                    {ep.name}
-                  </p>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-y-8 gap-x-4 font-mono text-sm uppercase tracking-[0.15em] text-ash/80">
-                    <div>
-                      <span className="block text-ash/40 text-[10px] mb-2 font-medium">
-                        SUN
-                      </span>
-                      <span>
-                        {ep.sunSign} <SignGlyph sign={ep.sunSign} />
-                      </span>
-                    </div>
-                    <div>
-                      <span className="block text-ash/40 text-[10px] mb-2 font-medium">
-                        MOON
-                      </span>
-                      <span>
-                        {ep.moonSign} <SignGlyph sign={ep.moonSign} />
-                      </span>
-                    </div>
-                    <div>
-                      <span className="block text-ash/40 text-[10px] mb-2 font-medium">
-                        RISING
-                      </span>
-                      <span>
-                        {ep.rising ?? "—"}{" "}
-                        {ep.rising && <SignGlyph sign={ep.rising} />}
-                      </span>
+              {/* Extra people. Their real chart gives the same eight rows
+                  person 1 gets; the stored three are the fallback for older
+                  roasts whose second chart was never cast. */}
+              {extraPlacements?.map((ep, i) => {
+                const rows =
+                  i === 0 && partnerPlacements?.length
+                    ? partnerPlacements
+                    : [
+                        { label: "SUN", value: ep.sunSign },
+                        { label: "MOON", value: ep.moonSign },
+                        { label: "RISING", value: ep.rising ?? "" },
+                      ].filter((r) => r.value);
+
+                return (
+                  <div key={i} className="border-t border-ash/10 pt-8">
+                    <p className="font-mono text-xs uppercase tracking-[0.15em] text-blood mb-4">
+                      {ep.name}
+                    </p>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-y-8 gap-x-4 font-mono text-sm uppercase tracking-[0.15em] text-ash/80">
+                      {rows.map((r) => (
+                        <div key={r.label}>
+                          <span className="block text-ash/40 text-[10px] mb-2 font-medium">
+                            {r.label}
+                          </span>
+                          <span>
+                            {r.value} <SignGlyph sign={r.value} />
+                          </span>
+                        </div>
+                      ))}
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </header>

@@ -254,6 +254,9 @@ export default function RoastClient({
         placements={placements}
         targetPct={data.stagePct ?? 0}
         chart={chart}
+        mode={data.kind && data.kind !== "solo" ? "duo" : "solo"}
+        names={data.subjectNames ?? []}
+        relationship={data.relationship || "a pair"}
       />
     );
   }
@@ -296,6 +299,7 @@ export default function RoastClient({
         roastId={roastId}
         subjectNames={data.subjectNames}
         extraPlacements={data.extraPlacements}
+        relationship={data.relationship}
         currency={currency}
       />
     );

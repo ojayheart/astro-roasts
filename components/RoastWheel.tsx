@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import NatalWheel, { type HoverInfo } from "./NatalWheel";
-import type { ChartResponse, NatalChart } from "@/lib/types";
+import { useRoastCharts, type RoastCharts } from "@/lib/use-roast-charts";
 import type { ChartAnnotations, WheelSelection } from "@/lib/chart-annotations";
 
 const KIND_LABEL: Record<WheelSelection["kind"], string> = {
@@ -22,33 +22,24 @@ const KIND_LABEL: Record<WheelSelection["kind"], string> = {
 export default function RoastWheel({
   roastId,
   caption,
+  names,
+  charts: providedCharts,
 }: {
   roastId: string;
   caption: string;
+  /** Subject names in position order. Two → the wheel draws the pair. */
+  names?: string[];
+  /** Already-fetched charts from the parent, to avoid a second round trip. */
+  charts?: RoastCharts;
 }) {
-  const [chart, setChart] = useState<NatalChart | null>(null);
+  const fetched = useRoastCharts(providedCharts ? "" : roastId);
+  const { chart, charts } = providedCharts ?? fetched;
+  // Two charts → bi-wheel. One → the solo wheel, exactly as before.
+  const partner = charts?.[1] ?? null;
+
   const [annotations, setAnnotations] = useState<ChartAnnotations | null>(null);
   const [selected, setSelected] = useState<WheelSelection | null>(null);
   const [hover, setHover] = useState<HoverInfo | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    fetch("/api/chart", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ roastId }),
-    })
-      .then((res) => (res.ok ? res.json() : { chart: null }))
-      .then((data: ChartResponse) => {
-        if (!cancelled && data?.chart) setChart(data.chart);
-      })
-      .catch(() => {
-        // Wheel is decoration-plus — the roast must never depend on it.
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [roastId]);
 
   // Once the chart exists, fetch the per-element copy. First call for a paid
   // roast generates + caches the witty lines (one Opus pass); later calls and
@@ -93,6 +84,12 @@ export default function RoastWheel({
         <div className="max-w-[480px] mx-auto aspect-square">
           <NatalWheel
             chart={chart}
+            partner={partner}
+            names={
+              partner
+                ? [names?.[0] || chart.name, names?.[1] || partner.name]
+                : undefined
+            }
             onSelect={setSelected}
             onHover={setHover}
             selectedId={selected?.id ?? null}
@@ -104,7 +101,11 @@ export default function RoastWheel({
         {!selected && (
           <div className="mt-4 flex items-center justify-center gap-3 font-mono text-[10px] uppercase tracking-[0.25em] text-ash/45 select-none">
             <span className="w-6 h-px bg-blood/70 shrink-0" />
-            <span>tap any mark to read it</span>
+            <span>
+              {partner
+                ? "tap any mark — the lines between are you two"
+                : "tap any mark to read it"}
+            </span>
             <span className="inline-block w-1.5 h-3 bg-blood animate-pulse" />
           </div>
         )}
