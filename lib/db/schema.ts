@@ -57,6 +57,7 @@ export const roasts = pgTable(
     saturnSign: text("saturn_sign"),
     chartData: text("chart_data"), // raw formatted output from natal_chart.py
     chartJson: jsonb("chart_json"), // fast natal chart JSON for the d3 loading wheel
+    subjectCharts: jsonb("subject_charts"), // NatalChart[] in position order — what the synastry bi-wheel reads
     chartAnnotations: jsonb("chart_annotations"), // {id: {facts, line}} witty per-element copy for the interactive wheel
     status: text("status").default("generating").notNull(), // generating | ready | error
     stagePct: integer("stage_pct").default(0).notNull(), // 0-100, runner-reported progress
