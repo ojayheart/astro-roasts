@@ -1,5 +1,7 @@
 const MAX_ROAST_CHARS = 80_000;
-const MAX_ELEMENTS = 100;
+// A solo chart is ~59 elements. A duo roast is both charts plus the contacts
+// between them — ~120 — so this ceiling is sized for the pair, not one person.
+const MAX_ELEMENTS = 200;
 const MAX_ID_CHARS = 200;
 const MAX_TITLE_CHARS = 200;
 const MAX_FACTS_CHARS = 500;
@@ -16,7 +18,9 @@ export const ANNOTATION_SYSTEM_PROMPT = `You write micro-captions for an astrolo
 
 Make it funny first. Use precise, surprising recognition, a mundane punchline, or a callback to the roast. Tease like a friend who adores them: warm underneath, never cruel. Match the supplied roast's voice and running jokes without contradicting it.
 
-Each line must use second person, be one sentence, contain no emoji, hashtags, or quotation marks, and stay near 140 characters. Return raw JSON only in this exact shape: {"lines":[{"id":"the supplied id","line":"the caption"}]}. Include one entry for every supplied element id and never invent ids.`;
+Each line must use second person, be one sentence, contain no emoji, hashtags, or quotation marks, and stay near 140 characters. Return raw JSON only in this exact shape: {"lines":[{"id":"the supplied id","line":"the caption"}]}. Include one entry for every supplied element id and never invent ids.
+
+SOME ROASTS COVER TWO PEOPLE. There the titles name whose element it is ("Dan's Moon"), and ids prefixed "synastry:" are contacts BETWEEN the two charts — the aspect one person's planet makes to the other's. Those are the ones they actually paid for, so make them about the pair: what this contact does to them in a room together, who bends, what argument it keeps starting. Address both of them as "you two" or by name; never write a synastry line as though it belonged to one person's chart alone. For a single person's element on a two-person roast, stay on that person and use their name rather than a bare "you", so it's obvious which of them is being read.`;
 
 export function validateAnnotationInput(body) {
   if (!body || typeof body !== "object") return "body";

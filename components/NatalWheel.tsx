@@ -5,6 +5,7 @@ import * as d3 from "d3";
 import type { NatalChart } from "@/lib/types";
 import {
   enumerateElements,
+  enumerateDuoElements,
   drawableAspects,
   planetId,
   angleId,
@@ -13,6 +14,7 @@ import {
   signId,
   type WheelSelection,
 } from "@/lib/chart-annotations";
+import { computeSynastry, synastryAspectId } from "@/lib/synastry";
 
 /**
  * The person's actual natal chart, drawn live on the loading screen.
@@ -97,6 +99,18 @@ const R_DEG_LABEL = 198;
 const R_HOUSE_NUM = 164;
 const R_ASPECT = 150;
 
+// Bi-wheel: person B rides just inside the zodiac ring, person A drops inward
+// to make room, and a hairline divider keeps whose-planet-is-whose readable.
+const R_PLANET_OUTER = 244;
+const R_PLANET_INNER = 196;
+const R_DIVIDER = 220;
+const R_RING_LABEL = 214;
+
+// Cross-chart contacts get their own weight so they read as the relationship
+// rather than as more of either person's own chart.
+const SYNASTRY_HARD = "#ff2a00";
+const SYNASTRY_SOFT = "#7db7ff";
+
 function fmtDeg(degInSign: number): string {
   const d = Math.floor(degInSign);
   const m = Math.floor((degInSign - d) * 60);
@@ -122,11 +136,22 @@ type Hit =
 
 export default function NatalWheel({
   chart,
+  partner,
+  names,
   onSelect,
   onHover,
   selectedId,
 }: {
   chart: NatalChart;
+  /**
+   * Second chart for a duo roast. Present → bi-wheel: `chart` becomes the
+   * inner ring, `partner` the outer, and the cross-aspects between them are
+   * drawn instead of either chart's internal aspects. Absent → the solo wheel,
+   * unchanged.
+   */
+  partner?: NatalChart | null;
+  /** Display names for the two rings, in [inner, outer] order. */
+  names?: [string, string];
   onSelect?: (sel: WheelSelection | null) => void;
   onHover?: (info: HoverInfo | null) => void;
   selectedId?: string | null;
@@ -164,12 +189,18 @@ export default function NatalWheel({
     const root = svg.append("g");
 
     // id → selection payload, for wiring click/hover targets.
+    const specs = partner
+      ? enumerateDuoElements(chart, partner, {
+          nameA: names?.[0],
+          nameB: names?.[1],
+        })
+      : enumerateElements(chart);
     const specById = new Map<string, WheelSelection>(
-      enumerateElements(chart).map((e) => [
-        e.id,
-        { id: e.id, kind: e.kind, title: e.title },
-      ]),
+      specs.map((e) => [e.id, { id: e.id, kind: e.kind, title: e.title }]),
     );
+    // On a bi-wheel every element belongs to someone, so the ids the wheel
+    // draws must carry the same prefix the annotations were stored under.
+    const elId = (id: string) => (partner ? `a:${id}` : id);
     const hits: Hit[] = [];
 
     // ── 1. Zodiac ring ──────────────────────────────────────────────────
@@ -224,7 +255,7 @@ export default function NatalWheel({
         .duration(T(450))
         .attr("opacity", 0.4);
 
-      const sSpec = specById.get(signId(SIGN_NAMES[i]));
+      const sSpec = specById.get(elId(signId(SIGN_NAMES[i])));
       if (sSpec) {
         glyph.attr("data-el-id", sSpec.id);
         hits.push({ kind: "circle", x: gx, y: gy, r: 16, spec: sSpec });
@@ -298,7 +329,7 @@ export default function NatalWheel({
           .duration(T(450))
           .attr("opacity", 0.3);
 
-        const hSpec = specById.get(houseId(i + 1));
+        const hSpec = specById.get(elId(houseId(i + 1)));
         if (hSpec) {
           numeral.attr("data-el-id", hSpec.id);
           hits.push({ kind: "circle", x: nx, y: ny, r: 14, spec: hSpec });
@@ -330,7 +361,7 @@ export default function NatalWheel({
           .duration(T(450))
           .attr("opacity", 0.85);
 
-        const aSpec = specById.get(angleId(label));
+        const aSpec = specById.get(elId(angleId(label)));
         if (aSpec) {
           angleText.attr("data-el-id", aSpec.id);
           hits.push({ kind: "circle", x: lx, y: ly, r: 16, spec: aSpec });
@@ -352,17 +383,25 @@ export default function NatalWheel({
       .attr("stroke-opacity", 0.1);
 
     // ── 5. Planets — collision-nudged display angle, true-degree tick ───
+    // Glyphs that would collide get pushed apart for legibility; the tick on
+    // the ring still marks the true degree.
+    const nudge = (planets: { name: string; lon: number }[]) => {
+      const out = new Map<string, number>();
+      let cursor = -Infinity;
+      for (const p of [...planets].sort((a, b) => a.lon - b.lon)) {
+        const d = Math.max(p.lon, cursor + 7.5);
+        out.set(p.name, d);
+        cursor = d;
+      }
+      // If the nudge chain wrapped past the first planet, that's a 14-planet
+      // pile-up that doesn't happen in real charts — accept the overlap.
+      return out;
+    };
+
     const sorted = [...chart.planets].sort((a, b) => a.lon - b.lon);
-    const MIN_GAP = 7.5;
-    const display = new Map<string, number>();
-    let prev = -Infinity;
-    for (const p of sorted) {
-      const d = Math.max(p.lon, prev + MIN_GAP);
-      display.set(p.name, d);
-      prev = d;
-    }
-    // If the nudge chain wrapped past the first planet, that's a 14-planet
-    // pile-up that doesn't happen in real charts — accept the overlap.
+    const display = nudge(chart.planets);
+    // Bi-wheel: person A drops inward to leave the outer band for person B.
+    const rPlanet = partner ? R_PLANET_INNER : R_PLANET;
 
     const planetsG = root.append("g");
     const planetPos = new Map<string, [number, number]>();
@@ -370,7 +409,7 @@ export default function NatalWheel({
     const PLANET_STEP = 320;
     sorted.forEach((p, i) => {
       const dLon = display.get(p.name)!;
-      const [px, py] = toXY(dLon, R_PLANET);
+      const [px, py] = toXY(dLon, rPlanet);
       planetPos.set(p.name, [px, py]);
       const delay = T(PLANET_START + i * PLANET_STEP);
 
@@ -416,29 +455,33 @@ export default function NatalWheel({
         .attr("opacity", 1)
         .attr("transform", `translate(${px},${py}) scale(1)`);
 
-      const pSpec = specById.get(planetId(p.name));
+      const pSpec = specById.get(elId(planetId(p.name)));
       if (pSpec) {
         g.attr("data-el-id", pSpec.id);
         hits.push({ kind: "circle", x: px, y: py, r: 22, spec: pSpec });
       }
 
-      // Degree label, one step further in
-      const [dx, dy] = toXY(dLon, R_DEG_LABEL);
-      planetsG
-        .append("text")
-        .attr("x", dx)
-        .attr("y", dy)
-        .attr("text-anchor", "middle")
-        .attr("dominant-baseline", "central")
-        .attr("fill", ASH)
-        .attr("font-family", MONO)
-        .attr("font-size", 8.5)
-        .attr("opacity", 0)
-        .text(fmtDeg(p.degInSign))
-        .transition()
-        .delay(delay + T(150))
-        .duration(T(450))
-        .attr("opacity", 0.45);
+      // Degree label, one step further in. Dropped on the bi-wheel: 24 glyphs
+      // across two rings leaves no room to set it without it colliding with
+      // the outer ring's planets.
+      if (!partner) {
+        const [dx, dy] = toXY(dLon, R_DEG_LABEL);
+        planetsG
+          .append("text")
+          .attr("x", dx)
+          .attr("y", dy)
+          .attr("text-anchor", "middle")
+          .attr("dominant-baseline", "central")
+          .attr("fill", ASH)
+          .attr("font-family", MONO)
+          .attr("font-size", 8.5)
+          .attr("opacity", 0)
+          .text(fmtDeg(p.degInSign))
+          .transition()
+          .delay(delay + T(150))
+          .duration(T(450))
+          .attr("opacity", 0.45);
+      }
 
       // Single discovery pulse
       if (!reduceMotion) {
@@ -463,12 +506,233 @@ export default function NatalWheel({
       }
     });
 
-    // ── 6. Aspect lines — planet-to-planet only, tightest first ─────────
-    const lonOf = new Map(chart.planets.map((p) => [p.name, p.lon]));
-    const drawable = chart.aspects.filter(
-      (a) => lonOf.has(a.a) && lonOf.has(a.b) && a.type !== "conjunction",
-    );
+    // ── 5b. Partner ring — person B just inside the zodiac band ─────────
     const ASPECT_START = PLANET_START + sorted.length * PLANET_STEP + 400;
+
+    if (partner) {
+      const partnerSorted = [...partner.planets].sort((a, b) => a.lon - b.lon);
+      const partnerDisplay = nudge(partner.planets);
+      const partnerG = root.append("g");
+
+      // Hairline between the two rings — without it the eye reads 24 planets
+      // as one crowded chart instead of two people.
+      partnerG
+        .append("circle")
+        .attr("r", R_DIVIDER)
+        .attr("fill", "none")
+        .attr("stroke", ASH)
+        .attr("stroke-opacity", 0)
+        .attr("stroke-width", 1)
+        .attr("stroke-dasharray", "2 6")
+        .transition()
+        .delay(T(PLANET_START - 200))
+        .duration(T(600))
+        .attr("stroke-opacity", 0.18);
+
+      partnerSorted.forEach((p, i) => {
+        const dLon = partnerDisplay.get(p.name)!;
+        const [px, py] = toXY(dLon, R_PLANET_OUTER);
+        const delay = T(PLANET_START + i * PLANET_STEP);
+
+        // True-degree tick, pointing inward from the zodiac ring.
+        const [t1x, t1y] = toXY(p.lon, R_RING_IN - 2);
+        const [t2x, t2y] = toXY(p.lon, R_RING_IN - 9);
+        partnerG
+          .append("line")
+          .attr("x1", t1x)
+          .attr("y1", t1y)
+          .attr("x2", t2x)
+          .attr("y2", t2y)
+          .attr("stroke", SYNASTRY_SOFT)
+          .attr("stroke-width", 1.5)
+          .attr("stroke-opacity", 0)
+          .transition()
+          .delay(delay)
+          .duration(T(300))
+          .attr("stroke-opacity", 0.7);
+
+        const g = partnerG
+          .append("g")
+          .attr("transform", `translate(${px},${py}) scale(0.5)`)
+          .attr("opacity", 0);
+        g.append("text")
+          .attr("text-anchor", "middle")
+          .attr("dominant-baseline", "central")
+          .attr("fill", SYNASTRY_SOFT)
+          .attr("font-size", 19)
+          .text(PLANET_GLYPHS[p.name] ?? p.name[0]);
+        if (p.retrograde) {
+          g.append("text")
+            .attr("x", 12)
+            .attr("y", -9)
+            .attr("fill", SYNASTRY_SOFT)
+            .attr("font-family", MONO)
+            .attr("font-size", 8)
+            .text("Rx");
+        }
+        g.transition()
+          .delay(delay)
+          .duration(T(450))
+          .attr("opacity", 1)
+          .attr("transform", `translate(${px},${py}) scale(1)`);
+
+        const pSpec = specById.get(`b:${planetId(p.name)}`);
+        if (pSpec) {
+          g.attr("data-el-id", pSpec.id);
+          hits.push({ kind: "circle", x: px, y: py, r: 22, spec: pSpec });
+        }
+      });
+
+      // Legend in the bottom corners — outside the r=300 circle, the only
+      // space on a 24-glyph wheel where text doesn't land on a planet.
+      if (names) {
+        const [innerName, outerName] = names;
+        const legend = (
+          text: string,
+          x: number,
+          anchor: "start" | "end",
+          fill: string,
+        ) => {
+          const g = partnerG.append("g").attr("opacity", 0);
+          g.append("circle")
+            .attr("cx", anchor === "start" ? x : x - 8)
+            .attr("cy", R_RING_LABEL + 92)
+            .attr("r", 3)
+            .attr("fill", fill);
+          g.append("text")
+            .attr("x", anchor === "start" ? x + 10 : x - 18)
+            .attr("y", R_RING_LABEL + 92)
+            .attr("text-anchor", anchor)
+            .attr("dominant-baseline", "central")
+            .attr("fill", fill)
+            .attr("font-family", MONO)
+            .attr("font-size", 10)
+            .attr("letter-spacing", "0.16em")
+            .text(text.toUpperCase());
+          g.transition()
+            .delay(T(PLANET_START + 200))
+            .duration(T(600))
+            .attr("opacity", 0.75);
+        };
+        legend(innerName, -300, "start", ASH);
+        legend(outerName, 300, "end", SYNASTRY_SOFT);
+      }
+    }
+
+    // ── 6. Aspect lines ─────────────────────────────────────────────────
+    // Solo: this chart's own aspects. Bi-wheel: the contacts between the two
+    // charts, which are the whole point — neither person's internal aspects
+    // say anything about the pair, and drawing all three sets is unreadable.
+    const lonOf = new Map(chart.planets.map((p) => [p.name, p.lon]));
+
+    if (partner) {
+      const partnerLonOf = new Map(
+        partner.planets.map((p) => [p.name, p.lon] as const),
+      );
+      if (partner.angles) {
+        partnerLonOf.set("Ascendant", partner.angles.ascendant.lon);
+        partnerLonOf.set("MC", partner.angles.mc.lon);
+      }
+      const ownLonOf = new Map(lonOf);
+      if (chart.angles) {
+        ownLonOf.set("Ascendant", chart.angles.ascendant.lon);
+        ownLonOf.set("MC", chart.angles.mc.lon);
+      }
+
+      const synastryG = root.append("g");
+      // Same cut the annotations take, so every drawn line is tappable.
+      computeSynastry(chart, partner)
+        .slice(0, 24)
+        .forEach((s, i) => {
+          const lonA = ownLonOf.get(s.a);
+          const lonB = partnerLonOf.get(s.b);
+          if (lonA === undefined || lonB === undefined) return;
+
+          const [x1, y1] = toXY(lonA, R_ASPECT - 2);
+          const [x2, y2] = toXY(lonB, R_ASPECT - 2);
+          const hard = HARD_ASPECTS.has(s.type);
+          const opacity = hard
+            ? 0.28 + s.strength * 0.08
+            : 0.12 + s.strength * 0.05;
+          const len = Math.hypot(x2 - x1, y2 - y1);
+
+          // A tight conjunction is a sub-pixel line — invisible and impossible
+          // to tap. Mark it instead: it's the strongest contact in synastry and
+          // has to be reachable.
+          if (s.type === "conjunction") {
+            const [mx, my] = [(x1 + x2) / 2, (y1 + y2) / 2];
+            const dot = synastryG
+              .append("circle")
+              .attr("cx", mx)
+              .attr("cy", my)
+              .attr("r", 4.5)
+              .attr("fill", "none")
+              .attr("stroke", SYNASTRY_HARD)
+              .attr("stroke-width", 1.2)
+              .attr("stroke-opacity", 0)
+              .transition()
+              .delay(T(ASPECT_START + i * 180))
+              .duration(T(450))
+              .attr("stroke-opacity", 0.3 + s.strength * 0.08);
+
+            const cSpec = specById.get(synastryAspectId(s));
+            if (cSpec) {
+              dot.selection().attr("data-el-id", cSpec.id);
+              hits.push({ kind: "circle", x: mx, y: my, r: 14, spec: cSpec });
+            }
+            return;
+          }
+
+          const line = synastryG
+            .append("line")
+            .attr("x1", x1)
+            .attr("y1", y1)
+            .attr("x2", x2)
+            .attr("y2", y2)
+            .attr("stroke", hard ? SYNASTRY_HARD : SYNASTRY_SOFT)
+            .attr("stroke-width", hard ? 1.3 : 1)
+            .attr("stroke-dasharray", s.type === "quincunx" ? "3 5" : `${len}`)
+            .attr("stroke-dashoffset", s.type === "quincunx" ? 0 : len)
+            .attr("stroke-opacity", s.type === "quincunx" ? 0 : opacity);
+
+          if (s.type === "quincunx") {
+            line
+              .transition()
+              .delay(T(ASPECT_START + i * 180))
+              .duration(T(500))
+              .attr("stroke-opacity", opacity);
+          } else {
+            line
+              .transition()
+              .delay(T(ASPECT_START + i * 180))
+              .duration(T(550))
+              .ease(d3.easeCubicOut)
+              .attr("stroke-dashoffset", 0);
+          }
+
+          if (!reduceMotion && hard && i < 3) {
+            line
+              .attr("class", "aspect-breathe")
+              .style("--aspect-base-opacity", String(opacity))
+              .style(
+                "animation-delay",
+                `${(ASPECT_START + i * 180 + 800) / 1000}s`,
+              );
+          }
+
+          const spec = specById.get(synastryAspectId(s));
+          if (spec) {
+            line.attr("data-el-id", spec.id);
+            hits.push({ kind: "line", x1, y1, x2, y2, spec });
+          }
+        });
+    }
+
+    const drawable = partner
+      ? []
+      : chart.aspects.filter(
+          (a) => lonOf.has(a.a) && lonOf.has(a.b) && a.type !== "conjunction",
+        );
     const aspectsG = root.append("g");
     drawable.forEach((a, i) => {
       const [x1, y1] = toXY(lonOf.get(a.a)!, R_ASPECT - 2);
@@ -514,7 +778,7 @@ export default function NatalWheel({
           );
       }
 
-      const aspSpec = specById.get(aspectId(a));
+      const aspSpec = specById.get(elId(aspectId(a)));
       if (aspSpec) {
         line.attr("data-el-id", aspSpec.id);
         hits.push({ kind: "line", x1, y1, x2, y2, spec: aspSpec });
@@ -635,7 +899,7 @@ export default function NatalWheel({
       svg.on("click", null);
       svg.selectAll("*").interrupt().remove();
     };
-  }, [chart, onSelect]);
+  }, [chart, partner, names, onSelect]);
 
   // Selection highlight — dim the wheel, light the selected element (and, for
   // an aspect, the two planets it joins). Independent of the heavy draw effect.
@@ -653,19 +917,37 @@ export default function NatalWheel({
     svg.selectAll(".wheel-invite").interrupt().remove();
 
     const ids = new Set<string>([selectedId]);
-    if (selectedId.startsWith("aspect:")) {
-      const asp = drawableAspects(chart).find(
-        (a) => aspectId(a) === selectedId,
-      );
+
+    // Selecting an aspect also lights the two planets it joins.
+    const bare = partner ? selectedId.replace(/^a:/, "") : selectedId;
+    if (bare.startsWith("aspect:")) {
+      const asp = drawableAspects(chart).find((a) => aspectId(a) === bare);
       if (asp) {
-        ids.add(planetId(asp.a));
-        ids.add(planetId(asp.b));
+        ids.add(partner ? `a:${planetId(asp.a)}` : planetId(asp.a));
+        ids.add(partner ? `a:${planetId(asp.b)}` : planetId(asp.b));
+      }
+    }
+    // A synastry line joins one planet from each ring.
+    if (partner && selectedId.startsWith("synastry:")) {
+      const hit = computeSynastry(chart, partner).find(
+        (s) => synastryAspectId(s) === selectedId,
+      );
+      if (hit) {
+        // Either end may be an angle rather than a planet.
+        const endId = (slot: "a" | "b", body: string) =>
+          body === "Ascendant"
+            ? `${slot}:${angleId("ASC")}`
+            : body === "MC"
+              ? `${slot}:${angleId("MC")}`
+              : `${slot}:${planetId(body)}`;
+        ids.add(endId("a", hit.a));
+        ids.add(endId("b", hit.b));
       }
     }
     ids.forEach((id) =>
       svg.selectAll(`[data-el-id="${id}"]`).classed("is-selected", true),
     );
-  }, [selectedId, chart]);
+  }, [selectedId, chart, partner]);
 
   return (
     <svg
@@ -673,7 +955,11 @@ export default function NatalWheel({
       viewBox="-320 -320 640 640"
       className="w-full h-full"
       role="img"
-      aria-label={`Natal chart for ${chart.name}`}
+      aria-label={
+        partner
+          ? `Synastry chart for ${chart.name} and ${partner.name}`
+          : `Natal chart for ${chart.name}`
+      }
     />
   );
 }

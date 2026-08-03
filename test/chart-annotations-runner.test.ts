@@ -28,7 +28,7 @@ test("validates bounded annotation payloads", () => {
   assert.equal(
     validateAnnotationInput({
       ...body,
-      elements: Array(101).fill(body.elements[0]),
+      elements: Array(201).fill(body.elements[0]),
     }),
     "elements",
   );

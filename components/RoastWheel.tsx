@@ -11,6 +11,7 @@ const KIND_LABEL: Record<WheelSelection["kind"], string> = {
   aspect: "Aspect",
   house: "House",
   sign: "Sign",
+  synastry: "Between you",
 };
 
 // The subject's real natal wheel on teaser/full roast pages. Fetches the

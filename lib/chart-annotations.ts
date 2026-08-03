@@ -1,3 +1,8 @@
+import {
+  computeSynastry,
+  synastryAspectId,
+  type SynastryAspect,
+} from "./synastry";
 import type { NatalAspect, NatalChart } from "./types";
 
 // Per-element copy for the interactive natal wheel. `facts` is computed
@@ -10,7 +15,15 @@ export interface ChartAnnotation {
 }
 export type ChartAnnotations = Record<string, ChartAnnotation>;
 
-export type ElementKind = "planet" | "angle" | "aspect" | "house" | "sign";
+export type ElementKind =
+  "planet" | "angle" | "aspect" | "house" | "sign" | "synastry";
+
+/**
+ * Which chart an element belongs to on a duo roast. Solo roasts never carry
+ * one, so their ids stay exactly as they were and old cached annotations keep
+ * resolving.
+ */
+export type PersonSlot = "a" | "b";
 
 export interface ElementSpec {
   id: string;
@@ -151,11 +164,78 @@ export function enumerateElements(chart: NatalChart): ElementSpec[] {
   return out;
 }
 
+/** Prefix a solo element id with the person it belongs to on a duo roast. */
+export const personElementId = (slot: PersonSlot, id: string) =>
+  `${slot}:${id}`;
+
+/** Split "a:planet:Sun" back into its slot and solo id. Null for solo ids. */
+export function splitPersonElementId(
+  id: string,
+): { slot: PersonSlot; id: string } | null {
+  const match = /^([ab]):(.+)$/.exec(id);
+  return match ? { slot: match[1] as PersonSlot, id: match[2] } : null;
+}
+
+const SYNASTRY_SYMBOL: Record<SynastryAspect["type"], string> = ASPECT_SYMBOL;
+
+/**
+ * Every clickable element on a duo roast: both charts' elements namespaced by
+ * person, plus the cross-aspects between them. The cross-aspects come first —
+ * they are the reason the pair bought a duo roast, and putting them at the top
+ * means a truncated model response still covers the relationship itself.
+ *
+ * `topSynastry` bounds the aspect list; a full pair produces 60+ contacts and
+ * the long tail is 6°-orb noise nobody taps.
+ */
+export function enumerateDuoElements(
+  chartA: NatalChart,
+  chartB: NatalChart,
+  options: { nameA?: string; nameB?: string; topSynastry?: number } = {},
+): ElementSpec[] {
+  const nameA = options.nameA || chartA.name || "Person 1";
+  const nameB = options.nameB || chartB.name || "Person 2";
+  const limit = options.topSynastry ?? 24;
+
+  const out: ElementSpec[] = computeSynastry(chartA, chartB)
+    .slice(0, limit)
+    .map((s) => ({
+      id: synastryAspectId(s),
+      kind: "synastry" as const,
+      title: `${nameA}'s ${s.a} ${SYNASTRY_SYMBOL[s.type]} ${nameB}'s ${s.b}`,
+      facts: `${s.type}, orb ${s.orb.toFixed(1)}° · strength ${s.strength}/5 · between the two charts`,
+    }));
+
+  for (const [slot, chart, who] of [
+    ["a", chartA, nameA],
+    ["b", chartB, nameB],
+  ] as const) {
+    for (const e of enumerateElements(chart)) {
+      // The bi-wheel is oriented to person A's ascendant, so only A's houses
+      // and sign segments exist on screen. Generating copy for B's would spend
+      // model calls on elements nobody can ever tap.
+      if (slot === "b" && (e.kind === "house" || e.kind === "sign")) continue;
+      out.push({
+        ...e,
+        id: personElementId(slot, e.id),
+        title: `${who}'s ${e.title}`,
+      });
+    }
+  }
+
+  return out;
+}
+
 interface GenerateChartAnnotationOptions {
   runnerUrl?: string;
   runnerSecret?: string;
   fetchImpl?: typeof fetch;
   timeoutMs?: number;
+  /**
+   * Elements to write copy for. Defaults to this chart's own. Duo roasts pass
+   * enumerateDuoElements() so both charts and the contacts between them get
+   * lines from a single call.
+   */
+  elements?: ElementSpec[];
 }
 
 // The runner writes ~59 lines in chunks and takes ~100s end to end. Only the
@@ -170,7 +250,7 @@ export async function generateChartAnnotations(
   roastText: string,
   options: GenerateChartAnnotationOptions = {},
 ): Promise<ChartAnnotations> {
-  const elements = enumerateElements(chart);
+  const elements = options.elements ?? enumerateElements(chart);
   const annotations: ChartAnnotations = {};
   for (const e of elements) annotations[e.id] = { facts: e.facts, line: "" };
 

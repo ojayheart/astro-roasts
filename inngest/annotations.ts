@@ -3,7 +3,10 @@ import { eq } from "drizzle-orm";
 import { inngest } from "./client";
 import { db } from "@/lib/db";
 import { roasts } from "@/lib/db/schema";
-import { generateChartAnnotations } from "@/lib/chart-annotations";
+import {
+  generateChartAnnotations,
+  enumerateDuoElements,
+} from "@/lib/chart-annotations";
 import type { NatalChart } from "@/lib/types";
 
 /**
@@ -48,10 +51,12 @@ export const generateAnnotations = inngest.createFunction(
         where: eq(roasts.id, roastId),
         columns: {
           chartJson: true,
+          subjectCharts: true,
           chartAnnotations: true,
           fullText: true,
           paid: true,
         },
+        with: { subjects: { with: { user: true } } },
       });
 
       // Every gate is re-checked here, not just at queue time — the event may
@@ -62,9 +67,26 @@ export const generateAnnotations = inngest.createFunction(
       if (!roast.fullText) return { roastId, skipped: "no_text" };
       if (roast.chartAnnotations) return { roastId, skipped: "cached" };
 
+      // A duo roast writes copy for both charts plus the contacts between
+      // them — the cross-aspects are the relationship, and a wheel where only
+      // person 1 responds to a tap reads as an afterthought.
+      const charts = roast.subjectCharts as NatalChart[] | null;
+      const names = [...(roast.subjects ?? [])]
+        .sort((a, b) => a.position - b.position)
+        .map((s) => s.user.name);
+      const duo = charts?.length === 2 ? charts : null;
+
       const annotations = await generateChartAnnotations(
         roast.chartJson as NatalChart,
         roast.fullText,
+        duo
+          ? {
+              elements: enumerateDuoElements(duo[0], duo[1], {
+                nameA: names[0],
+                nameB: names[1],
+              }),
+            }
+          : {},
       );
 
       await db
