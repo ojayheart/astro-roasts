@@ -6,6 +6,7 @@ import { roasts } from "@/lib/db/schema";
 import type { NatalChart } from "@/lib/types";
 import {
   enumerateElements,
+  annotationsMatchDuo,
   type ChartAnnotations,
 } from "@/lib/chart-annotations";
 import { queueChartAnnotationsIfReady } from "@/lib/queue-chart-annotations";
@@ -47,6 +48,7 @@ export async function POST(req: NextRequest) {
       where: eq(roasts.id, roastId),
       columns: {
         chartJson: true,
+        subjectCharts: true,
         chartAnnotations: true,
         fullText: true,
         paid: true,
@@ -57,11 +59,13 @@ export async function POST(req: NextRequest) {
     }
     const chart = roast.chartJson as NatalChart;
 
-    // Cache hit — the witty version is already generated.
-    if (roast.chartAnnotations) {
-      return NextResponse.json({
-        annotations: roast.chartAnnotations as ChartAnnotations,
-      });
+    // Cache hit — the witty version is already generated. A duo roast holding
+    // solo-keyed annotations is the exception: those match nothing the bi-wheel
+    // draws, so serving them would leave every tap blank forever.
+    const cached = roast.chartAnnotations as ChartAnnotations | null;
+    const isDuo = (roast.subjectCharts as unknown[] | null)?.length === 2;
+    if (cached && (!isDuo || annotationsMatchDuo(cached))) {
+      return NextResponse.json({ annotations: cached });
     }
 
     // Cache cold. Facts keep the wheel interactive now; queueing self-heals a
