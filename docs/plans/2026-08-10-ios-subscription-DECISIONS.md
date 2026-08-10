@@ -465,3 +465,99 @@ database read — the routes' Drizzle queries type-check and build, but they hav
 against Neon. Still deferred: the chart recompute on `PUT /api/me/birth` (round 5).
 Constraint 15 (`server.js:16`'s `claude-opus-4-8` default) is still open and belongs to
 whichever round revisits the runner.
+
+## Round 10 (`/api/duo`, `/api/duo/:id`, `DELETE /api/account`)
+
+**All three duo entry points are gated on `isSubscribed`, reads included.** Plan §3 only
+annotates `/api/daily` with "gated to subscribers", but duos are a v1 subscription feature
+and `lib/entitlement.ts` is the single authorisation source. Gating the reads as well as the
+create keeps the surface consistent with `/api/daily` and `/api/forecast`: a lapsed
+subscriber gets `402 subscription_required` rather than a silently degraded library. If the
+app later wants a lapsed user to still see what they paid to generate, that is a one-line
+change in `serveDuoList`/`serveDuo`.
+
+**`DELETE /api/account` is auth-only, never entitlement-gated.** App Review requires the
+in-app deletion path to work for anyone with an account, subscribed or not.
+
+**A duo is the existing group path with a two-person cast.** `parseDuoRequest` builds the
+partner from `{name, dob|date, birthTime|time, birthPlace|birthCity}` and hands
+`["couple", [owner, partner]]` straight to `validateGroupRequest` from `lib/group.ts`;
+`normalizeRelationship` supplies the relationship. The route inserts a `roasts` row with
+`kind: "couple"`, the two `roast_subjects` rows, then sends `roast/generate` with
+`people` — which `inngest/pipeline.ts:162` turns into `buildGroupRunnerPayload` and the
+runner's `mode:"group"`. No synastry maths and no prompt text were written this round.
+
+**Missing `gender` defaults to `"unspecified"`.** Plan §3's duo payload is
+`(name, dob, birth place, relationship)` — no gender — but `validPerson` in `lib/group.ts`
+requires a non-empty gender and the runner payload carries it. Defaulting keeps the plan's
+field list sufficient without loosening the shared validator. The owner's own gender comes
+from `users.gender`, with the same default when null.
+
+**The partner becomes a real `users` row.** `duos.subject_id` is `NOT NULL REFERENCES
+users(id)` (migration 0009), so there is no way to store a partner as loose JSON. The row is
+created exactly the way `app/api/generate/route.ts` creates persons 2..N of a group roast:
+no email, `lat/lon = 0`, `tz = "UTC"`, a random referral code.
+
+**`POST /api/duo` replies `201` with the duo, not a bare job id.** Plan §3 says "→ job id";
+the duo id *is* the job handle, and the row it comes back in is the same shape
+`GET /api/duo/:id` returns, so the client has one model instead of two. `201` because a row
+was created; every other duo reply is `200`.
+
+**In-flight duos use the daily/forecast convention exactly (constraint 16).** A duo whose
+roast is not `ready` returns `200` with `status` from the roast row and `title`, `goldLine`
+and `body` null — the same 200-with-null-content contract `/api/daily` and `/api/forecast`
+use for a `generating` row. The client polls. No third shape was invented.
+
+**`pass()` and an `Auth` type are now exported from `lib/subscription-api.ts`.** The duo
+routes need the 401/402 gate but not the daily/forecast `subject` lookup, so `Gate` was split
+into `Auth` (`userId` + `subscribed`) and `Gate = Auth & { subject }`. Reusing the round-9
+plumbing rather than re-authoring the gate. No behaviour changed for daily or forecast.
+
+**Account deletion is a hard delete in FK order, scoped by `PURGE_ORDER`.** The migration
+declares no `ON DELETE CASCADE`, so the order is the contract: `referrals`, `duos`,
+`roast_subjects`, `connections`, `daily_roasts`, `forecasts`, `devices`, `subscriptions`,
+`sessions`, `magic_links`, `roasts`, `users`. Everything referencing `roasts(id)`
+(`roast_subjects`, `connections`, `duos`) goes before `roasts`; everything referencing
+`users(id)` goes before `users`. The order is pinned by a unit test, not by comment.
+
+**`referrals` is an update, not a delete.** `users.referred_by` points at the account being
+removed from *other people's* rows, so it is set to null first. Deleting those referred users
+would delete strangers' accounts.
+
+**The cascade also takes duo placeholder users, and only those.** `subjectIds` selects
+subjects of the caller's duos whose `users.email IS NULL` — the rows this API invented and
+nobody can log into. A subject with an email is somebody's real account and is left alone,
+so the duo row goes but the person stays. Roasts owned by the caller take their
+`roast_subjects` and `connections` with them even when a co-subject is a stranger.
+
+**`magic_links` is keyed by email, not user id.** The purge reads the emails of the ids being
+deleted first, then deletes the links. Nothing else in the schema is email-keyed.
+
+**Reply is `200 {deleted: true, rows: {...counts}}`.** Counts come from `.returning()` row
+lengths, so the response reports what actually went, which is the only cheap evidence a
+client or an operator gets that the cascade reached every table.
+
+**Constraint 15 stays open and is recorded, not chased.** `ops/hermes-roast-runner/server.js:16`
+still defaults `ROAST_MODEL` to `claude-opus-4-8` for the runner's own CLI path, while
+`lib/roast-model.ts` defaults to `claude-opus-5` per plan §7. They are two different
+processes reading the same env var name; in deployment the var is set explicitly. Changing
+the runner default is a runner change and was out of this round's scope.
+
+**Constraint 13 stays as recorded in round 7.** `lib/roast-model.ts` reads
+`OPENROUTER_BASE_URL` at module import and `buildVoiceBlock` falls back the way round 7
+documented. Nothing in this round touches that file.
+
+Measured: `npx tsc --noEmit --incremental false` exit 0 before and after. `npm test`
+154 tests / 152 pass / 2 fail before, 166 / 164 / 2 after — +12 passing, all in
+`test/duo-api.test.ts` and `test/account-api.test.ts`; `swisseph` importable in both runs,
+and the two failures are the same pre-existing file-level throws at
+`test/chart-annotations.test.ts:1:1` and `test/compute-chart.test.ts:1:1`.
+
+## Blockers (round 10)
+
+None. Not done this round, by scope: the Inngest hourly daily fan-out, the monthly job and
+the yearly job. Not verified: no live database read or write has happened — the duo and
+account queries type-check but have never run against Neon, so the cascade's real row counts
+and the `alias()` joins are unproven at runtime; no live provider call has been made; the
+group generation path was not run end to end. Still deferred: the chart recompute on
+`PUT /api/me/birth` (round 5).
