@@ -46,6 +46,62 @@ throwaway venv at `/tmp/.sqlparse-venv`.** Not added to project dependencies. Re
 statements — 5 `CreateStmt`, 4 `IndexStmt`, 2 `AlterTableStmt`, both of the latter
 `AT_AddColumn` with `missing_ok`. No ALTER of an existing column, no DROP.
 
+## Round 3 (Drizzle mirror of 0009)
+
+Decisions carrier stays at this docs path. `.lh-harness/` is harness-owned — never read,
+listed, or written by this run.
+
+**Baseline re-measured, not assumed.** Before editing: `npm run lint` exit 0; `npm test`
+95 tests / 93 pass / 2 fail (`test/chart-annotations.test.ts:1:1`,
+`test/compute-chart.test.ts:1:1`). After editing: identical. Neither failing file was
+touched.
+
+**`timestamptz` → `timestamp(name, { withTimezone: true })`.** The SQL is authoritative
+and every new timestamp column is `timestamptz`. Existing columns in the file use bare
+`timestamp(...)`; those are left alone rather than retro-fitted, so the file now carries
+both spellings — deliberate, each matching the SQL that created its table.
+
+**`date` → drizzle `date(...)`, default string mode.** `for_date`, `period_start` and
+`period_end` are calendar dates with no zone; the string mode round-trips `YYYY-MM-DD`
+without a UTC-midnight shift, which matters because the daily roast is keyed on the
+user's local date.
+
+**`jsonb` → `jsonb(...)` untyped.** Matches how `chartJson`, `analysis` and
+`extraPlacements` are already declared on `roasts` — no `$type<>()` generic anywhere in
+this file.
+
+**Composite uniques use unnamed `unique().on(...)`.** The SQL writes bare
+`UNIQUE (user_id, for_date)` and `UNIQUE (user_id, kind, period_start)`, so Postgres
+names them `*_key` while Drizzle would emit `*_unique`. The constraint columns and
+semantics match exactly; only the generated identifier differs, and nothing in the code
+references it by name. Naming them explicitly would have to guess Postgres' own
+convention, which is the more surprising option.
+
+**Single-column uniques inline.** `subscriptions.original_txn_id`,
+`devices.apns_token`, `users.apple_sub` use `.unique()` on the column, matching
+`referralCode` and `sessions.token` in this file.
+
+**Index constants keep the SQL's names verbatim** — `subscriptions_user_idx`,
+`subscriptions_status_idx`, `devices_user_idx`, `duos_owner_idx` — passed as the first
+argument to `index(...)` exactly as the existing tables do.
+
+**`relations(...)` added for all five tables.** The file already declares relations for
+every table it has, so omitting them would be the divergence. `duos` has two FKs to
+`users`, so `owner`/`subject` carry `relationName`, mirroring how `connections` handles
+its `buyer`/`friend` pair.
+
+**Only two columns added to `users`** — `appleSub` and `onboardedAt`, placed before
+`createdAt` so the created-at stays last as it is on every other table. `tz` untouched at
+line 27.
+
+**`roastId` on `duos` is nullable with no `.notNull()`** — the SQL writes
+`roast_id uuid REFERENCES roasts(id)` with no NOT NULL, because a duo exists before its
+roast finishes generating.
+
+**No `onDelete` behaviour anywhere.** The SQL declares plain `REFERENCES` with no
+`ON DELETE` clause on any of the nine new foreign keys, so the mirror uses bare
+`.references(() => ...)`, matching both the SQL and every existing FK in the file.
+
 ## Blockers
 
 None this round.

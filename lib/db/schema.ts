@@ -8,6 +8,8 @@ import {
   integer,
   index,
   jsonb,
+  date,
+  unique,
   type AnyPgColumn,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
@@ -29,6 +31,8 @@ export const users = pgTable(
     referredBy: uuid("referred_by").references((): AnyPgColumn => users.id),
     stripeCustomerId: text("stripe_customer_id"),
     credits: integer("credits").default(0).notNull(),
+    appleSub: text("apple_sub").unique(), // Sign in with Apple subject
+    onboardedAt: timestamp("onboarded_at", { withTimezone: true }),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (table) => [
@@ -139,12 +143,124 @@ export const roastSubjects = pgTable(
   (table) => [index("roast_subjects_roast_idx").on(table.roastId)],
 );
 
+export const subscriptions = pgTable(
+  "subscriptions",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id")
+      .references(() => users.id)
+      .notNull(),
+    platform: text("platform").notNull(), // ios | web
+    originalTxnId: text("original_txn_id").unique(), // Apple originalTransactionId
+    productId: text("product_id").notNull(),
+    status: text("status").notNull(), // trial | active | grace | expired | refunded
+    expiresAt: timestamp("expires_at", { withTimezone: true }),
+    environment: text("environment").default("production").notNull(),
+    rawLatest: jsonb("raw_latest"), // last decoded App Store notification payload
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    index("subscriptions_user_idx").on(table.userId),
+    index("subscriptions_status_idx").on(table.status, table.expiresAt),
+  ],
+);
+
+export const dailyRoasts = pgTable(
+  "daily_roasts",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id")
+      .references(() => users.id)
+      .notNull(),
+    forDate: date("for_date").notNull(),
+    title: text("title"),
+    body: text("body"),
+    goldLine: text("gold_line"),
+    transits: jsonb("transits"),
+    status: text("status").default("generating").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [unique().on(table.userId, table.forDate)],
+);
+
+export const forecasts = pgTable(
+  "forecasts",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id")
+      .references(() => users.id)
+      .notNull(),
+    kind: text("kind").notNull(), // month | year
+    periodStart: date("period_start").notNull(),
+    periodEnd: date("period_end").notNull(),
+    title: text("title"),
+    body: text("body"),
+    highlights: jsonb("highlights"),
+    avoid: jsonb("avoid"),
+    status: text("status").default("generating").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [unique().on(table.userId, table.kind, table.periodStart)],
+);
+
+export const devices = pgTable(
+  "devices",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id")
+      .references(() => users.id)
+      .notNull(),
+    apnsToken: text("apns_token").notNull().unique(),
+    tz: text("tz").notNull(), // handset timezone, follows the traveller
+    notifyHour: integer("notify_hour").default(8).notNull(),
+    build: text("build"),
+    lastSeenAt: timestamp("last_seen_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [index("devices_user_idx").on(table.userId)],
+);
+
+export const duos = pgTable(
+  "duos",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    ownerId: uuid("owner_id")
+      .references(() => users.id)
+      .notNull(),
+    subjectId: uuid("subject_id")
+      .references(() => users.id)
+      .notNull(),
+    relationship: text("relationship").notNull(),
+    roastId: uuid("roast_id").references(() => roasts.id),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [index("duos_owner_idx").on(table.ownerId)],
+);
+
 // Relations for Drizzle query API
 export const usersRelations = relations(users, ({ many }) => ({
   roasts: many(roasts),
   sessions: many(sessions),
   sentConnections: many(connections, { relationName: "buyer" }),
   receivedConnections: many(connections, { relationName: "friend" }),
+  subscriptions: many(subscriptions),
+  dailyRoasts: many(dailyRoasts),
+  forecasts: many(forecasts),
+  devices: many(devices),
+  ownedDuos: many(duos, { relationName: "owner" }),
+  subjectDuos: many(duos, { relationName: "subject" }),
 }));
 
 export const roastsRelations = relations(roasts, ({ one, many }) => ({
@@ -177,4 +293,34 @@ export const roastSubjectsRelations = relations(roastSubjects, ({ one }) => ({
     fields: [roastSubjects.userId],
     references: [users.id],
   }),
+}));
+
+export const subscriptionsRelations = relations(subscriptions, ({ one }) => ({
+  user: one(users, { fields: [subscriptions.userId], references: [users.id] }),
+}));
+
+export const dailyRoastsRelations = relations(dailyRoasts, ({ one }) => ({
+  user: one(users, { fields: [dailyRoasts.userId], references: [users.id] }),
+}));
+
+export const forecastsRelations = relations(forecasts, ({ one }) => ({
+  user: one(users, { fields: [forecasts.userId], references: [users.id] }),
+}));
+
+export const devicesRelations = relations(devices, ({ one }) => ({
+  user: one(users, { fields: [devices.userId], references: [users.id] }),
+}));
+
+export const duosRelations = relations(duos, ({ one }) => ({
+  owner: one(users, {
+    fields: [duos.ownerId],
+    references: [users.id],
+    relationName: "owner",
+  }),
+  subject: one(users, {
+    fields: [duos.subjectId],
+    references: [users.id],
+    relationName: "subject",
+  }),
+  roast: one(roasts, { fields: [duos.roastId], references: [roasts.id] }),
 }));
