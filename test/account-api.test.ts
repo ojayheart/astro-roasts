@@ -84,3 +84,11 @@ test("an account with no duos purges only itself", async () => {
   );
   for (const ids of batches) assert.deepEqual(ids, [USER_ID]);
 });
+
+test("credentials go last, so a mid-purge failure leaves a retryable account", async () => {
+  const order = [...PURGE_ORDER];
+  for (const step of ["duos", "roasts", "daily_roasts", "subscriptions"]) {
+    assert.ok(order.indexOf(step as PurgeStep) < order.indexOf("sessions"));
+  }
+  assert.ok(order.indexOf("magic_links") < order.indexOf("users"));
+});

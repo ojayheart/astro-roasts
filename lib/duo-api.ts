@@ -10,6 +10,7 @@ import {
   validateGroupRequest,
   type PersonInput,
 } from "./group.ts";
+import { normalizeBirthLocation } from "./location.ts";
 import { pass, type Auth, type Reply } from "./subscription-api.ts";
 
 export type DuoRow = {
@@ -74,7 +75,12 @@ export function parseDuoRequest(
 
   return {
     relationship: normalizeRelationship(r.relationship, "couple"),
-    people: validated.people,
+    // Same normalisation point as app/api/generate/route.ts — the runner and
+    // the city lookup both key on the collapsed string.
+    people: validated.people.map((person) => ({
+      ...person,
+      birthPlace: normalizeBirthLocation(person.birthPlace),
+    })),
   };
 }
 

@@ -3,6 +3,11 @@
  * nothing referencing users(id) or roasts(id) survives the row it points at.
  * `referrals` is an update, not a delete: users.referred_by points back at the
  * account being removed, so it is cleared before users go.
+ *
+ * The neon-http driver has no interactive transactions, so the steps run in
+ * sequence. Every step is idempotent, and the credentials the caller needs to
+ * retry — sessions and magic_links — go last, so a failure anywhere earlier
+ * leaves a re-runnable DELETE rather than a locked-out half-deleted account.
  */
 
 import type { Reply } from "./subscription-api.ts";
@@ -12,13 +17,13 @@ export const PURGE_ORDER = [
   "duos",
   "roast_subjects",
   "connections",
+  "roasts",
   "daily_roasts",
   "forecasts",
   "devices",
   "subscriptions",
-  "sessions",
   "magic_links",
-  "roasts",
+  "sessions",
   "users",
 ] as const;
 

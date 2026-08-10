@@ -499,7 +499,7 @@ created exactly the way `app/api/generate/route.ts` creates persons 2..N of a gr
 no email, `lat/lon = 0`, `tz = "UTC"`, a random referral code.
 
 **`POST /api/duo` replies `201` with the duo, not a bare job id.** Plan §3 says "→ job id";
-the duo id *is* the job handle, and the row it comes back in is the same shape
+the duo id _is_ the job handle, and the row it comes back in is the same shape
 `GET /api/duo/:id` returns, so the client has one model instead of two. `201` because a row
 was created; every other duo reply is `200`.
 
@@ -521,7 +521,7 @@ declares no `ON DELETE CASCADE`, so the order is the contract: `referrals`, `duo
 `users(id)` goes before `users`. The order is pinned by a unit test, not by comment.
 
 **`referrals` is an update, not a delete.** `users.referred_by` points at the account being
-removed from *other people's* rows, so it is set to null first. Deleting those referred users
+removed from _other people's_ rows, so it is set to null first. Deleting those referred users
 would delete strangers' accounts.
 
 **The cascade also takes duo placeholder users, and only those.** `subjectIds` selects
@@ -561,3 +561,90 @@ account queries type-check but have never run against Neon, so the cascade's rea
 and the `alias()` joins are unproven at runtime; no live provider call has been made; the
 group generation path was not run end to end. Still deferred: the chart recompute on
 `PUT /api/me/birth` (round 5).
+
+## Round 11 — the three scheduled jobs, and constraint 17
+
+**The fan-out is two functions, not one.** `daily-roast-fan-out` runs on `cron 0 * * * *`,
+selects the cohort and sends one `daily/generate` event per user; `generate-daily-roast`
+consumes those. That is Inngest's own fan-out idiom and it buys per-user retry — a single
+user whose city fails to geocode does not fail the hour for everyone else. Both are
+registered on `app/api/inngest/route.ts`, the repo's only serve handler, alongside
+`generate-roast` and `generate-chart-annotations`, on the same client from `inngest/client.ts`.
+
+**The notify hour comes from `devices`, per Ruling 2.** `notifyDevices()` reads every
+handset row and `dueDevices()` compares `notify_hour` against the handset's local hour
+computed with `Intl.DateTimeFormat(..., { hourCycle: "h23" })`. It is not a SQL predicate
+because offsets are not whole hours — Kathmandu is +5:45, Chatham +12:45 — so "which
+notify_hour is due at 20:00 UTC" is nearly the whole 0–23 range and the filter would not
+narrow anything. Comparing in JS is one small read per hour and is exact for half-hour and
+quarter-hour zones. If the device table outgrows a single read, the fix is a paged select,
+not a smarter predicate.
+
+**One push per account.** Two handsets on the same user due in the same hour dedupe to one
+cohort entry, and the roast date is `localDate(device.tz)` — the handset's calendar day, not
+UTC's. An unresolvable timezone yields `null` and the device is skipped rather than pushed at
+the wrong hour.
+
+**Entitlement is checked twice.** Once when the cohort is built and again inside
+`generate-daily-roast`, both through `isSubscribed`. The cron can fire twice and a
+subscription can lapse between selection and generation. The per-user function also skips
+when a `ready` row already exists for that date, so a double fire costs a read, not a
+completion.
+
+**Monthly and yearly are one factory, two crons.** `forecastBatchJob(id, cron, periodFor)`
+builds both, so `0 2 1 * *` (monthly, per plan §4) and `0 3 1 1 *` (yearly, 1 January) share
+one body. Each builds its cohort from `activeSubscribers()`, submits through
+`submitForecastBatch` → `lib/roast-model.ts`'s Batch API path, polls `batchStatus` on a
+`step.sleep("10m")` loop capped at 24 polls, then writes rows via `applyForecastResults`.
+`custom_id` is the user id, so results key back by identity and never by list order.
+
+**Per-user yearly anniversaries are not built.** Plan §4 says "1 Jan + per-user
+anniversary". Only the 1 January cron exists. The anniversary variant needs a second cohort
+rule (birthday-relative windows) and a `forecasts` key that is not the calendar year, which
+is a schema question this migration did not answer. Recorded as deferred, not dropped.
+
+**`lib/subscription-store.ts` is new, and the two routes now use it.** The daily and forecast
+upserts existed only inline in `app/api/daily/route.ts` and `app/api/forecast/route.ts`. The
+jobs need the same writes, and two copies of an `onConflictDoUpdate` against the same unique
+key is exactly the divergence the plan's idempotency guard is meant to prevent. The routes
+were refactored onto it rather than the job duplicating them; behaviour and response shapes
+are unchanged, `next build` compiles both routes.
+
+**Constraint 17a — the purge cannot be a transaction here.** `lib/db.ts` builds the client
+with `drizzle-orm/neon-http`, and that driver's session throws
+`No transactions support in neon-http driver` (node_modules/drizzle-orm/neon-http/session.js:152).
+`db.transaction` is therefore not available without swapping the driver, which is a
+deployment-wide change well outside this task. Instead the ordering was made recoverable:
+`roasts` moved earlier and `magic_links`/`sessions` moved to the last two steps before
+`users`. Every step is idempotent, so the consequence of a mid-sequence failure is a
+partially purged account whose owner still holds a valid session and can simply call
+`DELETE /api/account` again; only a failure inside the final `sessions`/`users` pair needs an
+operator, and at that point everything else is already gone. `test/account-api.test.ts`
+asserts that ordering.
+
+**Constraint 17b — the duo handoff is normalised now, not recorded.** `parseDuoRequest` runs
+`normalizeBirthLocation` over each person's `birthPlace`, the same normalisation
+`app/api/generate/route.ts:156` applies before it writes users and dispatches to Inngest.
+
+**Constraint 13 is closed on the second half.** `buildVoiceBlock` already falls back to
+`VOICE_PRESETS["cold-literary"]` for an unknown preset, matching `inngest/prompts.ts:189`.
+`OPENROUTER_BASE_URL` is read inside `openRouterBaseUrl()` — per call, not at module import —
+in the file as it stands today (`lib/roast-model.ts:19-21`). Nothing left open there.
+
+Measured: `npm run lint` exit 0 before and after. `npm test` 166 tests / 164 pass / 2 fail
+before, 183 / 181 / 2 after — +17 passing in `test/daily-schedule.test.ts`,
+`test/forecast-jobs.test.ts` and one added case in `test/account-api.test.ts`; `swisseph`
+importable in both runs (the 1.16 s `year` transit case ran), and the two failures are the
+same pre-existing file-level throws at `test/chart-annotations.test.ts:1:1` and
+`test/compute-chart.test.ts:1:1`. `npx next build` compiled cleanly.
+
+## Blockers (round 11)
+
+None. Not verified: no live database read or write has happened, so `notifyDevices`,
+`activeSubscribers` and both upserts are type-checked and build-compiled but never executed
+against Neon; no live provider call has been made, so the Batch submit/poll/collect loop is
+exercised only against injected fakes in `test/roast-model.test.ts`; APNs push is out of
+scope for phases 1–4 and the fan-out stops at writing `daily_roasts`. Still deferred: the
+chart recompute on `PUT /api/me/birth` (round 5), and the per-user yearly anniversary run.
+Still recorded-not-fixed: constraint 15 (`server.js:16` defaults `ROAST_MODEL` to
+`claude-opus-4-8` for the runner's own CLI path).
