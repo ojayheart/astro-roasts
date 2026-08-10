@@ -16,6 +16,7 @@ import {
 import { SUBSCRIBED_STATUSES } from "@/lib/entitlement-rule";
 import type { DeviceRow } from "@/lib/daily-schedule";
 import type { CohortUser } from "@/lib/forecast-jobs";
+import { SERVED_STATUSES } from "@/lib/subscription-api";
 import type {
   DailyRow,
   ForecastRow,
@@ -110,6 +111,25 @@ export async function findForecast(
     )
     .limit(1);
   return row ?? null;
+}
+
+/**
+ * Everyone already holding a forecast for this window, ready or in flight.
+ * One query for the whole cohort — the batch builder filters against it before
+ * any model call, since saveForecast upserts and the unique key never rejects.
+ */
+export async function servedForecastUsers(period: Period): Promise<string[]> {
+  const rows = await db
+    .select({ userId: forecasts.userId })
+    .from(forecasts)
+    .where(
+      and(
+        eq(forecasts.kind, period.kind),
+        eq(forecasts.periodStart, period.start),
+        inArray(forecasts.status, [...SERVED_STATUSES]),
+      ),
+    );
+  return rows.map((row) => row.userId);
 }
 
 export async function saveForecast(

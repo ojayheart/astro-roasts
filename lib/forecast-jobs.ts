@@ -12,6 +12,8 @@ export type CohortUser = { userId: string; subject: Subject };
 
 export type BatchPorts = {
   subscribers: () => Promise<CohortUser[]>;
+  /** Ids that already hold a ready or generating forecast for this period. */
+  served: (period: Period) => Promise<string[]>;
   transits: (
     subject: Subject,
     period: Period,
@@ -42,7 +44,11 @@ export async function buildForecastJobs(
   period: Period,
 ): Promise<ForecastJob[]> {
   const jobs: ForecastJob[] = [];
+  // Read before a single transit is computed and long before submit-batch:
+  // a replayed cron must not pay the model again for a served cohort.
+  const served = new Set(await ports.served(period));
   for (const { userId, subject } of await ports.subscribers()) {
+    if (served.has(userId)) continue;
     const transits = await ports.transits(subject, period);
     if (transits) jobs.push({ customId: userId, transits });
   }

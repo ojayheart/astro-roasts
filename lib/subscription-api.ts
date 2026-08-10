@@ -35,6 +35,17 @@ export type ForecastRow = {
   status: string;
 };
 
+/**
+ * A daily or forecast row in either of these states has already been paid for:
+ * `ready` is written, `generating` is in flight. The unique keys upsert rather
+ * than reject, so a replayed cron would silently re-bill without this check.
+ */
+export const SERVED_STATUSES = ["ready", "generating"] as const;
+
+export function alreadyServed(status: string | null | undefined): boolean {
+  return SERVED_STATUSES.includes(status as (typeof SERVED_STATUSES)[number]);
+}
+
 /** The calendar date it is right now where the user lives. */
 export function localDate(tz: string, now: Date = new Date()): string {
   try {

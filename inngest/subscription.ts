@@ -9,7 +9,7 @@
 import * as Sentry from "@sentry/nextjs";
 import { inngest } from "./client";
 import { birthInputFor } from "@/lib/birth-input";
-import { dailyCohort } from "@/lib/daily-schedule";
+import { dailyCohort, runDailyJob } from "@/lib/daily-schedule";
 import { isSubscribed } from "@/lib/entitlement";
 import {
   applyForecastResults,
@@ -31,6 +31,7 @@ import {
   notifyDevices,
   saveDaily,
   saveForecast,
+  servedForecastUsers,
   subjectFor,
 } from "@/lib/subscription-store";
 import { monthTransits, yearTransits } from "@/lib/transits";
@@ -84,31 +85,28 @@ export const generateDailyRoast = inngest.createFunction(
   async ({ event, step }) => {
     const { userId, date } = event.data as { userId: string; date: string };
 
-    return await step.run("generate-daily-roast", async () => {
-      // Re-checked here, not just at fan-out: the cron can fire twice and the
-      // subscription can lapse between the selection and this run.
-      if (!(await isSubscribed(userId))) {
-        return { userId, skipped: "not_subscribed" };
-      }
-
-      const existing = await findDaily(userId, date);
-      if (existing?.status === "ready") return { userId, skipped: "cached" };
-
-      const subject = await subjectFor(userId);
-      const birth = subject ? await birthInputFor(subject) : null;
-      if (!birth) return { userId, skipped: "no_birth" };
-
-      const made = await generateDaily({ birth }, date);
-      if (!made) return { userId, skipped: "no_transits" };
-
-      await saveDaily(userId, date, made.roast, made.transits);
-      return { userId, date, status: "ready" };
-    });
+    return await step.run("generate-daily-roast", () =>
+      runDailyJob(
+        {
+          subscribed: isSubscribed,
+          find: findDaily,
+          birth: async (id) => {
+            const subject = await subjectFor(id);
+            return subject ? await birthInputFor(subject) : null;
+          },
+          generate: (birth, forDate) => generateDaily({ birth }, forDate),
+          save: saveDaily,
+        },
+        userId,
+        date,
+      ),
+    );
   },
 );
 
 const ports: BatchPorts = {
   subscribers: activeSubscribers,
+  served: servedForecastUsers,
   transits: async (subject, period) => {
     const birth = await birthInputFor(subject);
     if (!birth) return null;
