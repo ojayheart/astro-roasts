@@ -280,3 +280,68 @@ failures are the same pre-existing file-level throws.
 None. Still deferred: the chart recompute on `PUT /api/me/birth` (round 5). Not verified
 this round: nothing runs `transits.py` yet — wiring it into `server.js` belongs to
 Phase 3, which is explicitly out of this round's scope.
+
+## Round 7 (Phase 3, part 1: lib/roast-model.ts)
+
+**Exported surface is four verbs plus three pure builders.** `complete(req, deps)` for the
+latency-bound daily path, `submitBatch(items, deps)` / `batchStatus(id, deps)` /
+`collectBatch(id, deps)` for monthly and yearly, and `resolveModel`, `providerFor`,
+`buildVoiceBlock`, `buildAnthropicBody`, `buildOpenAIBody` exported so the request shape is
+testable without a client at all. One module, one entry point per workload — no second
+client bolted alongside it.
+
+**Provider selection is `model.startsWith("claude-")`**, exactly as plan §7 words it, and
+the model resolves `req.model → process.env.ROAST_MODEL → "claude-opus-5"`. §7's default
+governs over §4's "Sonnet 5". A per-request model override exists because the bake-off in
+§7 needs to run the same prompt through three models without touching the environment.
+
+**Keys are read at call time, never at import.** `ANTHROPIC_API_KEY` and
+`OPENROUTER_API_KEY` come from `process.env` inside the call and throw a named error when
+absent; nothing is hardcoded and no key is logged. `OPENROUTER_BASE_URL` is overridable so
+Kimi and Qwen can be routed to their native APIs (the §7 caveat about OpenRouter credit)
+without a code change.
+
+**The Anthropic SDK is a dynamic import.** `await import("@anthropic-ai/sdk")` inside
+`anthropicClient` means the tests, which always inject a fake, never load the SDK and can
+never open a socket.
+
+**Fakes are injected through a `deps` argument, not module mocking.** `deps.anthropic`
+takes an `AnthropicLike` — the four SDK methods this module actually calls, typed
+structurally — and `deps.fetch` takes a `fetch` shape for the OpenRouter path. Both default
+to the real thing, so production call sites pass nothing.
+
+**The voice block is imported, never re-typed.** `buildVoiceBlock` returns
+`ROAST_SYSTEM_PROMPT`, or `ROAST_SYSTEM_PROMPT_NO_BIRTHTIME` when `hasBirthTime: false`,
+optionally with a `VOICE_PRESETS[preset]` section appended — all three come from
+`lib/roast-prompt.ts` and `inngest/prompts.ts`. A test asserts identity against those
+constants, so re-authoring the voice fails the suite.
+
+**Cache control sits on the voice block alone.** Both bodies put the voice first with
+`cache_control: {type: "ephemeral"}` and any per-request system text second and uncached —
+the shared prefix is the only stable ~2k tokens, and marking the variable half would make
+the prefix unstable and defeat the cache.
+
+**Batch results key back by `custom_id` supplied by the caller** (`monthly:<userId>:<ym>`
+in the intended usage), returned as a `{customId, text}` / `{customId, error}` list.
+Anthropic does not guarantee result order, so nothing in this module relies on it, and a
+per-item error becomes a value rather than throwing away the whole batch.
+
+**A non-Anthropic `ROAST_MODEL` makes `submitBatch` throw.** OpenRouter has no batch
+surface; failing loudly is better than silently issuing 1,000 serial calls at full price
+while the caller believes it batched. The caller decides whether to fall back to `complete`.
+
+**Relative `.ts` imports, not the `@/` alias**, because `npm test` is bare `node --test` and
+cannot resolve the alias. `lib/location.ts`, `lib/me.ts` and `lib/admin-stripe.ts` already
+import this way, so it is the existing idiom for a lib module that has to be unit-testable.
+
+Measured: `npx tsc --noEmit --incremental false` exit 0. `npm test` 117 tests / 115 pass /
+2 fail before, 131 / 129 / 2 after — +14 passing, all in `test/roast-model.test.ts`; the
+two failures are the same pre-existing file-level throws.
+
+## Blockers
+
+None. Not done this round, by scope: no call site was changed — the `claude` CLI spawn at
+`ops/hermes-roast-runner/server.js:188` still stands, the Inngest functions are untouched,
+and no plan §3 route was created. Not verified: the module has never made a live provider
+call, so request shapes are checked against the documented SDK surface and injected fakes
+only. Still deferred: the chart recompute on `PUT /api/me/birth` (round 5).
