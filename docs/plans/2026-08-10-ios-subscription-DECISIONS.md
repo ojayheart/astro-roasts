@@ -207,3 +207,76 @@ because `0009_subscriptions.sql` has not been applied to Neon (a human step) and
 a live connection is out of bounds. The composed `isSubscribed` query and every new
 Drizzle query type-check against the committed schema; runtime behaviour against real
 rows is unproven.
+
+## Round 6 (Phase 2: ops/hermes-roast-runner/transits.py)
+
+**Both home-directory sources were present and read in full** —
+`~/transits_offline_meaningful.py` (340 lines) and `~/transits_offline_calendar.py`
+(467 lines). Neither was edited. `~/natal_chart.py` (the real path behind
+`NATAL_CHART_PATH`, `server.js:22`) was read for the argument convention.
+
+**Argument convention copied from `natal_chart.py` as invoked at `server.js:330-352`:**
+`PYTHON_BIN <script> --json --name --year --month --day [--hour --minute] --lat --lon
+--tz`, every value a separate argv entry, one JSON object on stdout. `transits.py` takes
+exactly those natal flags plus `--hsys`, so the runner can build the argv the same way.
+
+**The period is a separate flag set, because `--year`/`--month` are already the natal
+year and month.** `--mode daily --date YYYY-MM-DD`; `--mode month --target-year
+--target-month`; `--mode year --start YYYY-MM-DD`. Renaming the natal flags to match the
+calendar script's `--natal-*` style would have broken symmetry with `natal_chart.py`,
+which is the convention Ruling 4 points at.
+
+**Natal input is per invocation.** `natal_points(chart)` takes a dict; the module-level
+`NATAL` dict from the meaningful script is gone. `normalize_chart` coerces types so the
+Python entry points accept the same loose JSON shape the runner already validates.
+
+**Every invocation prints one top-level JSON object**, never the bare array both sources
+printed. `daily` returns `{mode,name,date,tz,has_birth_time,natal,transits[]}`;
+`month`/`year` return the same envelope with `start`,`end`,`events[]`. Failures print
+`{"error":"transits_failed","detail":...}` on stdout and exit 1, so the runner's
+`code !== 0` branch and its `JSON.parse` both stay valid.
+
+**No angles without a birth time.** `Ascendant`/`Medium_Coeli` are omitted from `natal`
+and from every target list when `--hour` is absent — the same rule the runner's own
+prompt states at `server.js:142`. Noon is used for the planet positions in that case.
+
+**Orb thresholds split by mode.** The calendar path keeps the source defaults (base 1.5,
+Jupiter 2.0, soft 1.5). The daily path widens to base 3.0 / Moon 6.0, because the source
+defaults were tuned for multi-month scans and would return an empty day most days.
+
+**Transiter defaults split too:** daily scans all ten majors including the Moon; month
+and year scan Jupiter/Saturn/Uranus/Neptune/Pluto only. Chiron is dropped from every
+default because it needs external `.se1` files; it is still selectable via
+`--transiters`, and `usable_transiters` probes each body once and skips what the
+installed ephemeris cannot compute.
+
+**Longitudes are cached per timestep instead of recomputed per aspect pair.** The
+calendar source called `swe.calc_ut` inside the innermost aspect loop; sampling each
+transiter once per step and doing the orb arithmetic on the cached list is the same maths
+and turns a full year into ~1.2s. Bisection and peak refinement still call the ephemeris
+directly, since those are off-grid times.
+
+**Year is twelve months from `--start`, not a calendar year**, matching the plan's
+rolling forecast, and samples at 12h rather than 6h — only slow bodies transit there.
+
+**Offline:** `swe.set_ephe_path(os.getenv("SWEPHE_PATH",""))` and a
+`FLG_SWIEPH → FLG_MOSEPH` fallback, exactly as the calendar source did. No network call
+exists in the file.
+
+**Tests are `test/transits.test.ts`**, node:test in the repository idiom, spawning
+`process.env.ASTRO_PYTHON || "python3"` against the real script and asserting on a fixed
+Wellington 1994-01-21 13:00 chart: natal Sun 300.715567° and Ascendant 19.62016°, the
+Mars-trine-natal-Saturn hit on 2026-08-10 under 0.01° orb, Pluto conjunct natal Venus
+inside 2026, ordering, peak-inside-interval, the no-birth-time rule, and that stdout is a
+single object in both the success and failure paths. The whole file skips if `swisseph`
+is not importable, so the suite stays green on a machine without it.
+
+Measured: `npm run lint` exit 0 before and after. `npm test` 112 tests / 110 pass / 2
+fail before, 117 / 115 / 2 after — +5 passing, all in `test/transits.test.ts`; the two
+failures are the same pre-existing file-level throws.
+
+## Blockers
+
+None. Still deferred: the chart recompute on `PUT /api/me/birth` (round 5). Not verified
+this round: nothing runs `transits.py` yet — wiring it into `server.js` belongs to
+Phase 3, which is explicitly out of this round's scope.
