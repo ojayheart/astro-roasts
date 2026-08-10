@@ -648,3 +648,46 @@ scope for phases 1–4 and the fan-out stops at writing `daily_roasts`. Still de
 chart recompute on `PUT /api/me/birth` (round 5), and the per-user yearly anniversary run.
 Still recorded-not-fixed: constraint 15 (`server.js:16` defaults `ROAST_MODEL` to
 `claude-opus-4-8` for the runner's own CLI path).
+
+## Round 12 — the forecast re-bill guard
+
+**The unique constraint was never a guard.** `saveForecast`
+(`lib/subscription-store.ts`) is an `onConflictDoUpdate` on
+`(user_id, kind, period_start)`, so a replayed cron does not hit a rejection — it overwrites
+the row it already paid for, silently. The same is true of `saveDaily`. Any guard therefore
+has to be a read, and it has to run before the batch is assembled: in
+`inngest/subscription.ts` the `build-jobs` step precedes `submit-batch`, and `submit-batch`
+is where the money goes.
+
+**Port shape: `served: (period) => Promise<string[]>`, one call per cohort.** The alternative
+was a per-user `isServed(userId, period)` in the same style as the existing `transits` port,
+but that is one query per subscriber for a check that a single indexed read answers for the
+whole cohort. `buildForecastJobs` turns the list into a `Set` and skips before it asks for
+transits, so a served user costs neither a transit computation nor a batch item. The DB half
+is `servedForecastUsers` in `lib/subscription-store.ts`, which keeps the builder free of the
+db client exactly as `subscribers` and `transits` already do.
+
+**Status set: `ready` and `generating`, named once in `lib/subscription-api.ts`.**
+`SERVED_STATUSES` and `alreadyServed()` live next to the other shared daily/forecast pure
+helpers, and both the batch guard and the daily job read them. `error` is deliberately not in
+the set — a failed generation should be retried on the next run, and it was never delivered.
+The daily path previously compared `existing?.status === "ready"` only, so a job replayed
+while a generation was still in flight paid twice; it now uses the same predicate.
+
+**The daily job moved into `lib/daily-schedule.ts` as `runDailyJob`.** It was an inline
+closure inside `step.run` in `inngest/subscription.ts`, which cannot be tested without the db
+client. It is now a ports-injected function beside `dailyCohort`, in the same db-free style,
+and the Inngest handler supplies the real ports. Return payloads are byte-identical to before
+(`{userId, skipped}` / `{userId, date, status}`), so nothing downstream of the step changes.
+
+**No SQL.** `servedForecastUsers` is a plain select over the existing `forecasts` table on
+`(kind, period_start, status)`. `drizzle/0010_*` is still free.
+
+Measured: `npm run lint` exit 0. `npm test` 183 tests / 181 pass / 2 fail before,
+191 / 189 / 2 after — +8 in `test/forecast-jobs.test.ts` and `test/daily-schedule.test.ts`,
+0 skipped, and the two failures are the same pre-existing file-level throws at
+`test/chart-annotations.test.ts:1:1` and `test/compute-chart.test.ts:1:1`.
+
+Not verified: no live Neon read, so `servedForecastUsers` is type-checked and covered only
+by the in-memory equivalent of its filter in `test/forecast-jobs.test.ts`, never executed
+against the real table.
