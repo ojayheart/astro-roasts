@@ -125,9 +125,12 @@ function forecastBody(row: ForecastRow) {
   };
 }
 
-type Gate = {
+export type Auth = {
   userId: () => Promise<string | null>;
   subscribed: (userId: string) => Promise<boolean>;
+};
+
+type Gate = Auth & {
   subject: (userId: string) => Promise<Subject | null>;
 };
 
@@ -158,7 +161,7 @@ export type ForecastPorts = Gate & {
   ) => Promise<ForecastRow>;
 };
 
-async function pass(ports: Gate): Promise<Reply | { userId: string }> {
+export async function pass(ports: Auth): Promise<Reply | { userId: string }> {
   const userId = await ports.userId();
   if (!userId) return { status: 401, body: { error: "unauthorized" } };
   if (!(await ports.subscribed(userId))) {
