@@ -691,3 +691,69 @@ Measured: `npm run lint` exit 0. `npm test` 183 tests / 181 pass / 2 fail before
 Not verified: no live Neon read, so `servedForecastUsers` is type-checked and covered only
 by the in-memory equivalent of its filter in `test/forecast-jobs.test.ts`, never executed
 against the real table.
+
+## Round 13 (chart recompute on PUT /api/me/birth)
+
+**Round 5 is reversed.** It said "`PUT /api/me/birth` persists only; it does not trigger a
+natal recompute", on two grounds: the recompute target did not exist yet, and "the obvious
+alternative — clearing `roasts.chart_json` — would blank the wheel on a paid roast." The
+first ground has expired: Phase 2/3 landed, and the daily and forecast paths now read the
+user's birth row every run, so a corrected birth time silently keeps producing roasts cast
+from the wrong ascendant. The second ground was an objection to *clearing*, not to
+recomputing, and this implementation never clears a chart. `lib/birth-refresh.ts` casts the
+corrected chart first and only then **overwrites** `roasts.chart_json` (and the user's slot
+in `subject_charts`) in the same write. If `computeChart` returns null — no runner
+configured, city unresolvable, timeout — `refreshChartsAfterBirthChange` returns
+`recomputed: false` and writes nothing at all, so the paid roast keeps drawing the chart it
+already had. There is no window in which a wheel is empty, which is exactly what round 5
+was protecting.
+
+**Only `chart_annotations` is invalidated, and by the existing mechanism.** The wheel copy
+was written against the old chart, so it is stale in the same sense as the solo-keyed
+annotations on a duo roast in `43c403e feat(duo)`: cached, but describing something the
+wheel no longer draws. That commit's answer was to stop treating stale-but-present as done
+and let `queueChartAnnotationsIfReady` re-send `roast/annotate`. This reuses that path
+verbatim — set `chart_annotations` to null, call `queueChartAnnotationsIfReady(roastId)`,
+and let it apply its own paid / full-text / chart gates before anything is spent. A roast
+that had no annotations is refreshed but never queued, so a correction costs zero model
+calls on unpaid or unannotated roasts. No new invalidation mechanism was introduced.
+
+**Scope of the invalidation is every roast that caches a chart of this user's** — the solo
+roasts they own, and any group roast where they hold a `roast_subjects` row, keyed by
+position exactly as `/api/chart` orders `people`. A roast with `chart_json` still null is
+skipped: there is no stale artefact, and `/api/chart` will cast it from the corrected row on
+first view. One runner cast serves the whole account.
+
+**A PUT that changes nothing does nothing.** `birthDetailsChanged` compares the row read
+before the update against the row returned by it; an idempotent resend of the same details
+skips the cast and the requeue. Without this, a client re-saving an unchanged form would pay
+for a runner round-trip and a model call per roast.
+
+**`lib/compute-chart.ts`'s extensionless `./location` import was left alone.** It is why
+`test/compute-chart.test.ts` throws at file level under `node --test`, and fixing it to
+`./location.ts` (the form `lib/me.ts` uses) would repair one of the two known-failing tests
+and move the agreed baseline — that file is the operator's own WIP and is out of bounds this
+run. Instead `lib/birth-refresh.ts` follows the `lib/account-api.ts` ports shape: it holds
+all the recompute-and-invalidate logic, imports nothing but a type, and takes `computeChart`
+and `queueChartAnnotationsIfReady` as injected ports. The tests therefore exercise the real
+decision logic with no db, no runner and no network, and the route is the only file that
+touches `lib/compute-chart.ts`.
+
+**Failure of the refresh never fails the correction.** The birth row is already committed
+when the refresh runs; an exception there is reported to Sentry under
+`subsystem: chart-refresh` and the route still returns `200 {birth}`. The response body is
+byte-identical to before — `name` was added to the `returning(...)` only to build the
+`ChartSubject`, and is destructured off before the JSON is sent. `maxDuration = 60` was added
+because the route now makes a runner round-trip (~1s, 20s timeout).
+
+**No SQL.** All reads and writes are over existing columns; `drizzle/0010_*` is still free.
+
+Measured: `npm run lint` exit 0. `npm test` 191 tests / 189 pass / 2 fail before,
+202 / 200 / 2 after — +11 in `test/birth-refresh.test.ts`, 0 skipped, and the two failures
+are the same pre-existing file-level throws at `test/chart-annotations.test.ts:1:1` and
+`test/compute-chart.test.ts:1:1`.
+
+Not verified: the route was never executed against Neon, so `cachedCharts`'s three queries
+are type-checked only; and `computeChart` was never called for real, because that needs
+`ROAST_RUNNER_URL`/`ROAST_RUNNER_SECRET` and a network hop. Both are covered in-memory
+through the ports.
