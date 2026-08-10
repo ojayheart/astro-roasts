@@ -105,3 +105,45 @@ roast finishes generating.
 ## Blockers
 
 None this round.
+
+# Round 4 — `lib/entitlement.ts`
+
+**The rule lives in a db-free module, `lib/entitlement-rule.ts`.** `node --test` runs the
+TypeScript directly and cannot resolve the `@/` alias, and `lib/db/index.ts` calls
+`neon(process.env.DATABASE_URL!)` at import time, so anything importing the db handle is
+untestable without a live connection. The predicate, the status list and the row shape sit
+in a module with no imports; `lib/entitlement.ts` imports the status list from it so the
+query and the test share one source of truth. No mocking framework was introduced — the
+repo has none.
+
+**The predicate is expressed in SQL, not in JS.** `isSubscribed` builds
+`and(eq(user_id), inArray(status, SUBSCRIBED_STATUSES), gt(expires_at, now))` with
+`.limit(1)` and returns whether a row came back, matching `lib/admin-data.ts`, which also
+composes its filters with drizzle operators rather than filtering after the fetch.
+
+**A null `expires_at` is not entitlement.** `expiresAt` is nullable in
+`0009_subscriptions.sql`; in SQL `NULL > now()` is NULL, so such a row is already excluded
+by `gt`. `isSubscribedRow` returns false for null to match, rather than treating an absent
+expiry as "never expires". A subscription with no known expiry is an unverified one.
+
+**`expires_at` strictly greater than now.** Equality fails, per the plan's
+`expires_at > now()`.
+
+**`isSubscribedRow` accepts a string timestamp as well as a `Date`.** Neon's HTTP driver
+can hand back timestamps as strings depending on the parser in play, and the coercion is
+one `new Date(...)`; the alternative is a silent false for a live subscriber.
+
+**`hasActiveSubscription(rows)` exists alongside the single-row predicate** so the no-row
+case is expressible in a test and so later callers holding a fetched row set can apply the
+same rule without a second query.
+
+**Test file is `test/entitlement.test.ts`**, matching the `<module>.test.ts` naming of
+every other file in `test/`, with a fixed `NOW` like `test/admin-stripe.test.ts` does.
+
+Measured: `npm test` 95 tests / 93 pass / 2 fail before, 102 / 100 / 2 after — the two
+failures are the same pre-existing file-level throws in `test/chart-annotations.test.ts`
+and `test/compute-chart.test.ts`. `npm run lint` exits 0.
+
+## Blockers
+
+None this round.
