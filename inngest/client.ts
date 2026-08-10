@@ -32,6 +32,15 @@ export type RoastGenerateEvent = {
   };
 };
 
+export type DailyGenerateEvent = {
+  name: "daily/generate";
+  data: {
+    userId: string;
+    /** The calendar date where the handset is, not UTC. */
+    date: string;
+  };
+};
+
 export type RoastAnnotateEvent = {
   name: "roast/annotate";
   data: {
