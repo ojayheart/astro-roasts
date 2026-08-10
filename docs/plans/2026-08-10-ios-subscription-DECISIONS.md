@@ -699,7 +699,7 @@ natal recompute", on two grounds: the recompute target did not exist yet, and "t
 alternative — clearing `roasts.chart_json` — would blank the wheel on a paid roast." The
 first ground has expired: Phase 2/3 landed, and the daily and forecast paths now read the
 user's birth row every run, so a corrected birth time silently keeps producing roasts cast
-from the wrong ascendant. The second ground was an objection to *clearing*, not to
+from the wrong ascendant. The second ground was an objection to _clearing_, not to
 recomputing, and this implementation never clears a chart. `lib/birth-refresh.ts` casts the
 corrected chart first and only then **overwrites** `roasts.chart_json` (and the user's slot
 in `subject_charts`) in the same write. If `computeChart` returns null — no runner
@@ -757,3 +757,54 @@ Not verified: the route was never executed against Neon, so `cachedCharts`'s thr
 are type-checked only; and `computeChart` was never called for real, because that needs
 `ROAST_RUNNER_URL`/`ROAST_RUNNER_SECRET` and a network hop. Both are covered in-memory
 through the ports.
+
+## Round 14 (the end-to-end dry run)
+
+**The dry run drives the whole production path, not a slice of it.**
+`test/daily-dry-run.test.ts` spawns the real `ops/hermes-roast-runner/server.js` on a free
+loopback port with `TRANSITS_PATH` pointed at the repo's own
+`ops/hermes-roast-runner/transits.py`, sets `ROAST_RUNNER_URL` to that port, and calls the
+real `generateDaily`. So `lib/transits.ts` → the runner's `/transits` → `transits.py` →
+`buildDailyPrompt`/`formatDaily` → `buildAnthropicBody` all execute for real. The precedent
+is the existing runner test at `test/subscription-roast.test.ts:276`, which already spawns
+`server.js` this way; the only difference is that it substitutes `fixtures/echo-args.js` for
+the script and this one does not.
+
+**The model is the only thing stubbed.** `deps.anthropic` is the `AnthropicLike` seam
+`lib/roast-model.ts` documents for exactly this purpose: it records the assembled request
+body and returns a fixed four-line completion so `parseDaily` still has something to parse.
+Nothing is asserted about that completion beyond its title, which only proves the stub was
+the responder. No API key is needed — `anthropicClient` returns the injected client before it
+looks at `ANTHROPIC_API_KEY`. `ROAST_MODEL` is pinned to `claude-opus-5` inside the test so a
+stray env var cannot divert `complete` onto the OpenRouter path.
+
+**Fixed chart and date are the ones `test/transits.test.ts` already uses** — Wellington,
+21 Jan 1994 13:00, read on 2026-08-10 — so the two tests exercise the same ephemeris day and
+a drift in `transits.py` shows up in both rather than in one place only.
+
+**The assertions are read back out of the script, not hardcoded.** The test also runs
+`transits.py` directly via `spawnSync` and then requires that the runner-served output has
+the identical `natal` map and the identical ordered list of hit summaries — that is what
+proves no fixture stood in for the script. The prompt assertions are then derived from that
+direct output: the tightest hit's summary, its orb formatted the way `formatDaily` formats
+it, and its local peak time must all appear in the assembled user message, every `- ` bullet
+in the prompt must name a summary the script really returned, and the prompt must not contain
+`nothing tight today`. An empty or stubbed transit list fails all of these.
+
+**Only loopback traffic.** The single `fetch` is to `http://127.0.0.1:<free port>`; the
+runner spawns a local python process. Nothing leaves the machine and nothing is billed.
+
+**The skip guard is copied verbatim from `test/transits.test.ts:34-37`** — the same
+`spawnSync(PYTHON, ["-c", "import swisseph"])` probe feeding a `{ skip }` option — rather
+than a new mechanism. On this machine `swisseph` is present, so the test runs.
+
+**No SQL, no new dependency.** `drizzle/0010_*` is still free.
+
+Measured: `npm run lint` exit 0. `npm test` 202 tests / 200 pass / 2 fail before,
+203 / 201 / 2 after — +1 test, 0 skipped, and the two failures are the same pre-existing
+file-level throws at `test/chart-annotations.test.ts:1:1` and `test/compute-chart.test.ts:1:1`.
+
+Not verified: the daily path's database side (`runDailyJob`'s ports) is still not exercised
+end to end — the dry run stops at the assembled request, which is what was asked for. The
+`generating` window in the gap-1 guard remains dead code: nothing writes that status yet, so
+a cron replayed mid-flight can still re-bill.
