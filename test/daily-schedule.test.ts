@@ -4,9 +4,12 @@ import {
   dailyCohort,
   dueDevices,
   localHour,
+  runDailyJob,
+  type DailyJobPorts,
   type DeviceRow,
   type FanOutPorts,
 } from "../lib/daily-schedule.ts";
+import type { BirthInput, DailyTransits } from "../lib/transits.ts";
 
 const AUCKLAND = "3f1b1f9e-1c1a-4f6b-9a2e-0f3b7d5c1a11";
 const KATHMANDU = "1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d";
@@ -115,4 +118,101 @@ test("nobody due means nobody asked about entitlement", async () => {
   );
   assert.deepEqual(cohort, []);
   assert.deepEqual(asked, []);
+});
+
+const ROAST = {
+  title: "Tuesday, Again",
+  goldLine: "Mars is not your alibi.",
+  body: "You will call it timing.",
+};
+
+const BIRTH = { name: "Oliver" } as unknown as BirthInput;
+const DAILY = { date: "2026-08-11" } as unknown as DailyTransits;
+
+function jobPorts(
+  over: Partial<DailyJobPorts> = {},
+  generated: string[] = [],
+): DailyJobPorts {
+  return {
+    subscribed: async () => true,
+    find: async () => null,
+    birth: async () => BIRTH,
+    generate: async (_birth, date) => {
+      generated.push(date);
+      return { roast: ROAST, transits: DAILY };
+    },
+    save: async () => undefined,
+    ...over,
+  };
+}
+
+test("a daily that is ready or still generating is never generated twice", async () => {
+  for (const status of ["ready", "generating"]) {
+    const generated: string[] = [];
+    const saved: string[] = [];
+    const result = await runDailyJob(
+      jobPorts(
+        {
+          find: async () => ({ status }),
+          save: async (userId) => saved.push(userId),
+        },
+        generated,
+      ),
+      AUCKLAND,
+      "2026-08-11",
+    );
+    assert.deepEqual(result, { userId: AUCKLAND, skipped: "cached" });
+    assert.deepEqual(generated, [], `${status} still reached generate()`);
+    assert.deepEqual(saved, []);
+  }
+});
+
+test("a failed daily is retried, and a user with no row is generated", async () => {
+  for (const find of [
+    async () => null,
+    async () => ({ status: "error" }),
+  ] as DailyJobPorts["find"][]) {
+    const generated: string[] = [];
+    const result = await runDailyJob(
+      jobPorts({ find }, generated),
+      AUCKLAND,
+      "2026-08-11",
+    );
+    assert.deepEqual(result, {
+      userId: AUCKLAND,
+      date: "2026-08-11",
+      status: "ready",
+    });
+    assert.deepEqual(generated, ["2026-08-11"]);
+  }
+});
+
+test("a lapsed subscriber is skipped before anything is computed", async () => {
+  const generated: string[] = [];
+  const result = await runDailyJob(
+    jobPorts({ subscribed: async () => false }, generated),
+    AUCKLAND,
+    "2026-08-11",
+  );
+  assert.deepEqual(result, { userId: AUCKLAND, skipped: "not_subscribed" });
+  assert.deepEqual(generated, []);
+});
+
+test("no birth details and no transits are distinct skips, never a blank roast", async () => {
+  assert.deepEqual(
+    await runDailyJob(
+      jobPorts({ birth: async () => null }),
+      AUCKLAND,
+      "2026-08-11",
+    ),
+    { userId: AUCKLAND, skipped: "no_birth" },
+  );
+  assert.deepEqual(
+    await runDailyJob(
+      jobPorts({ generate: async () => null }),
+      AUCKLAND,
+      "2026-08-11",
+    ),
+    { userId: AUCKLAND, skipped: "no_transits" },
+  );
 });

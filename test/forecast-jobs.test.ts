@@ -8,7 +8,11 @@ import {
   type BatchPorts,
   type CohortUser,
 } from "../lib/forecast-jobs.ts";
-import type { Period, Subject } from "../lib/subscription-api.ts";
+import {
+  alreadyServed,
+  type Period,
+  type Subject,
+} from "../lib/subscription-api.ts";
 import type { Forecast } from "../lib/subscription-roast.ts";
 import type { CalendarTransits } from "../lib/transits.ts";
 
@@ -37,9 +41,30 @@ const FORECAST: Forecast = {
   avoid: ["two"],
 };
 
+type ForecastState = {
+  userId: string;
+  kind: string;
+  periodStart: string;
+  status: string;
+};
+
+/** The same filter servedForecastUsers runs in SQL, over an in-memory table. */
+function servedFrom(rows: ForecastState[]) {
+  return async (period: Period) =>
+    rows
+      .filter(
+        (row) =>
+          row.kind === period.kind &&
+          row.periodStart === period.start &&
+          alreadyServed(row.status),
+      )
+      .map((row) => row.userId);
+}
+
 function ports(over: Partial<BatchPorts> = {}): BatchPorts {
   return {
     subscribers: async () => COHORT,
+    served: async () => [],
     transits: async () => TRANSITS,
     ...over,
   };
@@ -124,4 +149,104 @@ test("an errored or empty batch entry is counted, never saved as a blank roast",
   );
   assert.deepEqual(written, []);
   assert.deepEqual(counts, { written: 0, failed: 2 });
+});
+
+test("a replayed monthly cron produces no batch item for a served cohort", async () => {
+  const period = monthPeriod(new Date("2026-08-01T02:00:00Z"));
+  for (const status of ["ready", "generating"]) {
+    const jobs = await buildForecastJobs(
+      ports({
+        served: servedFrom(
+          COHORT.map((user) => ({
+            userId: user.userId,
+            kind: "month",
+            periodStart: period.start,
+            status,
+          })),
+        ),
+      }),
+      period,
+    );
+    assert.deepEqual(jobs, [], `${status} still produced a job`);
+  }
+});
+
+test("a replayed yearly cron produces no batch item for a served cohort", async () => {
+  const period = yearPeriod(new Date("2027-01-01T03:00:00Z"));
+  for (const status of ["ready", "generating"]) {
+    const jobs = await buildForecastJobs(
+      ports({
+        served: servedFrom(
+          COHORT.map((user) => ({
+            userId: user.userId,
+            kind: "year",
+            periodStart: period.start,
+            status,
+          })),
+        ),
+      }),
+      period,
+    );
+    assert.deepEqual(jobs, [], `${status} still produced a job`);
+  }
+});
+
+test("the served check runs before a transit is computed, let alone a model call", async () => {
+  const period = monthPeriod(new Date("2026-08-01T02:00:00Z"));
+  const asked: string[] = [];
+  const jobs = await buildForecastJobs(
+    ports({
+      served: servedFrom([
+        {
+          userId: ONE,
+          kind: "month",
+          periodStart: period.start,
+          status: "generating",
+        },
+      ]),
+      transits: async (subject) => {
+        asked.push(subject.name);
+        return TRANSITS;
+      },
+    }),
+    period,
+  );
+  assert.deepEqual(
+    jobs.map((job) => job.customId),
+    [TWO],
+  );
+  assert.deepEqual(asked, ["Mara"]);
+});
+
+test("an errored forecast, or one for another window, is generated again", async () => {
+  const period = monthPeriod(new Date("2026-08-01T02:00:00Z"));
+  const jobs = await buildForecastJobs(
+    ports({
+      served: servedFrom([
+        {
+          userId: ONE,
+          kind: "month",
+          periodStart: period.start,
+          status: "error",
+        },
+        {
+          userId: TWO,
+          kind: "month",
+          periodStart: "2026-07-01",
+          status: "ready",
+        },
+        {
+          userId: TWO,
+          kind: "year",
+          periodStart: period.start,
+          status: "ready",
+        },
+      ]),
+    }),
+    period,
+  );
+  assert.deepEqual(
+    jobs.map((job) => job.customId),
+    [ONE, TWO],
+  );
 });
