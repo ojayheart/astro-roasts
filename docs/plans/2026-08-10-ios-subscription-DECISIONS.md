@@ -147,3 +147,63 @@ and `test/compute-chart.test.ts`. `npm run lint` exits 0.
 ## Blockers
 
 None this round.
+
+## Round 5 (account routes: /api/me, /api/me/birth, /api/me/device)
+
+**Route paths are `app/api/me/route.ts`, `app/api/me/birth/route.ts`,
+`app/api/me/device/route.ts`.** The App Router paths map one-to-one onto the plan §3
+table and match the existing `app/api/<name>/route.ts` layout; nothing in the repo says
+otherwise.
+
+**There is no user session helper in the repo, so `lib/session.ts` was written against
+the existing `sessions` table** rather than inventing a second identity source.
+`lib/admin-auth.ts` is an HMAC cookie for the admin console and authorises no user, and
+nothing else reads `sessions`. Transport is `Authorization: Bearer <sessions.token>`,
+which is what plan §3 means by "the app stores the token in the Keychain" and matches the
+bearer idiom already used by `/api/roast-progress` and `/api/manychat-intake`.
+
+**Pure logic split into `lib/session-token.ts` and `lib/me.ts`**, the same shape as
+`lib/entitlement-rule.ts`, so the tests never construct a db client. `lib/me.ts` imports
+`./location.ts` with the extension because that is how `lib/location.ts` imports
+`./cities.ts` and it keeps the file loadable under `node --test`.
+
+**Unauthorised is `401 {"error":"unauthorized"}`**, following the lowercase snake error
+codes in `/api/redeem-code` (`invalid_roast`, `not_found`, `rate_limited`). Missing,
+unknown and expired tokens are all the same 401 — an expired session is not a different
+fact to a caller.
+
+**`GET /api/me` reads placements off the user's most recent roast**, selecting the
+`sun_sign`…`saturn_sign` columns ordered by `created_at desc`. Those are the only stored
+placements; recomputing a chart on a launch call would put a runner round-trip in the hot
+path. All-null placements collapse to `null` rather than an object of nulls.
+
+**`PUT /api/me/birth` persists only; it does not trigger a natal recompute.** The plan
+notes the recompute, but the recompute target (daily transits) does not exist until
+Phase 2/3, and the obvious alternative — clearing `roasts.chart_json` — would blank the
+wheel on a paid roast. The route resolves the city through `resolveBirthLocation`, the
+same helper the web flow uses, so an unknown city stores 0/0/UTC exactly as
+`/api/generate` does rather than rejecting the correction.
+
+**`PUT /api/me/device` upserts on `devices.apns_token`**, the table's unique column.
+Keying on the token means a reinstall that reuses it updates in place, and a handset
+handed to another account reassigns its `user_id` instead of leaving a stale row pushing
+to the wrong person. `notify_hour` defaults to 8 when absent, mirroring the schema
+default; `devices.tz` is written from the request and never from `users.tz` (Ruling 2).
+
+**Validation is deliberately narrow:** `date` as `YYYY-MM-DD`, `time` as `HH:MM` or
+absent, `birthPlace` ≤160 chars (the same cap `/api/generate` uses), APNs token 16–255
+chars of `[A-Za-z0-9._-]`, tz ≤64 chars of `[A-Za-z0-9_+-/]`, `notifyHour` an integer
+0–23, `build` ≤40 chars.
+
+Measured: `npm run lint` exit 0. `npm test` 102 tests / 100 pass / 2 fail before,
+112 / 110 / 2 after — +10 passing, all in `test/me.test.ts` and
+`test/session-token.test.ts`; the two failures are the same pre-existing file-level
+throws.
+
+## Blockers
+
+None. Not verifiable this round: the handlers were never executed against a database,
+because `0009_subscriptions.sql` has not been applied to Neon (a human step) and opening
+a live connection is out of bounds. The composed `isSubscribed` query and every new
+Drizzle query type-check against the committed schema; runtime behaviour against real
+rows is unproven.
