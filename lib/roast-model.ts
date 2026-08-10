@@ -15,8 +15,10 @@ import { VOICE_PRESETS } from "../inngest/prompts.ts";
 
 export const DEFAULT_ROAST_MODEL = "claude-opus-5";
 const DEFAULT_MAX_TOKENS = 4096;
-const OPENROUTER_BASE_URL =
-  process.env.OPENROUTER_BASE_URL || "https://openrouter.ai/api/v1";
+
+function openRouterBaseUrl(): string {
+  return process.env.OPENROUTER_BASE_URL || "https://openrouter.ai/api/v1";
+}
 
 export type Provider = "anthropic" | "openrouter";
 
@@ -106,7 +108,7 @@ export function buildVoiceBlock(voice: VoiceOptions = {}): string {
       ? ROAST_SYSTEM_PROMPT_NO_BIRTHTIME
       : ROAST_SYSTEM_PROMPT;
   const preset = voice.voicePreset
-    ? VOICE_PRESETS[voice.voicePreset]
+    ? (VOICE_PRESETS[voice.voicePreset] ?? VOICE_PRESETS["cold-literary"])
     : undefined;
   return preset ? `${base}\n\n## ${preset}` : base;
 }
@@ -172,7 +174,7 @@ async function completeOpenRouter(
   const key = process.env.OPENROUTER_API_KEY;
   if (!key) throw new Error("OPENROUTER_API_KEY missing");
   const doFetch = deps.fetch ?? fetch;
-  const res = await doFetch(`${OPENROUTER_BASE_URL}/chat/completions`, {
+  const res = await doFetch(`${openRouterBaseUrl()}/chat/completions`, {
     method: "POST",
     headers: {
       "content-type": "application/json",

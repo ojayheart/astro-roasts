@@ -345,3 +345,63 @@ None. Not done this round, by scope: no call site was changed — the `claude` C
 and no plan §3 route was created. Not verified: the module has never made a live provider
 call, so request shapes are checked against the documented SDK surface and injected fakes
 only. Still deferred: the chart recompute on `PUT /api/me/birth` (round 5).
+
+---
+
+# Round 8 — generation off the CLI, transits wired in
+
+**Daily and forecast generation live Next-side, not in the runner.** Plan §4 puts the
+three jobs on Inngest, and `lib/roast-model.ts` is a TypeScript module the plain-JS runner
+cannot import. Rather than bolt a TS bridge (tsx/esbuild) onto `server.js`, the runner
+keeps only what needs the VM's Swiss Ephemeris venv — a deterministic `POST /transits` —
+and `lib/subscription-roast.ts` does the writing through `complete()` / `submitBatch()`.
+No new bridge, no second completion client.
+
+**The `claude` CLI spawn stays for the existing one-off web `/roast` (solo and group).**
+Plan §4: "One-off web roasts can stay on the runner if you want; the subscription path
+cannot." That path is agentic — Skill, Bash, WebSearch — and rewriting it would mean
+rebuilding the natal/synastry pipeline and breaking `mode:"group"`, which this round is
+explicitly barred from touching. No daily or forecast generation touches it.
+
+**`POST /transits` mirrors `POST /chart`.** Same `validateChartInput`, same birth argument
+convention lifted into `birthArgs()`, same spawn/parse path lifted into `runPythonJson()`,
+so `natal_chart.py` and `transits.py` are invoked identically. Period arguments are
+validated per mode (`--date`, `--target-year`/`--target-month`, `--start`). Timeouts: 30s
+daily and month, 120s year — the year mode scans twelve months at a 12-hour step.
+
+**`lib/transits.ts` takes a resolved `BirthInput`, not a `ChartSubject`.** `lib/compute-chart.ts`
+imports `./location` without a file extension, which Node's type stripping cannot resolve,
+so anything importing it is unusable under `node --test` — that is the standing failure in
+`test/compute-chart.test.ts`, which this run must not repair. Keeping `transits.ts` and
+`subscription-roast.ts` free of that import makes them unit-testable; `lib/birth-input.ts`
+is the thin Next-side adapter that turns a stored subject into `BirthInput`.
+
+**Output contract is labelled sections, not JSON.** `TITLE` / `GOLD` / `BODY` for daily and
+`TITLE` / `HIGHLIGHTS` / `AVOID` / `BODY` for forecasts, mapping one-to-one onto the
+`daily_roasts` and `forecasts` columns. Asking for prose inside a JSON string degrades the
+voice; the runner already uses marker sections for the same reason.
+
+**Constraint 13, both fixed rather than recorded.** `OPENROUTER_BASE_URL` is now read per
+call via `openRouterBaseUrl()` instead of at module import, and an unknown `voicePreset`
+falls back to `VOICE_PRESETS["cold-literary"]`, matching `inngest/prompts.ts:189`. An
+absent preset still yields the base voice with no preset section.
+
+**`ops/hermes-roast-runner/server.js` had to be committed despite being operator WIP.**
+Its pre-existing uncommitted change is a whitespace-only prettier reformat: `git diff -w`
+against HEAD shows no non-whitespace removal outside the functions this round rewrote
+(`validateChartInput`'s wrapping, `handleChart`). The reformat is carried into the commit
+verbatim; no operator edit is reverted, and no other WIP file is touched.
+
+Measured: `npx tsc --noEmit --incremental false` exit 0 before and after. `npm test`
+131 tests / 129 pass / 2 fail before, 141 / 139 / 2 after — +10 passing, all in
+`test/subscription-roast.test.ts`; `swisseph` was importable in both runs and the two
+failures are the same pre-existing file-level throws.
+
+## Blockers
+
+None. Not done this round, by scope: the plan §3 routes (`/api/daily`, `/api/forecast`,
+`/api/duo`, `/api/duo/:id`, `/api/account`) and the Inngest hourly/monthly/yearly functions.
+Not verified: no live provider call has ever been made — provider behaviour is checked
+against injected fakes only. Verified live: the runner's `/transits` endpoint against the
+real `transits.py` and a real chart. Still deferred: the chart recompute on
+`PUT /api/me/birth` (round 5).
