@@ -405,3 +405,63 @@ Not verified: no live provider call has ever been made — provider behaviour is
 against injected fakes only. Verified live: the runner's `/transits` endpoint against the
 real `transits.py` and a real chart. Still deferred: the chart recompute on
 `PUT /api/me/birth` (round 5).
+
+## Round 9 (Phase 4, part 1: GET /api/daily and GET /api/forecast)
+
+**The gating and cache-or-generate flow lives in `lib/subscription-api.ts`, not the route
+files.** Same split as `lib/me.ts`: the module never imports the db client, so the tests
+exercise auth, the paywall, a cache hit and a cache miss against injected ports without
+Neon and without a network call. The route files supply the real ports — `sessionUserId`,
+`isSubscribed`, Drizzle reads and writes, and `generateDaily` / `generateForecast`.
+
+**Unsubscribed is `402 subscription_required`, not 403.** The paywall is exactly what 402
+means, and it gives the handset one status to branch on that is distinct from "your token
+expired" (401) and from a route the user may not touch at all. The `/api/me*` handlers had
+no precedent because none of them is gated.
+
+**Unauthenticated is checked before the subscription and before any read.** A missing
+session never touches `subscriptions` or `daily_roasts`; the tests assert this by throwing
+from the ports that must not run.
+
+**`?date=` is optional and resolves to the user's own calendar day.** `users.tz` through
+`Intl.DateTimeFormat("en-CA")`, which yields `YYYY-MM-DD` directly. An unparseable tz falls
+back to the UTC date rather than failing the request. Note this is the account timezone, not
+`devices.tz` — the handset's timezone drives the push, the account's drives which day a
+history request means.
+
+**A malformed `?date=` is `400 invalid_date`, mirroring `/api/me/birth`'s `invalid_birth`.**
+No date is not malformed; an absent parameter means today.
+
+**`/api/forecast` accepts `?kind=year&period=YYYY` as well as the plan's `YYYY-MM`.** A year
+window is twelve months from the start month, so `2026-03` gives `2026-03-01..2027-02-28`
+and `2026` gives the calendar year. `kind` defaults to `month`; an unknown kind is
+`400 invalid_period`. An absent `period` falls back to the user's current month.
+
+**A missing row generates inline and persists before replying.** The unique constraints
+(`user_id, for_date` and `user_id, kind, period_start`) are the idempotency guard, so both
+writes are `onConflictDoUpdate` on that constraint — a concurrent cron write and a user
+request converge on one row instead of erroring. Rows are written `status: "ready"`; the
+schema default `generating` stays for rows the Inngest jobs open ahead of time.
+
+**Generation that cannot run is `503 unavailable`.** `generateDaily` returns null when the
+runner is unconfigured or `transits.py` fails; replying 503 keeps an empty roast out of the
+table. Nothing is persisted in that branch.
+
+**No voice preset is passed.** `users` has no preset column, so both routes take
+`lib/roast-model.ts`'s base voice. Wiring a per-user preset is a schema change and out of
+scope for this round.
+
+Measured: `npx tsc --noEmit --incremental false` exit 0 before and after. `npm test`
+141 tests / 139 pass / 2 fail before, 154 / 152 / 2 after — +13 passing, all in
+`test/subscription-api.test.ts`; `swisseph` importable in both runs, and the two failures
+are the same pre-existing file-level throws. `npx next build` registers both routes as
+dynamic server routes (`ƒ /api/daily`, `ƒ /api/forecast`).
+
+## Blockers
+
+None. Not done this round, by scope: `/api/duo`, `/api/duo/:id`, `DELETE /api/account`, and
+the Inngest hourly/monthly/yearly functions. Not verified: no live provider call and no live
+database read — the routes' Drizzle queries type-check and build, but they have not been run
+against Neon. Still deferred: the chart recompute on `PUT /api/me/birth` (round 5).
+Constraint 15 (`server.js:16`'s `claude-opus-4-8` default) is still open and belongs to
+whichever round revisits the runner.
