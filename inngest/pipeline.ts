@@ -21,6 +21,7 @@ import {
   extractRoastBlock,
 } from "@/lib/roast-runner";
 import { sendInstagramDm, buildDmTeaser } from "@/lib/manychat";
+import { parseRoastOutput } from "@/lib/roast-parse";
 import { sendInstagramDm as sendInstagramGraphDm } from "@/lib/instagram";
 import { pickGoldLine } from "@/lib/gold-line";
 
@@ -31,70 +32,6 @@ if (!ROAST_RUNNER_URL || !ROAST_RUNNER_SECRET) {
   console.warn(
     "ROAST_RUNNER_URL or ROAST_RUNNER_SECRET missing — roast generation will fail.",
   );
-}
-
-/**
- * Parse the structured roast output (---ROAST_START--- markers).
- * Falls back to plain prose if markers missing.
- */
-function parseRoastOutput(raw: string): {
-  title: string;
-  teaser: string;
-  fullText: string;
-  callouts: string;
-} {
-  const hasStructured =
-    raw.includes("---ROAST_START---") && raw.includes("---ROAST_END---");
-
-  if (hasStructured) {
-    const content = raw
-      .split("---ROAST_START---")[1]
-      .split("---ROAST_END---")[0]
-      .trim();
-
-    const titleMatch = content.match(/TITLE:\s*(.*?)(?:\n|$)/);
-    const teaserMatch = content.match(/TEASER:\s*([\s\S]*?)(?=\nFULL:)/);
-    const fullMatch = content.match(/FULL:\s*([\s\S]*?)(?=\nCALLOUTS:)/);
-    const calloutsMatch = content.match(/CALLOUTS:\s*([\s\S]*?)$/);
-
-    const fullText = fullMatch?.[1]?.trim() || "";
-    if (fullText) {
-      return {
-        title: titleMatch?.[1]?.trim() || "",
-        teaser: teaserMatch?.[1]?.trim() || "",
-        fullText,
-        callouts: calloutsMatch?.[1]?.trim() || "",
-      };
-    }
-
-    // Group runner emits bare prose between the markers without
-    // TITLE:/TEASER:/FULL: labels — treat the whole block as the roast
-    // rather than shipping an empty "ready" roast.
-    const contentParagraphs = content.split("\n\n");
-    return {
-      title: titleMatch?.[1]?.trim() || "",
-      teaser:
-        contentParagraphs.length > 3
-          ? contentParagraphs.slice(0, 3).join("\n\n")
-          : contentParagraphs[0] || "",
-      fullText: content,
-      callouts: calloutsMatch?.[1]?.trim() || "",
-    };
-  }
-
-  const mainText = raw.split("---CALLOUTS---")[0].trim();
-  const calloutsRaw = raw.split("---CALLOUTS---")[1]?.trim() || "";
-  const paragraphs = mainText.split("\n\n");
-
-  return {
-    title: "",
-    teaser:
-      paragraphs.length > 3
-        ? paragraphs.slice(0, 3).join("\n\n")
-        : paragraphs[0] || "",
-    fullText: mainText,
-    callouts: calloutsRaw,
-  };
 }
 
 class RateLimitError extends Error {
