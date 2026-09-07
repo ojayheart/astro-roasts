@@ -78,3 +78,6 @@ succeeded. Do not routinely overwrite it with desktop credentials.
 - Production switched to the tested Codex adapter and patched server. Backups:
   `/opt/roast-runner/server.js.pre-codex-20260907` and
   `/opt/roast-runner/chart-annotations.js.pre-codex-20260907`.
+- Final public-endpoint couple roast after that prompt change: HTTP 200, 1139
+  words, two valid charts, 181s; no technical metadata or source links in prose.
+  Public chart-annotation request also returned HTTP 200 in 12s.
