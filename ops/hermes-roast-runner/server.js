@@ -10,10 +10,11 @@ import { spawn } from "node:child_process";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { handleChartAnnotations } from "./chart-annotations.js";
+import { CODEX_MODEL, hasCalculatedChart, loadRoastSkill, runCodex } from "./codex.js";
 
 const PORT = Number(process.env.PORT || 8787);
 const SECRET = process.env.ROAST_RUNNER_SECRET;
-const MODEL = process.env.ROAST_MODEL || "claude-opus-4-8";
+const MODEL = process.env.ROAST_CODEX_MODEL || CODEX_MODEL;
 const TIMEOUT_MS = Number(process.env.ROAST_TIMEOUT_MS || 10 * 60 * 1000);
 const PROGRESS_URL = process.env.PROGRESS_CALLBACK_URL || "";
 const PYTHON_BIN =
@@ -27,12 +28,12 @@ if (!SECRET) {
 }
 
 // ─── DM agent: one in-voice conversational turn on the subscription ────────
-// The webhook (Vercel) posts {history, latestText}; we run one fast claude
+// The webhook (Vercel) posts {history, latestText}; we run one Codex
 // turn and return the raw action JSON. Validation happens on the web side.
 
-const DM_MODEL = process.env.DM_AGENT_MODEL || "claude-sonnet-5";
+const DM_MODEL = process.env.DM_CODEX_MODEL || MODEL;
 const DM_TIMEOUT_MS = Number(process.env.DM_AGENT_TIMEOUT_MS || 45_000);
-const ANNOTATION_MODEL = process.env.ANNOTATION_MODEL || DM_MODEL;
+const ANNOTATION_MODEL = process.env.ANNOTATION_CODEX_MODEL || DM_MODEL;
 
 const DM_SYSTEM_PROMPT = `you are astroroasted — the instagram account that writes savage, scarily accurate comedic natal chart roasts. you are talking in instagram DMs.
 
@@ -92,7 +93,7 @@ async function handleDmAgent(body, send) {
   }
 
   const startedAt = Date.now();
-  const run = await runClaude({
+  const run = await runCodex({
     userPrompt: buildDmAgentPrompt({ history, latestText }),
     systemPrompt: DM_SYSTEM_PROMPT,
     model: DM_MODEL,
@@ -112,7 +113,7 @@ async function handleDmAgent(body, send) {
       stderr: run.stderr.slice(0, 300),
     });
     return send(500, {
-      error: "claude_failed",
+      error: "codex_failed",
       durationMs: Date.now() - startedAt,
     });
   }
@@ -132,7 +133,7 @@ async function handleDmAgent(body, send) {
 // ─── Phase 1: chart computation + the proven bathos write ──────────────────
 
 function buildWriteUserPrompt({ name, date, time, birthPlace, hasBirthTime }) {
-  return `Invoke the Skill tool now with skill="astro-roast" to load the full skill instructions, then follow them EXACTLY using this birth data:
+  return `Follow the supplied Astro Roast skill instructions EXACTLY using this birth data:
 
 - Name: ${name}
 - Date of birth: ${date}
@@ -154,18 +155,19 @@ function buildGroupWriteUserPrompt({ relationship, people }) {
     )
     .join("\n\n");
 
-  return `Invoke the Skill tool now with skill="astro-roast-group" to load the full skill instructions, then follow them EXACTLY. Relationship type: ${relationship}. The people:
+  return `Follow the supplied Astro Roast Group skill instructions EXACTLY. Relationship type: ${relationship}. The people:
 
 ${roster}
 
-Resolve each messy place input to exact coordinates and IANA timezone. Run the synastry engine as the skill instructs, then write ONE group roast of the dynamic. Output format, EXACTLY:
+Resolve each messy place input to exact coordinates and IANA timezone. Run the synastry engine as the skill instructs, then write ONE group roast of the dynamic. Use the actual returned schema (synastry crossAspects and overlays); never invent composite placements absent from the calculation. Also run natal_chart.py for each person and put its full raw text in that person's CHART marker below. Output format, EXACTLY:
 ${people.map((_, i) => `---CHART_${i + 1}_START---\n<person ${i + 1} full chart text>\n---CHART_${i + 1}_END---`).join("\n\n")}
 ---ROAST_START---
 <the group roast prose — no TITLE/TEASER/FULL/CALLOUTS fields>
 ---ROAST_END---
-No commentary outside the markers.`;
+No commentary outside the markers. The ROAST block must contain only the comedic reading: no geocoding, coordinates, timezone explanations, links, citations, engine or schema descriptions, tool status, or calculation caveats. All technical metadata belongs in the CHART blocks.`;
 }
 
+// Legacy helper retained for the separate live enrichment endpoint.
 // ─── claude subprocess ─────────────────────────────────────────────────────
 
 function runClaude({ userPrompt, systemPrompt, model, tools, timeoutMs }) {
@@ -361,7 +363,7 @@ const server = createServer(async (req, res) => {
   };
 
   if (req.method === "GET" && req.url === "/health") {
-    return send(200, { ok: true, model: MODEL });
+    return send(200, { ok: true, provider: "codex", model: MODEL });
   }
   if (
     req.method !== "POST" ||
@@ -392,7 +394,7 @@ const server = createServer(async (req, res) => {
   }
 
   if (req.url === "/chart-annotations") {
-    return handleChartAnnotations(body, send, runClaude, ANNOTATION_MODEL);
+    return handleChartAnnotations(body, send, runCodex, ANNOTATION_MODEL);
   }
 
   const {
@@ -415,12 +417,20 @@ const server = createServer(async (req, res) => {
     return send(400, { error: "missing_fields" });
   }
 
+  let skill;
+  try {
+    skill = await loadRoastSkill(isGroup);
+  } catch (error) {
+    console.error("roast_skill_unavailable", String(error));
+    return send(500, { error: "roast_skill_unavailable" });
+  }
+
   const startedAt = Date.now();
 
   // Initial tick so the bar moves the moment the runner accepts the job.
   postProgress(roastId, 8);
 
-  // Phase 1 — write. Background creep 10→70 across the expected ~75s opus run.
+  // Phase 1 — write. Background creep 10→70 while Astra computes and writes.
   // If the phase finishes faster, the creep stops; if it's slower, the creep
   // caps at 70 and we wait for the real finish to jump to 78.
   const stopWriteCreep = startProgressCreep({
@@ -430,7 +440,8 @@ const server = createServer(async (req, res) => {
     durationMs: isGroup ? 150_000 : 75_000,
   });
 
-  const write = await runClaude({
+  const write = await runCodex({
+    systemPrompt: skill,
     userPrompt: isGroup
       ? buildGroupWriteUserPrompt({
           relationship:
@@ -466,7 +477,7 @@ const server = createServer(async (req, res) => {
       stderr: write.stderr.slice(0, 500),
     });
     return send(500, {
-      error: "claude_failed",
+      error: "codex_failed",
       code: write.code,
       detail: write.stderr.slice(0, 1000),
       durationMs,
@@ -475,7 +486,7 @@ const server = createServer(async (req, res) => {
 
   const chartData = extractMarkedSection(write.stdout, "CHART");
   const roastBody = extractMarkedSection(write.stdout, "ROAST");
-  if (!roastBody) {
+  if (!roastBody || (!isGroup && !hasCalculatedChart(chartData))) {
     return send(500, {
       error: "missing_structured_output",
       detail: write.stdout.slice(0, 1000),
@@ -491,7 +502,7 @@ ${roastBody}
     const charts = people.map((_, i) =>
       extractMarkedSection(write.stdout, `CHART_${i + 1}`),
     );
-    if (charts.some((c) => !c)) {
+    if (charts.some((c) => !hasCalculatedChart(c))) {
       return send(500, {
         error: "missing_structured_output",
         detail: write.stdout.slice(0, 1000),

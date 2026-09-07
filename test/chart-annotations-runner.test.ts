@@ -62,7 +62,7 @@ test("parses fenced JSON and keeps only safe known lines", () => {
   ]);
 });
 
-test("handles a successful Claude runner response", async () => {
+test("handles a successful Codex runner response", async () => {
   let sent:
     { tools: string; systemPrompt: string; [key: string]: unknown } | undefined;
   let response: { status: number; payload: unknown } | undefined;
@@ -96,7 +96,7 @@ test("handles a successful Claude runner response", async () => {
   });
 });
 
-test("rejects invalid payloads before invoking Claude", async () => {
+test("rejects invalid payloads before invoking Codex", async () => {
   let invoked = false;
   let response: { status: number; payload: unknown } | undefined;
   await handleChartAnnotations(
@@ -123,7 +123,7 @@ test("Hermes server wires the authenticated chart-annotations route", async () =
     "utf8",
   );
   assert.match(source, /req\.url !== "\/chart-annotations"/);
-  assert.match(source, /handleChartAnnotations\(body, send, runClaude/);
+  assert.match(source, /handleChartAnnotations\(body, send, runCodex/);
 });
 
 const bigBody = {

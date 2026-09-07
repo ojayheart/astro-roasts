@@ -7,10 +7,8 @@ const MAX_TITLE_CHARS = 200;
 const MAX_FACTS_CHARS = 500;
 const MAX_LINE_CHARS = 300;
 // A full natal chart enumerates ~59 elements, and one call covering all of them
-// runs ~100s with the tail lines getting lazy. Chunks are for quality and
-// blast radius, not speed — the subscription serializes concurrent `claude -p`
-// calls, so these run back to back. Only the async Inngest path calls this, so
-// there is no request deadline to fit inside.
+// is split into chunks to keep coverage and quality consistent. Only the
+// async Inngest path calls this, so there is no browser request deadline.
 const CHUNK_SIZE = 20;
 const CHUNK_TIMEOUT_MS = 150_000;
 
@@ -166,7 +164,7 @@ export async function handleChartAnnotations(
 
       if (run.code !== 0) {
         const limited = isUsageLimit(run.stderr, run.stdout);
-        console.error("chart_annotations_claude_failed", {
+        console.error("chart_annotations_model_failed", {
           code: run.code,
           count: elements.length,
           stderr: String(run.stderr).slice(0, 300),
@@ -197,7 +195,7 @@ export async function handleChartAnnotations(
       return send(503, { error: "rate_limited" });
     }
     if (results.every((result) => result.stdout === undefined)) {
-      return send(500, { error: "claude_failed" });
+      return send(500, { error: "model_failed" });
     }
     console.error("chart_annotations_bad_output", {
       preview: String(
