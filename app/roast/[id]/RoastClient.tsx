@@ -6,6 +6,7 @@ import TeaserView from "@/components/TeaserView";
 import FullRoastView from "@/components/FullRoastView";
 import type { ChartPlacement, NatalChart, RoastData } from "@/lib/types";
 import { track } from "@/lib/track";
+import { startRoastPolling } from "@/lib/roast-polling";
 
 interface RoastClientProps {
   roastId: string;
@@ -106,83 +107,28 @@ export default function RoastClient({
     { planet: "Saturn", sign: data.saturnSign || "" },
   ].filter((placement) => placement.sign);
 
-  // Poll while generating (3 minutes of *foreground* time). Backgrounded tabs
-  // don't accrue toward the timeout — otherwise a 4-minute coffee break with
-  // the tab hidden would flip a finished roast into a permanent error state.
+  // Generation can exceed three minutes. Only the server decides when it failed.
   useEffect(() => {
     if (data.status !== "generating") return;
 
-    const TIMEOUT_MS = 3 * 60 * 1000;
-    let foregroundMs = 0;
-    let lastVisible = Date.now();
-    let cancelled = false;
-
-    const onVisibility = () => {
-      const now = Date.now();
-      if (document.visibilityState === "visible") {
-        lastVisible = now;
-      } else {
-        foregroundMs += now - lastVisible;
-      }
-    };
-    document.addEventListener("visibilitychange", onVisibility);
-
-    // Merge rather than replace: the payload for an unpaid roast omits
-    // fullText/callouts/outer placements, and a wholesale replace also dropped
-    // kind, subjectNames, extraPlacements and amountMinorUnits — which is how
-    // group roasts lost their names and price once the poll landed.
-    const apply = (json: Partial<RoastData>) =>
-      setData((prev) => ({ ...prev, ...json, id: roastId }));
-
-    const finalCheck = async () => {
-      try {
+    return startRoastPolling(
+      async () => {
         const res = await fetch(`/api/roast/${roastId}`);
-        const json = await res.json();
-        if (json.status === "ready") {
-          if (!cancelled) {
-            apply({ ...json, status: "ready", stagePct: 100 });
-            return;
-          }
-        }
-      } catch {
-        // Swallow; we're about to flip to error anyway.
-      }
-      if (!cancelled) setData((prev) => ({ ...prev, status: "error" }));
-    };
-
-    const interval = setInterval(async () => {
-      if (document.visibilityState !== "visible") return;
-      const elapsed = foregroundMs + (Date.now() - lastVisible);
-      if (elapsed > TIMEOUT_MS) {
-        clearInterval(interval);
-        await finalCheck();
-        return;
-      }
-
-      try {
-        const res = await fetch(`/api/roast/${roastId}`);
-        const json = await res.json();
-
-        if (json.status === "ready" || json.status === "generating") {
-          apply({
-            ...json,
-            stagePct:
-              json.status === "ready" ? 100 : Number(json.stagePct ?? 0),
-          });
-        } else if (json.status === "error") {
-          setData((prev) => ({ ...prev, status: "error" }));
-        }
-      } catch {
-        // Network error, keep polling
-      }
-    }, 2000);
-
-    return () => {
-      cancelled = true;
-      clearInterval(interval);
-      document.removeEventListener("visibilitychange", onVisibility);
-    };
-  }, [data.status, roastId, data.createdAt]);
+        if (!res.ok) throw new Error(`Roast status request failed (${res.status})`);
+        return (await res.json()) as Partial<RoastData> & { status: string };
+      },
+      (json) => {
+        // Preserve fields omitted from unpaid responses, including group details.
+        setData((prev) => ({
+          ...prev,
+          ...json,
+          id: roastId,
+          stagePct: json.status === "ready" ? 100 : Number(json.stagePct ?? 0),
+        }));
+      },
+      () => document.visibilityState === "visible",
+    );
+  }, [data.status, roastId]);
 
   // After Stripe payment the buyer lands here with `?paid=1`. Stripe also
   // appends `session_id` (hosted Checkout) or `payment_intent` (embedded flow).

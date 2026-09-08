@@ -81,3 +81,12 @@ succeeded. Do not routinely overwrite it with desktop credentials.
 - Final public-endpoint couple roast after that prompt change: HTTP 200, 1139
   words, two valid charts, 181s; no technical metadata or source links in prose.
   Public chart-annotation request also returned HTTP 200 in 12s.
+
+## Loading-page status
+
+Codex generation can take longer than three minutes. The browser must keep
+polling while the server reports `generating`; elapsed foreground time and
+transient network errors must not turn a running job into a failed roast.
+`lib/roast-polling.ts` pauses reads in hidden tabs, avoids overlapping requests,
+and stops on server-confirmed `ready` or `error`, or component cleanup.
+Regression coverage: `node --test test/roast-polling.test.ts`.
