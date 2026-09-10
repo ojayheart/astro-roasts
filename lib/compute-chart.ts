@@ -1,4 +1,4 @@
-import { resolveBirthLocation } from "./location";
+import { resolveBirthLocation } from "./location.ts";
 import type { NatalChart } from "./types";
 
 /**

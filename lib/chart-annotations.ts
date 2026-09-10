@@ -2,7 +2,7 @@ import {
   computeSynastry,
   synastryAspectId,
   type SynastryAspect,
-} from "./synastry";
+} from "./synastry.ts";
 import type { NatalAspect, NatalChart } from "./types";
 
 // Per-element copy for the interactive natal wheel. `facts` is computed
