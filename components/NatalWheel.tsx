@@ -1,4 +1,5 @@
 "use client";
+import { spaceChartLabels } from "@/lib/chart-label-spacing";
 
 import { useEffect, useRef } from "react";
 import * as d3 from "d3";
@@ -176,7 +177,7 @@ export default function NatalWheel({
       "(prefers-reduced-motion: reduce)",
     ).matches;
     // Reduced motion: everything appears near-instantly, nothing rotates.
-    const T = (ms: number) => (reduceMotion ? 0 : ms);
+    const T = (ms: number) => (reduceMotion || interactive ? 0 : ms);
 
     const asc = chart.angles?.ascendant.lon ?? 0;
     const toXY = (lonDeg: number, r: number): [number, number] => {
@@ -266,7 +267,7 @@ export default function NatalWheel({
     //       ambience and never misaligns with the chart) ─────────────────
     const ticks = root
       .append("g")
-      .attr("class", reduceMotion ? "" : "wheel-rotate");
+      .attr("class", reduceMotion || interactive ? "" : "wheel-rotate");
     for (let d = 0; d < 360; d += 5) {
       const major = d % 30 === 0;
       const [x1, y1] = toXY(d, R_RING_IN);
@@ -385,18 +386,7 @@ export default function NatalWheel({
     // ── 5. Planets — collision-nudged display angle, true-degree tick ───
     // Glyphs that would collide get pushed apart for legibility; the tick on
     // the ring still marks the true degree.
-    const nudge = (planets: { name: string; lon: number }[]) => {
-      const out = new Map<string, number>();
-      let cursor = -Infinity;
-      for (const p of [...planets].sort((a, b) => a.lon - b.lon)) {
-        const d = Math.max(p.lon, cursor + 7.5);
-        out.set(p.name, d);
-        cursor = d;
-      }
-      // If the nudge chain wrapped past the first planet, that's a 14-planet
-      // pile-up that doesn't happen in real charts — accept the overlap.
-      return out;
-    };
+    const nudge = spaceChartLabels;
 
     const sorted = [...chart.planets].sort((a, b) => a.lon - b.lon);
     const display = nudge(chart.planets);
@@ -712,7 +702,7 @@ export default function NatalWheel({
               .attr("stroke-dashoffset", 0);
           }
 
-          if (!reduceMotion && hard && i < 3) {
+          if (!reduceMotion && !interactive && hard && i < 3) {
             line
               .attr("class", "aspect-breathe")
               .style("--aspect-base-opacity", String(opacity))
@@ -770,7 +760,7 @@ export default function NatalWheel({
           .attr("stroke-dashoffset", 0);
       }
       // The three tightest hard aspects breathe forever once drawn.
-      if (!reduceMotion && hard && i < 3) {
+      if (!reduceMotion && !interactive && hard && i < 3) {
         line
           .attr("class", "aspect-breathe")
           .style("--aspect-base-opacity", String(opacity))
@@ -798,6 +788,16 @@ export default function NatalWheel({
       ) => {
         sel
           .attr("data-el-id", spec.id)
+          .attr("role", "button")
+          .attr("tabindex", 0)
+          .attr("aria-label", spec.title)
+          .on("keydown", (event: KeyboardEvent) => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              onSelectRef.current?.(spec);
+            }
+            if (event.key === "Escape") onSelectRef.current?.(null);
+          })
           .style("cursor", "pointer")
           .on("mouseenter", (event: MouseEvent) => {
             // First engagement — retire the "poke me" invite cue.
@@ -960,7 +960,7 @@ export default function NatalWheel({
       ref={svgRef}
       viewBox="-320 -320 640 640"
       className="w-full h-full"
-      role="img"
+      role={onSelect ? "group" : "img"}
       aria-label={
         partner
           ? `Synastry chart for ${chart.name} and ${partner.name}`
