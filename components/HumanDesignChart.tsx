@@ -12,6 +12,32 @@ import {
   centrePath,
 } from "@/lib/human-design-graph.js";
 import type { NatalChart } from "@/lib/types";
+const CENTER_COLORS: Record<string, string> = {
+  Head: "#fbf7a5",
+  Ajna: "#699e94",
+  Throat: "#604942",
+  G: "#fbf7a5",
+  Ego: "#cf494c",
+  Sacral: "#cf494c",
+  Spleen: "#604942",
+  SolarPlexus: "#604942",
+  Root: "#604942",
+};
+const PLANET_SYMBOLS: Record<string, string> = {
+  sun: "☉",
+  earth: "⊕",
+  moon: "☾",
+  northNode: "☊",
+  southNode: "☋",
+  mercury: "☿",
+  venus: "♀",
+  mars: "♂",
+  jupiter: "♃",
+  saturn: "♄",
+  uranus: "♅",
+  neptune: "♆",
+  pluto: "♇",
+};
 const centers = CENTRES as Record<
   string,
   {
@@ -28,7 +54,7 @@ const centers = CENTRES as Record<
 export default function HumanDesignChart({ chart }: { chart: NatalChart }) {
   const [data, setData] = useState<DesignChart | null>(null),
     [error, setError] = useState(""),
-    [full, setFull] = useState(false),
+    [full, setFull] = useState(true),
     [selection, setSelection] = useState<{
       title: string;
       facts: string;
@@ -98,8 +124,8 @@ export default function HumanDesignChart({ chart }: { chart: NatalChart }) {
     sources[g]?.some((s) => s.side === "personality")
       ? sources[g]?.some((s) => s.side === "design")
         ? `url(#${pattern})`
-        : "#e5e5e5"
-      : "#ff2a00";
+        : "#ffffff"
+      : "#ce494b";
   const chosenPair = PAIRS.find(
     ([a, b]) => selection?.title === `Channel ${a}–${b}`,
   );
@@ -153,7 +179,7 @@ export default function HumanDesignChart({ chart }: { chart: NatalChart }) {
           {full ? "Show essentials" : "Show all gates & channels"}
         </button>
       </div>
-      <div className="chart-layout">
+      <div className="chart-layout design-reference-layout">
         <div>
           <div
             className="chart-zoom"
@@ -176,15 +202,16 @@ export default function HumanDesignChart({ chart }: { chart: NatalChart }) {
               +
             </button>
           </div>
-          <div className="chart-map-scroll" data-chart-zoomed={zoom > 1}>
+          <div className="chart-map-scroll" data-chart-zoomed="true">
             <svg
               style={{
                 width: `${zoom * 100}%`,
+                minWidth: 640 * zoom,
                 maxHeight: zoom > 1 ? "none" : 740,
               }}
               ref={graphRef}
-              viewBox="0 0 810 1110"
-              className="design-graph"
+              viewBox="-240 0 1290 1110"
+              className="design-graph reference-bodygraph"
               role="group"
               aria-label={`Human Design chart for ${chart.name}`}
             >
@@ -196,45 +223,17 @@ export default function HumanDesignChart({ chart }: { chart: NatalChart }) {
                   patternUnits="userSpaceOnUse"
                   patternTransform="rotate(45)"
                 >
-                  <rect width="8" height="8" fill="#e5e5e5" />
-                  <rect width="4" height="8" fill="#ff2a00" />
+                  <rect width="8" height="8" fill="#ffffff" />
+                  <rect width="4" height="8" fill="#ce494b" />
                 </pattern>
-                <filter
-                  id={pattern + "-light"}
-                  x="-100%"
-                  y="-100%"
-                  width="300%"
-                  height="300%"
-                  colorInterpolationFilters="sRGB"
-                >
-                  <feGaussianBlur stdDeviation="4" />
-                  <feComponentTransfer>
-                    <feFuncA type="linear" slope=".65" />
-                  </feComponentTransfer>
-                  <feMerge>
-                    <feMergeNode />
-                    <feMergeNode in="SourceGraphic" />
-                  </feMerge>
-                </filter>
-                <linearGradient
-                  id={pattern + "-body"}
-                  x1="0"
-                  y1="0"
-                  x2="1"
-                  y2="1"
-                >
-                  <stop stopColor="#e5e5e5" stopOpacity=".10" />
-                  <stop offset=".55" stopColor="#e5e5e5" stopOpacity=".035" />
-                  <stop offset="1" stopColor="#ff2a00" stopOpacity=".06" />
-                </linearGradient>
               </defs>
               <path
                 className="human-silhouette"
                 fillRule="evenodd"
-                d="M400 42 C342 42 300 83 299 142 C297 180 310 209 325 240 C337 265 337 296 332 322 C327 352 294 365 249 374 C204 383 178 417 169 462 C156 531 158 595 146 663 L125 812 C122 844 128 875 144 892 C153 903 169 899 176 884 L204 777 C218 720 225 659 238 602 L248 550 C251 622 260 687 251 746 C241 816 251 870 267 911 L267 1080 L377 1080 L400 969 L423 1080 L533 1080 L533 911 C549 870 559 816 549 746 C540 687 549 622 552 550 L562 602 C575 659 582 720 596 777 L624 884 C631 899 647 903 656 892 C672 875 678 844 675 812 L654 663 C642 595 644 531 631 462 C622 417 596 383 551 374 C506 365 473 352 468 322 C463 296 463 265 475 240 C490 209 503 180 501 142 C500 83 458 42 400 42 Z"
-                fill={`url(#${pattern}-body)`}
-                stroke="#e5e5e5"
-                strokeOpacity=".10"
+                d="M400 98 C340 98 297 144 297 205 L305 228 L289 269 Q282 281 298 287 L304 291 L305 329 Q305 350 336 347 Q359 345 353 375 C346 408 296 426 233 437 Q213 441 205 467 L79 859 Q63 897 90 920 C178 1013 265 1060 400 1064 C535 1060 622 1013 710 920 Q737 897 721 859 L595 467 Q587 441 567 437 C504 426 454 408 447 375 C440 342 450 320 472 287 C493 255 506 215 499 179 C491 132 452 98 400 98 Z"
+                fill="#393939"
+                stroke="#ffffff"
+                strokeOpacity="0"
                 strokeWidth="1.5"
                 pointerEvents="none"
                 aria-hidden="true"
@@ -263,8 +262,8 @@ export default function HumanDesignChart({ chart }: { chart: NatalChart }) {
                     <path
                       d={channelPath(a, b)}
                       fill="none"
-                      stroke="#444"
-                      strokeWidth="3"
+                      stroke="#191919"
+                      strokeWidth="14"
                     />
                     {[a, b].map(
                       (g, i) =>
@@ -276,8 +275,7 @@ export default function HumanDesignChart({ chart }: { chart: NatalChart }) {
                             fill="none"
                             className="light-cable"
                             stroke={source(g)}
-                            strokeWidth="6"
-                            filter={`url(#${pattern}-light)`}
+                            strokeWidth="12"
                             strokeDasharray="50 50"
                             strokeDashoffset={i === 0 ? 0 : -50}
                           />
@@ -323,34 +321,10 @@ export default function HumanDesignChart({ chart }: { chart: NatalChart }) {
                   <path
                     d={centrePath(id)}
                     strokeLinejoin="round"
-                    fill={model.defined.has(id) ? "#321108" : "#090909"}
-                    stroke={model.defined.has(id) ? "#ff2a00" : "#666"}
+                    fill={model.defined.has(id) ? CENTER_COLORS[id] : "#1c1c1c"}
+                    stroke="none"
                     strokeWidth="2"
                   />
-                  <text
-                    x={c.x}
-                    y={c.y - 3}
-                    textAnchor="middle"
-                    fill="#e5e5e5"
-                    fontSize="17"
-                  >
-                    {id === "SolarPlexus"
-                      ? "Emotional"
-                      : id === "G"
-                        ? "Identity"
-                        : id === "Ego"
-                          ? "Heart"
-                          : id}
-                  </text>
-                  <text
-                    x={c.x}
-                    y={c.y + 19}
-                    textAnchor="middle"
-                    fill="#aaa"
-                    fontSize="11"
-                  >
-                    {model.defined.has(id) ? "DEFINED" : "UNDEFINED"}
-                  </text>
                 </g>
               ))}
               {Object.keys(GATE_CENTRE)
@@ -359,7 +333,11 @@ export default function HumanDesignChart({ chart }: { chart: NatalChart }) {
                   (g) => full || model.channels.some((p) => p.includes(g)),
                 )
                 .map((g) => {
-                  const p = gatePoint(g);
+                  const port = gatePoint(g);
+                  const p = {
+                    x: port.x - port.dx * 12,
+                    y: port.y - port.dy * 12,
+                  };
                   return (
                     <g
                       key={g}
@@ -397,14 +375,21 @@ export default function HumanDesignChart({ chart }: { chart: NatalChart }) {
                         cx={p.x}
                         cy={p.y}
                         r="14"
-                        fill="#030303"
-                        stroke={sources[g] ? "#e5e5e5" : "#555"}
+                        fill={sources[g] ? "#111" : "transparent"}
+                        stroke="none"
                       />
                       <text
                         x={p.x}
                         y={p.y + 4}
                         textAnchor="middle"
-                        fill={sources[g] ? "#fff" : "#999"}
+                        fill={
+                          sources[g]
+                            ? "#fff"
+                            : model.defined.has(GATE_CENTRE[g]) &&
+                                ["Head", "G", "Ajna"].includes(GATE_CENTRE[g])
+                              ? "#555c50"
+                              : "#aaa"
+                        }
                         fontSize="13"
                       >
                         {g}
@@ -412,6 +397,95 @@ export default function HumanDesignChart({ chart }: { chart: NatalChart }) {
                     </g>
                   );
                 })}
+              {(["design", "personality"] as const).map((side) => (
+                <g
+                  key={side}
+                  className="activation-column"
+                  fill={side === "design" ? "#ce494b" : "#f4f4f4"}
+                >
+                  <text
+                    x={side === "design" ? -130 : 940}
+                    y="75"
+                    textAnchor="middle"
+                    fontSize="24"
+                  >
+                    {side === "design" ? "Design" : "Personality"}
+                  </text>
+                  <path
+                    d={
+                      side === "design" ? "M -215 95 H -45" : "M 855 95 H 1025"
+                    }
+                    stroke={side === "design" ? "#ce494b" : "#444"}
+                    strokeWidth="2"
+                  />
+                  {Object.keys(PLANET_SYMBOLS).map((planet, i) => {
+                    const activation = data[side][planet];
+                    return activation ? (
+                      <g
+                        key={planet}
+                        role="button"
+                        tabIndex={0}
+                        aria-label={
+                          side +
+                          " " +
+                          planet +
+                          " " +
+                          activation.gate +
+                          "." +
+                          activation.line
+                        }
+                        onClick={() =>
+                          setSelection({
+                            title: "Gate " + activation.gate,
+                            facts:
+                              planet +
+                              " · " +
+                              side +
+                              " · " +
+                              activation.gate +
+                              "." +
+                              activation.line,
+                            line: "The number after the dot is the line, from 1 to 6.",
+                          })
+                        }
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            e.currentTarget.dispatchEvent(
+                              new MouseEvent("click", { bubbles: true }),
+                            );
+                          }
+                        }}
+                      >
+                        <rect
+                          x={side === "design" ? -215 : 855}
+                          y={115 + i * 69}
+                          width="170"
+                          height="52"
+                          fill="transparent"
+                        />
+                        <text
+                          x={side === "design" ? -188 : 998}
+                          y={150 + i * 69}
+                          textAnchor="middle"
+                          fontSize="28"
+                          style={{ fontFamily: "var(--font-symbols),serif" }}
+                        >
+                          {PLANET_SYMBOLS[planet]}
+                        </text>
+                        <text
+                          x={side === "design" ? -92 : 906}
+                          y={150 + i * 69}
+                          textAnchor="middle"
+                          fontSize="24"
+                        >
+                          {activation.gate}.{activation.line}
+                        </text>
+                      </g>
+                    ) : null;
+                  })}
+                </g>
+              ))}
             </svg>
           </div>
           <p className="chart-hint">

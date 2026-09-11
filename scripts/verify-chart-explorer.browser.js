@@ -19,14 +19,20 @@
       ?.textContent.includes("Triple Split"),
   );
   check(
+    "26 planetary activation rows",
+    document.querySelectorAll(".activation-column [role=button]").length === 26,
+  );
+  clickText("Show essentials");
+  await pause();
+  check(
     "essentials exposes 21 graph controls",
-    document.querySelectorAll(".design-graph [role=button]").length === 21,
+    document.querySelectorAll(".design-graph [role=button]").length === 47,
   );
   clickText("Show all gates & channels");
   await pause();
   check(
     "full map exposes all 64 gates, 36 channels and 9 centres",
-    document.querySelectorAll(".design-graph [role=button]").length === 109,
+    document.querySelectorAll(".design-graph [role=button]").length === 135,
   );
   const gate = document.querySelector(
     '.design-graph [aria-label="Gate 61, activated"]',

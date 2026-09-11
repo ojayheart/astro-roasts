@@ -224,3 +224,39 @@
   min-width: 4ch;
   text-align: center;
 }
+
+.design-reference-layout {
+  grid-template-columns: 1fr;
+}
+.reference-bodygraph {
+  background: #1e1e1e;
+  border-radius: 4px;
+}
+.reference-bodygraph text {
+  font-family: Arial, sans-serif !important;
+}
+.reference-bodygraph .activation-column {
+  cursor: pointer;
+}
+.reference-bodygraph .light-cable {
+  filter: none;
+}
+.design-reference-layout > .chart-reader {
+  max-width: 740px;
+  width: 100%;
+  margin: 0 auto;
+}
+.design-reference-layout .chart-map-scroll {
+  background: #1e1e1e;
+}
+.reference-bodygraph .activation-column text {
+  font-size: 24px;
+}
+@media (max-width: 680px) {
+  .design-reference-layout .chart-map-scroll {
+    overflow: auto;
+  }
+  .reference-bodygraph {
+    min-width: 640px;
+  }
+}
