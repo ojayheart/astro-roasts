@@ -6,7 +6,7 @@ Astrology keeps the cached natal data and existing two-person wheel. Placements 
 
 Human Design is calculated locally, on demand, from a known `birth.utc`. It does not call another service or write another database record. Unknown birth times show an explanatory state. Two-person roasts offer a subject selector. The MIT engine from whitspce/hd-chart uses astronomy-engine 2.1.19; attribution is in `lib/vendor/HD-LICENSE.txt`. Design time uses 88° of solar movement, not a fixed number of days. This remains an interpretive system, not a validated personality assessment.
 
-The diagram has rounded familiar centre shapes, a subtle seated human silhouette, and illuminated activation cables with original geometry. All 64 gate positions meet the correct shape boundaries. Default detail shows complete connections; full detail reveals all gates and channels. Half-channel colouring shows Personality, Design or both. Selection dims unrelated connections and provides exact activation information. Shape and spacing do not change gate membership or definition.
+The diagram has rounded familiar centre shapes, a proportionate human silhouette, and illuminated activation cables with geometry proportioned to the supplied BodyGraph reference. All 64 gate positions meet the correct shape boundaries. Default detail shows complete connections; full detail reveals all gates and channels. Half-channel colouring shows Personality, Design or both. Selection dims unrelated connections and provides exact activation information. Shape and spacing do not change gate membership or definition.
 
 ## Verification
 
