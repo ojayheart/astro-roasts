@@ -45,7 +45,7 @@ export default function RoastWheel({
 
   const [tab, setTab] = useState(0);
   const [person, setPerson] = useState(0);
-  const [allAspects, setAllAspects] = useState(false);
+  const [allAspects, setAllAspects] = useState(true);
   const [zoom, setZoom] = useState(1);
   const start = useRef<{ x: number; y: number } | null>(null);
   const uid = useId();

@@ -7,7 +7,7 @@ import {
   GATE_CENTRE,
   derive,
   gatePoint,
-  centreVertices,
+  centreOutline,
 } from "../lib/human-design-graph.js";
 test("reference instant retains all activations and definition", () => {
   const chart = engine.build(1994, 1, 21, 0, 0, "+00:00");
@@ -31,7 +31,7 @@ test("all 64 gates attach to their centre shape boundary", () => {
   assert.equal(PAIRS.length, 36);
   for (let g = 1; g <= 64; g++) {
     const p = gatePoint(g),
-      v = centreVertices(GATE_CENTRE[g]);
+      v = centreOutline(GATE_CENTRE[g]);
     assert.ok(Number.isFinite(p.x) && Number.isFinite(p.y));
     const distances = v.map((a, i) => {
       const b = v[(i + 1) % v.length],

@@ -199,7 +199,45 @@ export default function HumanDesignChart({ chart }: { chart: NatalChart }) {
                   <rect width="8" height="8" fill="#e5e5e5" />
                   <rect width="4" height="8" fill="#ff2a00" />
                 </pattern>
+                <filter
+                  id={pattern + "-light"}
+                  x="-100%"
+                  y="-100%"
+                  width="300%"
+                  height="300%"
+                  colorInterpolationFilters="sRGB"
+                >
+                  <feGaussianBlur stdDeviation="4" />
+                  <feComponentTransfer>
+                    <feFuncA type="linear" slope=".65" />
+                  </feComponentTransfer>
+                  <feMerge>
+                    <feMergeNode />
+                    <feMergeNode in="SourceGraphic" />
+                  </feMerge>
+                </filter>
+                <linearGradient
+                  id={pattern + "-body"}
+                  x1="0"
+                  y1="0"
+                  x2="1"
+                  y2="1"
+                >
+                  <stop stopColor="#e5e5e5" stopOpacity=".10" />
+                  <stop offset=".55" stopColor="#e5e5e5" stopOpacity=".035" />
+                  <stop offset="1" stopColor="#ff2a00" stopOpacity=".06" />
+                </linearGradient>
               </defs>
+              <path
+                className="human-silhouette" fillRule="evenodd"
+                d="M400 25 C348 25 309 65 309 119 L303 159 L289 183 Q282 196 300 204 L308 208 L310 249 Q310 280 343 282 L349 315 L345 350 C319 373 254 383 222 419 C190 456 179 525 158 591 L89 769 C69 814 66 859 96 898 C130 939 187 961 252 980 C292 996 318 1022 342 1051 C366 1080 434 1080 458 1051 C482 1022 508 996 548 980 C613 961 670 939 704 898 C734 859 731 814 711 769 L642 591 C621 525 610 456 578 419 C546 383 481 373 455 350 L451 315 C470 295 489 267 489 221 L489 134 C489 72 452 25 400 25 Z M250 465 C230 531 202 616 174 680 L204 704 C229 638 251 581 273 538 Z M550 465 C570 531 598 616 626 680 L596 704 C571 638 549 581 527 538 Z M162 877 C234 837 322 861 388 918 C298 909 231 927 162 877 Z M638 877 C566 837 478 861 412 918 C502 909 569 927 638 877 Z"
+                fill={`url(#${pattern}-body)`}
+                stroke="#e5e5e5"
+                strokeOpacity=".10"
+                strokeWidth="1.5"
+                pointerEvents="none"
+                aria-hidden="true"
+              />
               {PAIRS.filter(([a, b]) => full || complete(a, b)).map(
                 ([a, b]) => (
                   <g
@@ -235,8 +273,10 @@ export default function HumanDesignChart({ chart }: { chart: NatalChart }) {
                             d={channelPath(a, b)}
                             pathLength="100"
                             fill="none"
+                            className="light-cable"
                             stroke={source(g)}
-                            strokeWidth="7"
+                            strokeWidth="6"
+                            filter={`url(#${pattern}-light)`}
                             strokeDasharray="50 50"
                             strokeDashoffset={i === 0 ? 0 : -50}
                           />

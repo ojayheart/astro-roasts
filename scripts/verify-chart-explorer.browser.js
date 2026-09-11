@@ -87,6 +87,13 @@
     document.querySelectorAll('.wheel-hits [role=button][tabindex="0"]')
       .length > 10,
   );
+  check(
+    "aspect connections visible by default",
+    !!document.querySelector(".chart-layout") &&
+      !document.querySelector(".natal-key-only"),
+  );
+  clickText("Focus on placements");
+  await pause();
   clickText("Show aspect connections");
   await pause();
   check(
