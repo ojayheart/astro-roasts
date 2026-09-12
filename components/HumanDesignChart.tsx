@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useId, useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import { calculateDesign, type DesignChart } from "@/lib/human-design";
 import {
   CENTRES,
@@ -77,7 +77,6 @@ export default function HumanDesignChart({ chart }: { chart: NatalChart }) {
       });
     }
   }, [selection]);
-  const pattern = useId().replace(/:/g, "");
   useEffect(() => {
     let alive = true;
     setData(null);
@@ -121,11 +120,7 @@ export default function HumanDesignChart({ chart }: { chart: NatalChart }) {
     >;
   const complete = (a: number, b: number) => !!sources[a] && !!sources[b];
   const source = (g: number) =>
-    sources[g]?.some((s) => s.side === "personality")
-      ? sources[g]?.some((s) => s.side === "design")
-        ? `url(#${pattern})`
-        : "#ffffff"
-      : "#ce494b";
+    sources[g]?.some((s) => s.side === "personality") ? "#ffffff" : "#ce494b";
   const chosenPair = PAIRS.find(
     ([a, b]) => selection?.title === `Channel ${a}–${b}`,
   );
@@ -215,18 +210,6 @@ export default function HumanDesignChart({ chart }: { chart: NatalChart }) {
               role="group"
               aria-label={`Human Design chart for ${chart.name}`}
             >
-              <defs>
-                <pattern
-                  id={pattern}
-                  width="8"
-                  height="8"
-                  patternUnits="userSpaceOnUse"
-                  patternTransform="rotate(45)"
-                >
-                  <rect width="8" height="8" fill="#ffffff" />
-                  <rect width="4" height="8" fill="#ce494b" />
-                </pattern>
-              </defs>
               <path
                 className="human-silhouette"
                 fillRule="evenodd"
@@ -489,7 +472,7 @@ export default function HumanDesignChart({ chart }: { chart: NatalChart }) {
             </svg>
           </div>
           <p className="chart-hint">
-            Ash = Personality · Red = Design · Stripes = both.
+            White = Personality, including both · Red = Design only.
             <br />
             Crossing lines don’t connect. Numbered gates do.
           </p>
