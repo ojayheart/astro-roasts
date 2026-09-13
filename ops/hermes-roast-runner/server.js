@@ -11,6 +11,7 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { handleChartAnnotations } from "./chart-annotations.js";
 import { CODEX_MODEL, hasCalculatedChart, loadRoastSkill, runCodex } from "./codex.js";
+import { roastWritingPolicy } from "./roast-evidence.js";
 
 const PORT = Number(process.env.PORT || 8787);
 const SECRET = process.env.ROAST_RUNNER_SECRET;
@@ -441,7 +442,7 @@ const server = createServer(async (req, res) => {
   });
 
   const write = await runCodex({
-    systemPrompt: skill,
+    systemPrompt: skill + roastWritingPolicy(body),
     userPrompt: isGroup
       ? buildGroupWriteUserPrompt({
           relationship:

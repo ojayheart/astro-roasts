@@ -1,7 +1,7 @@
 /**
  * 3-step Inngest roast generation pipeline.
  *
- * Step 1: Generate chart + roast via headless Claude Code on Hermes.
+ * Step 1: Calculate evidence, then generate the roast via Codex on Hermes.
  * Step 2: Parse, save, email.
  */
 
@@ -23,6 +23,8 @@ import {
 import { sendInstagramDm, buildDmTeaser } from "@/lib/manychat";
 import { sendInstagramDm as sendInstagramGraphDm } from "@/lib/instagram";
 import { pickGoldLine } from "@/lib/gold-line";
+import { prepareRoastEvidence } from "@/lib/roast-evidence";
+import type { PersonInput } from "@/lib/group";
 
 const ROAST_RUNNER_URL = process.env.ROAST_RUNNER_URL;
 const ROAST_RUNNER_SECRET = process.env.ROAST_RUNNER_SECRET;
@@ -145,6 +147,20 @@ export const generateRoast = inngest.createFunction(
     const hasBirthTime = !!time;
     const isGroup = kind === "couple" || kind === "family";
 
+    // Persist deterministic evidence across writer retries, with each person's
+    // data attached to their own roster entry rather than matched by name.
+    const evidence = await step.run("prepare-roast-evidence", async () => {
+      const subjects: Array<Omit<PersonInput, "gender">> = isGroup
+        ? people
+        : [{ name, date, time, birthPlace: city }];
+      return Promise.all(subjects.map((person) => prepareRoastEvidence({
+        name: person.name,
+        dob: person.date,
+        birthTime: person.time,
+        birthCity: person.birthPlace,
+      })));
+    });
+
     // ─── Step 1: Generate Chart + Roast via Hermes Runner ──────────────
     const runnerOutput = await step.run("generate-roast", async () => {
       if (!ROAST_RUNNER_URL || !ROAST_RUNNER_SECRET) {
@@ -159,7 +175,14 @@ export const generateRoast = inngest.createFunction(
         },
         body: JSON.stringify(
           isGroup
-            ? buildGroupRunnerPayload({ roastId, relationship, people })
+            ? buildGroupRunnerPayload({
+                roastId,
+                relationship,
+                people: (people as PersonInput[]).map((person, i) => ({
+                  ...person,
+                  evidence: evidence[i],
+                })),
+              })
             : buildRoastRunnerPayload({
                 roastId,
                 name,
@@ -167,6 +190,7 @@ export const generateRoast = inngest.createFunction(
                 date,
                 time,
                 birthPlace: city,
+                evidence: evidence[0],
               }),
         ),
       });

@@ -29,6 +29,32 @@ Timeouts, launch failures and missing/empty final answers fail closed.
 
 ## Verify and deploy
 
+### Blended roast evidence (2026-09-14)
+
+New solo and group jobs calculate Human Design before the writer runs:
+`lib/roast-evidence.ts` resolves the natal birth instant through `/chart`, then
+uses the same HD engine as the interactive chart. Evidence travels with each
+person, including resolved coordinates/timezone and all HD activations. Inngest
+caches this step across writer retries. Unknown birth times omit HD; failed
+known-time calculations retry instead of silently dropping the second system.
+
+`ops/hermes-roast-runner/roast-evidence.js` adds the current product writing policy
+after the voice skill: synthesize behavioural tensions, keep technical mechanics
+in raw chart blocks, and default to no system terminology in the roast. Group
+roasts retain each person's evidence and the existing synastry calculation.
+Deploy this module alongside the focused server import/system-prompt change
+before deploying the web pipeline. Older callers without evidence get the new
+writing direction with astrology only. Existing saved roasts are not rewritten.
+
+Validation: deterministic Wellington sample resolves to 1994-01-21T00:00Z and
+the expected Manifesting Generator / 5/1 chart. Unit and HTTP integration tests
+verify evidence transport, group ordering, unknown-time handling and the output
+envelope. The 2026-09-14 solo/group live-model canaries both stopped before
+writing with `codex_authentication_failed: sign in again on Hermes`. Prose
+quality verification remains pending restoration of the service account login.
+
+### Deployment checks
+
 1. Run `node --test test/codex-runner.test.ts test/chart-annotations-runner.test.ts`,
    `npm test`, and `npm run lint`.
 2. Verify the deployed server before copying. Hermes also has live `/enrich-agent`
