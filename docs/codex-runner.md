@@ -49,9 +49,17 @@ writing direction with astrology only. Existing saved roasts are not rewritten.
 Validation: deterministic Wellington sample resolves to 1994-01-21T00:00Z and
 the expected Manifesting Generator / 5/1 chart. Unit and HTTP integration tests
 verify evidence transport, group ordering, unknown-time handling and the output
-envelope. The 2026-09-14 solo/group live-model canaries both stopped before
-writing with `codex_authentication_failed: sign in again on Hermes`. Prose
-quality verification remains pending restoration of the service account login.
+envelope. The initial 2026-09-14 solo/group live-model canaries stopped before
+writing with `codex_authentication_failed: sign in again on Hermes`. At Oliver's
+explicit request, the current desktop ChatGPT CLI login was transferred privately
+to the roast account after backing up its auth file; owner/mode remain roast/0600.
+Both production samples then returned HTTP 200 (solo 162s, group 169s), with
+calculated charts and no system jargon in the prose. The solo sample exposed a
+skill-template conflict; the writing policy now explicitly forbids internal
+TITLE/TEASER/FULL/CALLOUTS fields inside the roast markers.
+The final production solo check passed in 162s: 1,548 words, valid calculated
+chart, no internal fields and no system jargon. The authentication blocker is
+resolved. These synthetic checks used no roast ID and sent no customer messages.
 
 ### Deployment checks
 

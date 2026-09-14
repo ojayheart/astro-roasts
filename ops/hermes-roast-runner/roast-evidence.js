@@ -35,7 +35,11 @@ two brief astrology references across the whole roast, only if they improve a
 joke. No planet-dialogue sequences, no separate astrology/Human Design sections,
 no 'your chart says', no instructional lecture or repeated source attribution.
 Keep the Astro Roast wit, warmth, specificity and callback ending. Preserve the
-skill's exact chart and roast output markers; raw chart blocks remain technical.
+chart and roast output markers; raw chart blocks remain technical. Inside
+---ROAST_START--- and ---ROAST_END--- return ONLY uninterrupted roast prose.
+Never include TITLE:, TEASER:, FULL:, CALLOUTS:, headings, metadata, or a second
+copy of the opening. Those fields are derived downstream. This output contract
+overrides any structured-field template in the skill.
 Before returning, silently edit away jargon and generic claims. The customer
 should recognise themselves without needing to learn either system.
 
