@@ -1,3 +1,69 @@
+.chart-disclosure {
+  border: 1px solid #333;
+  background: var(--color-void, #050505);
+}
+.chart-disclosure[open] {
+  position: relative;
+  left: 50%;
+  width: min(1200px, calc(100vw - 48px));
+  transform: translateX(-50%);
+}
+.chart-disclosure-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  min-height: 80px;
+  padding: 18px 20px;
+  cursor: pointer;
+  list-style: none;
+}
+.chart-disclosure-toggle::-webkit-details-marker {
+  display: none;
+}
+.chart-disclosure-title {
+  display: block;
+  font: 600 20px/1.2 var(--font-syne);
+}
+.chart-disclosure-meta {
+  display: block;
+  margin-top: 6px;
+  font: 10px/1.5 var(--font-mono);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #aaa;
+}
+.chart-disclosure-toggle:hover .chart-disclosure-title {
+  color: #ff2a00;
+}
+.chart-disclosure-toggle:focus-visible {
+  outline: 2px solid #ff2a00;
+  outline-offset: 4px;
+}
+.chart-disclosure-icon {
+  position: relative;
+  flex: 0 0 18px;
+  height: 18px;
+}
+.chart-disclosure-icon::before,
+.chart-disclosure-icon::after {
+  content: "";
+  position: absolute;
+  background: #ff2a00;
+}
+.chart-disclosure-icon::before {
+  top: 8px;
+  width: 18px;
+  height: 2px;
+}
+.chart-disclosure-icon::after {
+  left: 8px;
+  width: 2px;
+  height: 18px;
+}
+.chart-disclosure[open] .chart-disclosure-icon::after {
+  display: none;
+}
 .chart-tabs {
   display: flex;
   border-bottom: 1px solid #333;
@@ -154,12 +220,6 @@
 }
 .chart-explorer svg.has-selection [data-el-id].is-selected {
   opacity: 1 !important;
-}
-.chart-heading {
-  font: 700 clamp(28px, 4vw, 44px) / 1 var(--font-syne);
-  text-transform: uppercase;
-  letter-spacing: -1px;
-  margin: 12px 0;
 }
 @media (max-width: 680px) {
   .chart-layout {
