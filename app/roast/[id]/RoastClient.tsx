@@ -112,8 +112,11 @@ export default function RoastClient({
     if (data.status !== "generating") return;
 
     return startRoastPolling(
-      async () => {
-        const res = await fetch(`/api/roast/${roastId}`);
+      async (signal) => {
+        const res = await fetch(`/api/roast/${roastId}`, {
+          signal,
+          cache: "no-store",
+        });
         if (!res.ok) throw new Error(`Roast status request failed (${res.status})`);
         return (await res.json()) as Partial<RoastData> & { status: string };
       },

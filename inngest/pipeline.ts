@@ -5,7 +5,7 @@
  * Step 2: Parse, save, email.
  */
 
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import * as Sentry from "@sentry/nextjs";
 import { inngest } from "./client";
 import { db } from "@/lib/db";
@@ -118,7 +118,12 @@ export const generateRoast = inngest.createFunction(
 
       const status =
         error?.name === "RateLimitError" ? "rate_limited" : "error";
-      await db.update(roasts).set({ status }).where(eq(roasts.id, roastId));
+      // Delivery retries can fail after the roast is already saved. Do not
+      // replace a finished roast with an error page, including in a save race.
+      await db.update(roasts).set({ status }).where(and(
+        eq(roasts.id, roastId),
+        eq(roasts.status, "generating"),
+      ));
 
       Sentry.withScope((scope) => {
         scope.setTag("subsystem", "inngest");

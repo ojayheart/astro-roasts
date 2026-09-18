@@ -123,4 +123,8 @@ polling while the server reports `generating`; elapsed foreground time and
 transient network errors must not turn a running job into a failed roast.
 `lib/roast-polling.ts` pauses reads in hidden tabs, avoids overlapping requests,
 and stops on server-confirmed `ready` or `error`, or component cleanup.
+Individual status requests are aborted after 15 seconds and retried; this is
+not a generation deadline. Late responses from aborted requests are ignored.
+The pipeline failure handler can only change a `generating` roast, so a delivery
+failure after saving cannot turn a completed roast into an error page.
 Regression coverage: `node --test test/roast-polling.test.ts`.
