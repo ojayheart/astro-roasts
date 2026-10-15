@@ -28,7 +28,8 @@ interface VerifyStripeEventInput {
 }
 
 type VerifyStripeEventResult =
-  { ok: true; event: Stripe.Event } | { ok: false; error: string };
+  | { ok: true; event: Stripe.Event }
+  | { ok: false; error: string };
 
 export function verifyStripeEvent({
   rawBody,
@@ -50,7 +51,8 @@ interface ExtractRoastIdInput {
 }
 
 type ExtractRoastIdResult =
-  { ok: true; roastId: string } | { ok: false; error: string };
+  | { ok: true; roastId: string }
+  | { ok: false; error: string };
 
 interface VerifyRoastPaymentInput {
   roastId: string;
