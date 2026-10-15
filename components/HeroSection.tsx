@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import gsap from "gsap";
+import AstroWheel from "./AstroWheel";
 
 export default function HeroSection() {
   useEffect(() => {
@@ -36,27 +37,12 @@ export default function HeroSection() {
 
   return (
     <section className="relative min-h-[100dvh] w-full overflow-hidden">
-      {/* Background SVG */}
-      <svg
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[150vw] md:w-[80vw] h-auto opacity-10 animate-spin-slow pointer-events-none"
-        viewBox="0 0 100 100"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="0.2"
-      >
-        <circle cx="50" cy="50" r="48" strokeDasharray="1 2" />
-        <circle cx="50" cy="50" r="38" />
-        <circle cx="50" cy="50" r="28" strokeDasharray="4 4" />
-        <path
-          d="M50 2 L50 98 M2 50 L98 50 M16 16 L84 84 M16 84 L84 16"
-          opacity="0.5"
-        />
-        <polygon points="50,12 88,50 50,88 12,50" opacity="0.3" />
-      </svg>
+      {/* Background natal wheel */}
+      <AstroWheel className="astro-wheel-mask absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[150vw] md:w-[min(80vw,100dvh)] h-auto text-ash pointer-events-none" />
 
       {/* Hero Typography — headline locked to the vertical center */}
       <div className="absolute inset-0 z-10 flex items-center justify-center px-4">
-        <div className="relative w-full max-w-7xl mx-auto flex flex-col items-center text-center clip-text">
+        <div className="relative w-full max-w-7xl mx-auto flex flex-col items-center text-center">
           <h1 className="font-syne font-extrabold text-[clamp(1.25rem,7vw,8.5rem)] leading-[0.85] tracking-tighter uppercase flex flex-col items-center">
             <div className="hero-line overflow-hidden">
               <span className="block translate-y-[100%] whitespace-nowrap">
