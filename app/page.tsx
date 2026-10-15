@@ -24,42 +24,18 @@ export default function Home() {
             aria-hidden
             className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-ash/15 to-transparent"
           />
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-x-0 top-0 px-4 md:px-12 lg:px-16"
-          >
-            <div className="max-w-6xl mx-auto">
-              <div className="h-px w-12 bg-blood" />
-            </div>
-          </div>
-          <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-24 items-start">
-            {/* Left: Copy */}
-            <div className="flex flex-col justify-start lg:sticky lg:top-32">
-              <p className="font-mono text-xs uppercase tracking-[0.2em] text-blood mb-6">
+          <div className="mx-auto w-full max-w-3xl">
+            <div className="mb-10 text-center md:mb-12">
+              <p className="confessional-eyebrow mb-5 font-mono text-xs uppercase tracking-[0.2em] text-blood">
                 Exhibit A: you
               </p>
-              <h2 className="font-syne font-extrabold text-4xl md:text-5xl lg:text-6xl uppercase leading-[0.9] tracking-tighter text-balance mb-8 md:mb-10">
+              <h2 className="font-syne text-4xl font-extrabold uppercase leading-[0.9] tracking-tighter text-balance md:text-5xl">
                 Hold still.
                 <br />
                 <span className="text-blood">This will sting.</span>
               </h2>
-              <div className="space-y-8 text-ash/80 text-base font-light leading-relaxed max-w-md text-pretty">
-                <p>
-                  Give exact details and we map where every planet was the
-                  minute you arrived. That&apos;s more
-                  attention than anyone has ever paid you. Don&apos;t round to
-                  the nearest hour to seem more interesting.
-                </p>
-                <p className="pl-5 border-l-2 border-blood text-ash/90 text-lg leading-snug">
-                  Don&apos;t know your birth time? Text your mum. She&apos;ll
-                  reply with the minute, the weather and every hour of labour,
-                  itemised. Not speaking to her? That&apos;s your free teaser.
-                </p>
-              </div>
             </div>
-
-            {/* Right: Form */}
-            <div className="lg:pt-4">
+            <div className="mx-auto w-full max-w-xl">
               <BirthForm />
             </div>
           </div>

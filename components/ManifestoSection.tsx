@@ -3,57 +3,84 @@
 import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import ZodiacAvatar from "./ZodiacAvatar";
+import type { ZodiacSign } from "./zodiacPaths";
 
-const ROAST_LINES = [
+const ROAST_LINES: {
+  quote: string;
+  author: string;
+  placement: string;
+  sign: ZodiacSign;
+}[] = [
   {
     quote:
       "Tea and feelings — but the tea's brewed at the temperature of the earth's core. You serve it smiling, then act surprised when someone mentions the burns. Hospitality as siege warfare. The doilies are load-bearing.",
-    author: "Delia, Cancer Rising",
+    author: "Delia",
+    placement: "Cancer Rising",
+    sign: "Cancer",
   },
   {
     quote:
       "You don't experience feelings. You undergo them, the way buildings undergo demolition. Afterwards you sweep the rubble behind the couch and call it processing.",
-    author: "Marcus, Scorpio Sun",
+    author: "Marcus",
+    placement: "Scorpio Sun",
+    sign: "Scorpio",
   },
   {
     quote:
       "Two people stacked in a trench coat — and the scary one got the outside. Visitors knock and the soft one answers through the letterbox. Nobody's been past the hallway since 2019. You call this boundaries; the chart calls it a moat.",
-    author: "Noor, Scorpio Rising",
+    author: "Noor",
+    placement: "Scorpio Rising",
+    sign: "Scorpio",
   },
   {
     quote:
       "You text the emotional bomb, then follow up twenty minutes later with “what I meant was—”. The clarification is always longer than the detonation. Forensics could reconstruct your relationships from the edit history alone.",
-    author: "Delia, Cancer Rising",
+    author: "Delia",
+    placement: "Cancer Rising",
+    sign: "Cancer",
   },
   {
     quote:
       "You've rewritten text messages more times than most people rewrite their CVs. Every draft gets colder, and you call that maturity. Somewhere there's a museum of the warm versions you never sent.",
-    author: "Marcus, Scorpio Sun",
+    author: "Marcus",
+    placement: "Scorpio Sun",
+    sign: "Scorpio",
   },
   {
     quote:
       "The 12th-house Venus is writing poetry. Mars is guarding the notebook with a sword. Nobody has read a single stanza in eleven years, and you wonder why people describe you as hard to know. The poems are good — that's the tragedy.",
-    author: "Noor, Scorpio Rising",
+    author: "Noor",
+    placement: "Scorpio Rising",
+    sign: "Scorpio",
   },
   {
     quote:
       "Joy has a permit system. Applications are reviewed quarterly by a committee of your worst memories. Approved fun must be completed quietly and is subject to inspection. Saturn signed off on this, and you framed the signature.",
-    author: "Delia, Cancer Rising",
+    author: "Delia",
+    placement: "Cancer Rising",
+    sign: "Cancer",
   },
   {
     quote:
       "A sommelier of your own darkness. You swirl the mood, sniff it, announce the vintage — ah yes, 2014, abandonment with oak notes. Connoisseurship is not the same as healing. But God, the cellar is impressive.",
-    author: "Marcus, Scorpio Sun",
+    author: "Marcus",
+    placement: "Scorpio Sun",
+    sign: "Scorpio",
   },
   {
     quote:
       "Give her a Capricorn Ascendant so she walks into every room like she's about to chair a meeting, FIVE fire planets so the meeting is secretly a bonfire, an Aries stellium in the 3rd house so her mouth is a flamethrower that thinks it's making polite conversation.",
-    author: "Imogen, Aries Sun",
+    author: "Imogen",
+    placement: "Aries Sun",
+    sign: "Aries",
   },
   {
     quote:
       "Her mind works like a duck: smooth on the surface, paddling FURIOUSLY underneath.",
-    author: "Theo, Gemini Sun",
+    author: "Theo",
+    placement: "Gemini Sun",
+    sign: "Gemini",
   },
 ];
 
@@ -130,7 +157,7 @@ export default function ManifestoSection() {
         ease: "power3.out",
       });
 
-      gsap.from("#confessional p", {
+      gsap.from("#confessional .confessional-eyebrow", {
         scrollTrigger: { trigger: "#confessional", start: "top 60%" },
         y: 30,
         opacity: 0,
@@ -195,23 +222,35 @@ export default function ManifestoSection() {
               role="region"
               aria-label="Sample roast lines"
               aria-roledescription="carousel"
-              className="relative min-h-[18rem] md:min-h-[20rem] flex items-center justify-center"
+              className="relative min-h-[32rem] sm:min-h-[26rem] md:min-h-[24rem] flex items-center justify-center"
             >
               {ROAST_LINES.map((t, i) => (
-                <div
+                <figure
                   key={i}
                   aria-hidden={i !== active}
-                  className={`absolute inset-0 flex flex-col items-center justify-center px-2 max-w-3xl mx-auto text-base md:text-xl lg:text-2xl normal-case font-normal font-mono leading-relaxed text-pretty text-ash/90 transition-opacity duration-700 ease-in-out ${
+                  className={`absolute inset-0 m-0 flex items-center justify-center px-1 normal-case font-normal tracking-normal transition-[opacity,transform] duration-700 ease-out ${
                     i === active
-                      ? "opacity-100"
-                      : "opacity-0 pointer-events-none"
+                      ? "opacity-100 translate-y-0"
+                      : "opacity-0 translate-y-2 pointer-events-none"
                   }`}
                 >
-                  &ldquo;{t.quote}&rdquo;
-                  <div className="mt-6 md:mt-8 text-xs md:text-sm uppercase tracking-[0.2em] text-blood font-syne font-bold">
-                    — {t.author}
+                  <div className="testimonial-card w-full max-w-2xl rounded-[28px] p-6 text-left md:p-8">
+                    <figcaption className="flex items-center gap-3.5">
+                      <ZodiacAvatar sign={t.sign} className="h-12 w-12" />
+                      <div className="min-w-0">
+                        <div className="font-syne text-base font-bold leading-tight text-ash">
+                          {t.author}
+                        </div>
+                        <div className="mt-1 font-mono text-[11px] uppercase tracking-[0.18em] text-ash/50">
+                          {t.placement}
+                        </div>
+                      </div>
+                    </figcaption>
+                    <blockquote className="mt-5 text-[17px] leading-relaxed text-pretty text-ash/90 md:mt-6 md:text-xl md:leading-relaxed">
+                      &ldquo;{t.quote}&rdquo;
+                    </blockquote>
                   </div>
-                </div>
+                </figure>
               ))}
             </div>
 

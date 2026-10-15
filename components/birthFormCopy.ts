@@ -83,7 +83,7 @@ export const COPY = {
     time: {
       label: "Birth time",
       placeholder: "Optional",
-      hint: "Makes it noticeably sharper. Sorry in advance.",
+      hint: "Sharper roast. Don't know it? Text your mum. She'll know to the minute.",
     },
     place: {
       label: "Birthplace",
@@ -108,10 +108,11 @@ export const COPY = {
   optionalTag: "(optional)",
 
   person: {
+    // Works for partners and friends alike.
     label: (n: number) =>
-      n === 2 ? "Suspect 2: the accomplice" : `Suspect ${n}`,
-    remove: "Release",
-    removeAriaLabel: (n: number) => `Release suspect ${n} (−€4)`,
+      n === 1 ? "You" : n === 2 ? "Your person" : `Person ${n}`,
+    remove: "Remove",
+    removeAriaLabel: (n: number) => `Remove person ${n} (−€4)`,
     add: "Drag in another relative",
     addPriceNote: "+ €4",
   },
@@ -137,8 +138,9 @@ export const COPY = {
     who: {
       solo: { possessive: "your", object: "you" } as Who,
       person: (n: number): Who => ({
-        possessive: `suspect ${n}'s`,
-        object: "them",
+        possessive:
+          n === 1 ? "your" : n === 2 ? "your person's" : `person ${n}'s`,
+        object: n === 1 ? "you" : "them",
       }),
     },
     name: (who: Who) =>
