@@ -164,7 +164,7 @@ Calibrate (same placement, two ways):
 
 You'll get the full roast (match its voice and running jokes, never contradict it) and the chart elements with their data. One line per element id. Planets and aspects get the sharpest, most personal jokes; houses and signs can riff on what they hold, or the comedy of an empty room.`;
 
-// One Opus call → a witty line per element. Facts stay deterministic; only the
+// One Sonnet call → a witty line per element. Facts stay deterministic; only the
 // line is model-written. On any failure, callers fall back to facts-only.
 export async function generateChartAnnotations(
   chart: NatalChart,
@@ -181,7 +181,7 @@ export async function generateChartAnnotations(
   const client = new Anthropic(); // ANTHROPIC_API_KEY from env
 
   const message = await client.messages.create({
-    model: "claude-opus-4-8",
+    model: "claude-sonnet-5-5",
     max_tokens: 6000,
     system: SYSTEM,
     tools: [

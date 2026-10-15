@@ -12,7 +12,7 @@ import { join } from "node:path";
 
 const PORT = Number(process.env.PORT || 8787);
 const SECRET = process.env.ROAST_RUNNER_SECRET;
-const MODEL = process.env.ROAST_MODEL || "claude-opus-4-8";
+const MODEL = process.env.ROAST_MODEL || "claude-sonnet-5-5";
 const TIMEOUT_MS = Number(process.env.ROAST_TIMEOUT_MS || 10 * 60 * 1000);
 const PROGRESS_URL = process.env.PROGRESS_CALLBACK_URL || "";
 const PYTHON_BIN =
@@ -339,7 +339,7 @@ const server = createServer(async (req, res) => {
   // Initial tick so the bar moves the moment the runner accepts the job.
   postProgress(roastId, 8);
 
-  // Phase 1 — write. Background creep 10→70 across the expected ~75s opus run.
+  // Phase 1 — write. Background creep 10→70 across the expected ~75s write.
   // If the phase finishes faster, the creep stops; if it's slower, the creep
   // caps at 70 and we wait for the real finish to jump to 78.
   const stopWriteCreep = startProgressCreep({
