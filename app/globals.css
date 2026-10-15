@@ -8,8 +8,9 @@
 
   --font-syne: "Syne", sans-serif;
   --font-mono: "DM Mono", monospace;
+  --font-body: "Instrument Sans", system-ui, sans-serif;
   --font-ui:
-    -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, "Segoe UI",
+    "Instrument Sans", -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, "Segoe UI",
     Roboto, "Helvetica Neue", Arial, sans-serif;
 
   --animate-spin-slow: spin 20s linear infinite;
@@ -388,6 +389,19 @@ body {
    Polish layer (base: component utilities still win)
    ------------------------------------------------------------------------ */
 @layer base {
+  /* Sentence copy in the body grotesk; mono stays for labels and eyebrows
+     (opt back in with the font-mono utility). */
+  p,
+  blockquote {
+    font-family: var(--font-body);
+  }
+
+  /* Resolve the UI stack on body, where next/font defines --font-body. */
+  body {
+    --font-ui: var(--font-body), -apple-system, BlinkMacSystemFont, system-ui,
+      sans-serif;
+  }
+
   /* One focus language site-wide: a blood ring, keyboard only. */
   :focus-visible {
     outline: 2px solid var(--color-blood);

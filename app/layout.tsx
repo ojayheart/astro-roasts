@@ -1,5 +1,10 @@
 import type { Metadata, Viewport } from "next";
-import { Syne, DM_Mono, Noto_Sans_Symbols_2 } from "next/font/google";
+import {
+  Syne,
+  DM_Mono,
+  Instrument_Sans,
+  Noto_Sans_Symbols_2,
+} from "next/font/google";
 import "./globals.css";
 import NoiseOverlay from "@/components/NoiseOverlay";
 import PostHogProvider from "@/components/PostHogProvider";
@@ -18,6 +23,13 @@ const dmMono = DM_Mono({
   display: "swap",
 });
 
+// Body copy — a crisp grotesk that sits under Syne's wide display caps.
+const instrumentSans = Instrument_Sans({
+  subsets: ["latin"],
+  variable: "--font-body",
+  display: "swap",
+});
+
 // Zodiac glyphs (♈–♓) — self-hosted so every platform draws the same mark
 // instead of falling back to OS symbol fonts (tofu on Android/Windows).
 const notoSymbols = Noto_Sans_Symbols_2({
@@ -33,7 +45,7 @@ export const metadata: Metadata = {
   ),
   title: "Astro Roasts | Radical Cosmic Honesty",
   description:
-    "A radically honest, surgically precise teardown of your exact natal chart. Swiss Ephemeris. Zero sugar coating.",
+    "A radically honest, surgically precise teardown of your exact birth chart. Zero sugar coating.",
   openGraph: {
     title: "Astro Roasts",
     description: "Stop blaming your moon sign.",
@@ -57,7 +69,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="scroll-smooth">
       <body
-        className={`${syne.variable} ${dmMono.variable} ${notoSymbols.variable} font-mono text-ash bg-void selection:bg-blood selection:text-void antialiased`}
+        className={`${syne.variable} ${dmMono.variable} ${instrumentSans.variable} ${notoSymbols.variable} font-mono text-ash bg-void selection:bg-blood selection:text-void antialiased`}
       >
         <a
           href="#main"
