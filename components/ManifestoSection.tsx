@@ -201,14 +201,14 @@ export default function ManifestoSection() {
                 <div
                   key={i}
                   aria-hidden={i !== active}
-                  className={`absolute inset-0 flex flex-col items-center justify-center px-2 max-w-3xl mx-auto text-base md:text-xl lg:text-2xl normal-case font-normal font-mono leading-relaxed transition-opacity duration-700 ease-in-out ${
+                  className={`absolute inset-0 flex flex-col items-center justify-center px-2 max-w-3xl mx-auto text-base md:text-xl lg:text-2xl normal-case font-normal font-mono leading-relaxed text-pretty text-ash/90 transition-opacity duration-700 ease-in-out ${
                     i === active
                       ? "opacity-100"
                       : "opacity-0 pointer-events-none"
                   }`}
                 >
                   &ldquo;{t.quote}&rdquo;
-                  <div className="mt-6 text-sm uppercase tracking-[0.15em] text-blood font-syne font-bold">
+                  <div className="mt-6 md:mt-8 text-xs md:text-sm uppercase tracking-[0.2em] text-blood font-syne font-bold">
                     — {t.author}
                   </div>
                 </div>
@@ -218,9 +218,10 @@ export default function ManifestoSection() {
             <div
               role="tablist"
               aria-label="Roast line"
-              className="mt-10 flex items-center justify-center gap-3"
+              className="mt-8 flex items-center justify-center"
             >
               {ROAST_LINES.map((_, i) => (
+                // 24px+ hit area; the visible pill is the inner span.
                 <button
                   key={i}
                   type="button"
@@ -228,19 +229,26 @@ export default function ManifestoSection() {
                   aria-selected={i === active}
                   aria-label={`Show roast line ${i + 1} of ${ROAST_LINES.length}`}
                   onClick={() => setActive(i)}
-                  className={`interactive h-1.5 rounded-full transition-all duration-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blood focus-visible:ring-offset-2 focus-visible:ring-offset-void ${
-                    i === active ? "w-8 bg-blood" : "w-1.5 bg-ash/30"
-                  }`}
-                />
+                  className="interactive group h-8 min-w-6 px-[9px] flex items-center justify-center focus-visible:outline-none"
+                >
+                  <span
+                    aria-hidden
+                    className={`block h-1.5 rounded-full transition-all duration-500 ease-out group-focus-visible:ring-2 group-focus-visible:ring-blood group-focus-visible:ring-offset-4 group-focus-visible:ring-offset-void ${
+                      i === active
+                        ? "w-8 bg-blood"
+                        : "w-1.5 bg-ash/30 group-hover:bg-ash/70"
+                    }`}
+                  />
+                </button>
               ))}
             </div>
 
-            <div className="mt-6 flex items-center justify-center">
+            <div className="mt-3 flex items-center justify-center">
               <button
                 type="button"
                 onClick={() => setPaused((p) => !p)}
                 aria-pressed={paused}
-                className="interactive font-mono text-[10px] tracking-[0.25em] uppercase text-ash/50 hover:text-blood focus-visible:outline-none focus-visible:text-blood transition-colors min-h-[44px] px-3"
+                className="interactive font-mono text-[11px] tracking-[0.2em] uppercase text-ash/60 hover:text-blood focus-visible:outline-none focus-visible:text-blood focus-visible:underline focus-visible:underline-offset-4 focus-visible:decoration-blood transition-colors min-h-[44px] px-3"
               >
                 {paused ? "Play roast lines" : "Pause roast lines"}
               </button>

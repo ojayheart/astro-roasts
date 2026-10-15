@@ -16,34 +16,48 @@ export default function Home() {
         {/* The Confessional Form */}
         <section
           id="confessional"
-          className="relative min-h-[100dvh] w-full py-32 px-4 md:px-12 lg:px-16 bg-void border-t border-ash/10"
+          className="relative min-h-[100dvh] w-full py-24 md:py-32 px-4 md:px-12 lg:px-16 bg-void"
         >
+          {/* Hairline divider: fades out at the edges, with a blood tick on
+              the content's left edge. */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-ash/15 to-transparent"
+          />
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-x-0 top-0 px-4 md:px-12 lg:px-16"
+          >
+            <div className="max-w-6xl mx-auto">
+              <div className="h-px w-12 bg-blood" />
+            </div>
+          </div>
           <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-24 items-start">
             {/* Left: Copy */}
             <div className="flex flex-col justify-start lg:sticky lg:top-32">
-              <p className="font-mono text-xs uppercase tracking-[0.2em] text-blood mb-5">
+              <p className="font-mono text-xs uppercase tracking-[0.2em] text-blood mb-6">
                 Exhibit A: you
               </p>
-              <h2 className="font-syne font-extrabold text-4xl md:text-5xl lg:text-6xl uppercase leading-[0.9] tracking-tighter mb-8">
+              <h2 className="font-syne font-extrabold text-4xl md:text-5xl lg:text-6xl uppercase leading-[0.9] tracking-tighter text-balance mb-8 md:mb-10">
                 Hold still.
                 <br />
                 <span className="text-blood">This&apos;ll sting.</span>
               </h2>
-              <div className="space-y-8 text-ash/80 text-base font-light leading-relaxed max-w-md">
+              <div className="space-y-8 text-ash/80 text-base font-light leading-relaxed max-w-md text-pretty">
                 <p>
                   Give exact details and the Swiss Ephemeris places every
                   planet, house and aspect to the degree. That&apos;s more
                   attention than anyone has ever paid you. Don&apos;t round to
                   the nearest hour to seem more interesting.
                 </p>
-                <ul className="space-y-2.5 font-mono text-xs uppercase tracking-[0.12em] text-ash/60">
+                <ul className="space-y-3 font-mono text-xs uppercase leading-relaxed tracking-[0.12em] text-ash/65">
                   {[
                     "Free teaser first. Pay once you've flinched.",
                     "Maths first, insults second. A couple of minutes.",
                     "No subscription. No 7am texts about Mercury.",
                   ].map((line) => (
                     <li key={line} className="flex gap-3">
-                      <span aria-hidden className="text-blood">
+                      <span aria-hidden className="shrink-0 text-blood">
                         ✦
                       </span>
                       {line}
