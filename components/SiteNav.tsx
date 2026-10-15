@@ -53,8 +53,8 @@ export default function SiteNav({
         </Link>
         {disclaimers && (
           <div className="font-mono text-[11px] md:text-xs leading-relaxed tracking-[0.2em] uppercase text-right text-ash/60">
-            * Swiss Ephemeris Data
-            <br />* Zero Sugar Coating
+            * Zero Sugar Coating
+            <br />* Mild Emotional Damage
           </div>
         )}
       </nav>

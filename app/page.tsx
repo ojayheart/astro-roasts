@@ -45,8 +45,8 @@ export default function Home() {
               </h2>
               <div className="space-y-8 text-ash/80 text-base font-light leading-relaxed max-w-md text-pretty">
                 <p>
-                  Give exact details and the Swiss Ephemeris places every
-                  planet, house and aspect to the degree. That&apos;s more
+                  Give exact details and we map where every planet was the
+                  minute you arrived. That&apos;s more
                   attention than anyone has ever paid you. Don&apos;t round to
                   the nearest hour to seem more interesting.
                 </p>

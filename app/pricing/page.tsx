@@ -32,8 +32,8 @@ export default function PricingPage() {
                 <li className="flex items-start gap-3">
                   <span className="text-blood mt-1">*</span>
                   <span>
-                    Full natal chart calculation via Swiss Ephemeris — planets,
-                    houses, aspects to the exact degree
+                    Your full birth chart, worked out to the minute you
+                    arrived
                   </span>
                 </li>
                 <li className="flex items-start gap-3">

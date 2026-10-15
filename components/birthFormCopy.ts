@@ -85,7 +85,7 @@ export const COPY = {
     time: {
       label: "Birth time",
       placeholder: "Optional",
-      hint: "Adds rising and houses. Sharper. Sorry in advance.",
+      hint: "Makes it noticeably sharper. Sorry in advance.",
     },
     place: {
       label: "Birth place",

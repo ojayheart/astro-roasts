@@ -62,7 +62,7 @@ export default function HeroSection() {
           </h1>
 
           <p className="hero-fade absolute top-full left-1/2 -translate-x-1/2 mt-6 md:mt-8 w-full max-w-md text-sm md:text-base opacity-0 font-light text-ash/70 leading-relaxed">
-            A radically honest, surgically precise teardown of your exact natal
+            A radically honest, surgically precise teardown of your exact birth
             chart. We see your patterns. We know your delusions.
           </p>
         </div>
