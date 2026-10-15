@@ -13,6 +13,8 @@ import PersonFields, {
   type PersonFormValue,
 } from "./PersonFields";
 import FireCursor from "./FireCursor";
+import { BIRTH_DATE_INVALID } from "./BirthDateInput";
+import { BIRTH_TIME_INVALID } from "./BirthTimeInput";
 import { COPY, type FieldKey, type FormMode } from "./birthFormCopy";
 
 type PersonField = Exclude<FieldKey, "email">;
@@ -83,6 +85,10 @@ export default function BirthForm() {
       if (!p.name.trim()) return fail("name", COPY.errors.name(who));
       if (!p.gender.trim()) return fail("gender", COPY.errors.gender(who));
       if (!p.date) return fail("date", COPY.errors.date(who));
+      if (p.date === BIRTH_DATE_INVALID)
+        return fail("date", COPY.errors.dateInvalid(who));
+      if (p.time === BIRTH_TIME_INVALID)
+        return fail("time", COPY.errors.timeInvalid(who));
       if (!p.placeName.trim()) return fail("place", COPY.errors.place(who));
     }
 

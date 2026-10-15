@@ -52,7 +52,7 @@ export default function SiteNav({
           Roasts
         </Link>
         {disclaimers && (
-          <div className="font-mono text-[11px] md:text-xs leading-relaxed tracking-[0.2em] uppercase text-right text-ash/60">
+          <div className="font-mono text-[10px] sm:text-[11px] md:text-xs leading-relaxed tracking-[0.1em] sm:tracking-[0.2em] uppercase text-right text-ash/60 whitespace-nowrap">
             * Zero Sugar Coating
             <br />* Bruised Ego… Almost Certain
           </div>

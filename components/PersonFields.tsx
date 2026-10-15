@@ -2,6 +2,8 @@
 
 import type { ReactNode } from "react";
 import { COPY, type FieldKey } from "./birthFormCopy";
+import BirthDateInput, { formatBirthDate } from "./BirthDateInput";
+import BirthTimeInput, { formatBirthTime } from "./BirthTimeInput";
 
 export type PersonFormValue = {
   name: string;
@@ -29,10 +31,6 @@ export const EMPTY_PERSON: PersonFormValue = {
  *  so the whole row is the tap target. */
 export const stackedInputClass =
   "ios-input block w-full bg-transparent px-4 pt-[30px] pb-3 text-[17px] leading-6";
-
-/** Date/time input inside an inline row: value right-aligned. */
-export const dateTimeInputClass =
-  "ios-input ios-datetime block w-full bg-transparent py-3 text-[17px] leading-6";
 
 const labelTextClass =
   "font-mono text-[11px] leading-4 uppercase tracking-[0.16em] text-ash/50 transition-colors duration-200 group-focus-within/row:text-blood group-data-[invalid=true]/row:text-blood";
@@ -94,7 +92,6 @@ export function FieldRow({
   hint,
   invalid = false,
   layout = "stacked",
-  emptyPlaceholder,
   children,
 }: {
   id: string;
@@ -105,8 +102,6 @@ export function FieldRow({
   /** stacked: label above value (text fields). inline: label left, value
    *  right (date/time). */
   layout?: "stacked" | "inline";
-  /** Shown on iOS Safari only, when a native date/time input is empty. */
-  emptyPlaceholder?: string;
   children: ReactNode;
 }) {
   const labelContent = (
@@ -143,17 +138,7 @@ export function FieldRow({
           >
             {labelContent}
           </label>
-          <div className="relative min-w-0 flex-1">
-            {children}
-            {emptyPlaceholder && (
-              <span
-                aria-hidden="true"
-                className="ios-empty-placeholder pointer-events-none absolute inset-y-0 right-1 items-center font-ui text-[17px] text-ash/30"
-              >
-                {emptyPlaceholder}
-              </span>
-            )}
-          </div>
+          <div className="relative min-w-0 flex-1">{children}</div>
         </div>
       )}
       {hint && (
@@ -302,6 +287,15 @@ export default function PersonFields({
     ),
   });
 
+  // Once a real date/time is in, the hint becomes a read-back so day/month
+  // mix-ups are obvious at a glance.
+  const validDate = /^\d{4}-\d{2}-\d{2}$/.test(value.date);
+  const validTime = /^\d{2}:\d{2}$/.test(value.time);
+  const dateHint = validDate ? formatBirthDate(value.date) : hint(f.date.hint);
+  const timeHint = validTime
+    ? `${formatBirthTime(value.time)}. Noted.`
+    : hint(f.time.hint);
+
   const groups = (
     <div className="space-y-6">
       <FormGroup
@@ -350,46 +344,37 @@ export default function PersonFields({
         <FieldRow
           id={id("date")}
           label={f.date.label}
-          hint={hint(f.date.hint)}
+          hint={dateHint}
           invalid={isInvalid("date")}
-          layout="inline"
-          emptyPlaceholder={f.date.placeholder}
         >
-          <input
-            id={id("date")}
-            name="bday"
-            type="date"
-            required
-            value={value.date}
-            onChange={(e) => onChange({ ...value, date: e.target.value })}
-            disabled={disabled}
-            autoComplete="bday"
-            className={dateTimeInputClass}
-            data-empty={value.date ? undefined : "true"}
-            style={{ colorScheme: "dark" }}
-            {...aria("date", hint(f.date.hint))}
-          />
+          <div className="px-4 pt-[30px] pb-3">
+            <BirthDateInput
+              id={id("date")}
+              value={value.date}
+              onChange={(date) => onChange({ ...value, date })}
+              disabled={disabled}
+              invalid={isInvalid("date")}
+              describedBy={aria("date", dateHint)["aria-describedby"]}
+            />
+          </div>
         </FieldRow>
         <FieldRow
           id={id("time")}
           label={f.time.label}
           optional
-          hint={hint(f.time.hint)}
-          layout="inline"
-          emptyPlaceholder={f.time.placeholder}
+          hint={timeHint}
+          invalid={isInvalid("time")}
         >
-          <input
-            id={id("time")}
-            name="bday-time"
-            type="time"
-            value={value.time}
-            onChange={(e) => onChange({ ...value, time: e.target.value })}
-            disabled={disabled}
-            className={dateTimeInputClass}
-            data-empty={value.time ? undefined : "true"}
-            style={{ colorScheme: "dark" }}
-            {...aria("time", hint(f.time.hint))}
-          />
+          <div className="px-4 pt-[30px] pb-3">
+            <BirthTimeInput
+              id={id("time")}
+              value={value.time}
+              onChange={(time) => onChange({ ...value, time })}
+              disabled={disabled}
+              invalid={isInvalid("time")}
+              describedBy={aria("time", timeHint)["aria-describedby"]}
+            />
+          </div>
         </FieldRow>
         <FieldRow
           id={id("place")}

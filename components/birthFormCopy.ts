@@ -8,13 +8,7 @@
 
 export type FormMode = "solo" | "couple" | "family";
 
-export type FieldKey =
-  | "name"
-  | "gender"
-  | "date"
-  | "time"
-  | "place"
-  | "email";
+export type FieldKey = "name" | "gender" | "date" | "time" | "place" | "email";
 
 /**
  * Who a validation error is about. Solo mode talks to "you"; couple/family
@@ -76,13 +70,12 @@ export const COPY = {
     },
     date: {
       label: "Date of birth",
-      /** iOS Safari shows no native placeholder for empty dates. */
-      placeholder: "Select",
+      placeholder: "",
       hint: "The real year, please. Saturn already knows.",
     },
     time: {
       label: "Birth time",
-      placeholder: "Optional",
+      placeholder: "",
       hint: "Sharper roast. Don't know it? Text your mum. She'll know to the minute.",
     },
     place: {
@@ -149,6 +142,10 @@ export const COPY = {
       `Pick ${who.possessive} gender, so the insults use the right pronouns.`,
     date: (who: Who) =>
       `Add ${who.possessive} date of birth. Without it, the planets have nothing on ${who.object}.`,
+    dateInvalid: (who: Who) =>
+      `That date doesn't exist. Check ${who.possessive} day, month and four-digit year.`,
+    timeInvalid: (who: Who) =>
+      `Finish ${who.possessive} birth time (AM or PM?), or clear it. Unknown is fine.`,
     place: (who: Who) =>
       `Add ${who.possessive} birthplace. "Earth" is too vague, even for astrology.`,
     /** Fallback when /api/generate fails without its own message. */
