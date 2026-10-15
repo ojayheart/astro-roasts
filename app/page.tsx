@@ -25,9 +25,9 @@ export default function Home() {
                 Exhibit A: you
               </p>
               <h2 className="font-syne font-extrabold text-4xl md:text-5xl lg:text-6xl uppercase leading-[0.9] tracking-tighter mb-8">
-                Time of
+                Let&apos;s see
                 <br />
-                <span className="text-blood">the crime.</span>
+                <span className="text-blood">the damage.</span>
               </h2>
               <div className="space-y-8 text-ash/80 text-base font-light leading-relaxed max-w-md">
                 <p>
