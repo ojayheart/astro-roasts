@@ -10,8 +10,8 @@
   --font-mono: "DM Mono", monospace;
   --font-body: "Instrument Sans", system-ui, sans-serif;
   --font-ui:
-    "Instrument Sans", -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, "Segoe UI",
-    Roboto, "Helvetica Neue", Arial, sans-serif;
+    "Instrument Sans", -apple-system, BlinkMacSystemFont, "SF Pro Text",
+    system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 
   --animate-spin-slow: spin 20s linear infinite;
   --animate-pulse-slow: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
@@ -375,8 +375,18 @@ body {
   animation: wheel-spin 360s linear infinite reverse;
 }
 .astro-wheel-mask {
-  mask-image: radial-gradient(closest-side, #000 72%, rgba(0, 0, 0, 0.6) 90%, transparent 100%);
-  -webkit-mask-image: radial-gradient(closest-side, #000 72%, rgba(0, 0, 0, 0.6) 90%, transparent 100%);
+  mask-image: radial-gradient(
+    closest-side,
+    #000 72%,
+    rgba(0, 0, 0, 0.6) 90%,
+    transparent 100%
+  );
+  -webkit-mask-image: radial-gradient(
+    closest-side,
+    #000 72%,
+    rgba(0, 0, 0, 0.6) 90%,
+    transparent 100%
+  );
 }
 @media (prefers-reduced-motion: reduce) {
   .astro-wheel-outer,
@@ -398,8 +408,8 @@ body {
 
   /* Resolve the UI stack on body, where next/font defines --font-body. */
   body {
-    --font-ui: var(--font-body), -apple-system, BlinkMacSystemFont, system-ui,
-      sans-serif;
+    --font-ui:
+      var(--font-body), -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   }
 
   /* One focus language site-wide: a blood ring, keyboard only. */
@@ -435,4 +445,83 @@ body {
   backdrop-filter: blur(8px);
   -webkit-mask-image: linear-gradient(to bottom, #000 55%, transparent 100%);
   mask-image: linear-gradient(to bottom, #000 55%, transparent 100%);
+}
+
+/* Fire cursor over the roast CTA (components/FireCursor.tsx). */
+@media (hover: hover) and (pointer: fine) {
+  .fire-cursor-zone,
+  .fire-cursor-zone * {
+    cursor: none !important;
+  }
+}
+.fire-cursor {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease-out;
+  will-change: transform;
+}
+.fire-cursor[data-on="true"] {
+  opacity: 1;
+}
+.fire-cursor-inner {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform: translate(-50%, -70%);
+}
+.fire-cursor-flame {
+  display: block;
+  font-size: 32px;
+  line-height: 1;
+  transform-origin: 50% 90%;
+  filter: drop-shadow(0 2px 3px rgb(0 0 0 / 0.35))
+    drop-shadow(0 0 10px rgb(255 190 0 / 0.55));
+  animation: flame-flicker 0.8s ease-in-out infinite alternate;
+}
+.fire-ember {
+  position: absolute;
+  left: 50%;
+  top: 18%;
+  width: 3px;
+  height: 3px;
+  border-radius: 9999px;
+  background: #ffc14d;
+  box-shadow: 0 0 6px #ff6a00;
+  opacity: 0;
+  animation: ember-rise 1.2s ease-out infinite;
+  animation-delay: var(--d);
+}
+@keyframes flame-flicker {
+  0% {
+    transform: scale(1, 1) rotate(-3deg) skewX(2deg);
+  }
+  25% {
+    transform: scale(1.06, 0.94) rotate(2deg);
+  }
+  50% {
+    transform: scale(0.95, 1.08) rotate(-2deg) skewX(-3deg);
+  }
+  75% {
+    transform: scale(1.04, 1) rotate(3deg);
+  }
+  100% {
+    transform: scale(1, 1.06) rotate(-1deg) skewX(1deg);
+  }
+}
+@keyframes ember-rise {
+  0% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--x), -36px) scale(0.3);
+    opacity: 0;
+  }
 }

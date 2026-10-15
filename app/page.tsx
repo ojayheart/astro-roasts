@@ -41,7 +41,7 @@ export default function Home() {
               <h2 className="font-syne font-extrabold text-4xl md:text-5xl lg:text-6xl uppercase leading-[0.9] tracking-tighter text-balance mb-8 md:mb-10">
                 Hold still.
                 <br />
-                <span className="text-blood">This&apos;ll sting.</span>
+                <span className="text-blood">This will sting.</span>
               </h2>
               <div className="space-y-8 text-ash/80 text-base font-light leading-relaxed max-w-md text-pretty">
                 <p>
@@ -50,20 +50,6 @@ export default function Home() {
                   attention than anyone has ever paid you. Don&apos;t round to
                   the nearest hour to seem more interesting.
                 </p>
-                <ul className="space-y-3 font-mono text-xs uppercase leading-relaxed tracking-[0.12em] text-ash/65">
-                  {[
-                    "Free teaser first. Pay once you've flinched.",
-                    "Maths first, insults second. A couple of minutes.",
-                    "No subscription. No 7am texts about Mercury.",
-                  ].map((line) => (
-                    <li key={line} className="flex gap-3">
-                      <span aria-hidden className="shrink-0 text-blood">
-                        ✦
-                      </span>
-                      {line}
-                    </li>
-                  ))}
-                </ul>
                 <p className="pl-5 border-l-2 border-blood text-ash/90 text-lg leading-snug">
                   Don&apos;t know your birth time? Text your mum. She&apos;ll
                   reply with the minute, the weather and every hour of labour,

@@ -12,6 +12,7 @@ import PersonFields, {
   stackedInputClass,
   type PersonFormValue,
 } from "./PersonFields";
+import FireCursor from "./FireCursor";
 import { COPY, type FieldKey, type FormMode } from "./birthFormCopy";
 
 type PersonField = Exclude<FieldKey, "email">;
@@ -23,7 +24,6 @@ const VALUE_KEY: Record<PersonField, keyof PersonFormValue> = {
   date: "date",
   time: "time",
   place: "placeName",
-  country: "countryName",
 };
 
 export default function BirthForm() {
@@ -84,8 +84,6 @@ export default function BirthForm() {
       if (!p.gender.trim()) return fail("gender", COPY.errors.gender(who));
       if (!p.date) return fail("date", COPY.errors.date(who));
       if (!p.placeName.trim()) return fail("place", COPY.errors.place(who));
-      if (!p.countryName.trim())
-        return fail("country", COPY.errors.country(who));
     }
 
     setError("");
@@ -177,11 +175,7 @@ export default function BirthForm() {
     >
       {/* Mode switch */}
       <div className="space-y-3">
-        <SegmentedControl
-          modes={modes}
-          value={mode}
-          onChange={switchMode}
-        />
+        <SegmentedControl modes={modes} value={mode} onChange={switchMode} />
         {COPY.modes[mode].subtitle && (
           <p
             aria-live="polite"
@@ -307,19 +301,21 @@ export default function BirthForm() {
 
       {/* CTA */}
       <div className="space-y-3">
-        <button
-          type="submit"
-          disabled={loading}
-          className="interactive relative flex min-h-[60px] w-full items-center justify-center gap-3 rounded-2xl bg-blood px-5 py-4 text-balance font-syne text-base font-bold uppercase leading-tight tracking-tight text-void shadow-[0_12px_40px_-12px_rgb(255_42_0/0.65),inset_0_1px_0_rgb(255_255_255/0.25)] transition-[transform,filter,box-shadow] duration-200 ease-out hover:brightness-110 hover:shadow-[0_16px_48px_-12px_rgb(255_42_0/0.8),inset_0_1px_0_rgb(255_255_255/0.25)] active:scale-[0.98] active:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ash focus-visible:ring-offset-2 focus-visible:ring-offset-void disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:brightness-100 sm:text-lg md:text-xl md:font-extrabold"
-        >
-          {loading && (
-            <span
-              aria-hidden="true"
-              className="h-[18px] w-[18px] shrink-0 animate-spin rounded-full border-2 border-void/25 border-t-void"
-            />
-          )}
-          <span>{loading ? COPY.cta.loading : COPY.cta[mode]}</span>
-        </button>
+        <FireCursor>
+          <button
+            type="submit"
+            disabled={loading}
+            className="interactive relative flex min-h-[60px] w-full items-center justify-center gap-3 rounded-2xl bg-blood px-5 py-4 text-balance font-syne text-base font-bold uppercase leading-tight tracking-tight text-void shadow-[0_12px_40px_-12px_rgb(255_42_0/0.65),inset_0_1px_0_rgb(255_255_255/0.25)] transition-[transform,filter,box-shadow] duration-200 ease-out hover:brightness-110 hover:shadow-[0_16px_48px_-12px_rgb(255_42_0/0.8),inset_0_1px_0_rgb(255_255_255/0.25)] active:scale-[0.98] active:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ash focus-visible:ring-offset-2 focus-visible:ring-offset-void disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:brightness-100 sm:text-lg md:text-xl md:font-extrabold"
+          >
+            {loading && (
+              <span
+                aria-hidden="true"
+                className="h-[18px] w-[18px] shrink-0 animate-spin rounded-full border-2 border-void/25 border-t-void"
+              />
+            )}
+            <span>{loading ? COPY.cta.loading : COPY.cta[mode]}</span>
+          </button>
+        </FireCursor>
         <div className="space-y-1 text-center">
           <p className="font-mono text-xs uppercase tracking-[0.15em] text-ash/55">
             {COPY.priceHint[mode](price)}

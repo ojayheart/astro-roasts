@@ -179,14 +179,88 @@ type PersonFieldError = {
   message: string;
 };
 
-const GROUP_OF: Record<PersonFieldError["field"], "who" | "when" | "where"> = {
+const GROUP_OF: Record<PersonFieldError["field"], "who" | "born"> = {
   name: "who",
   gender: "who",
-  date: "when",
-  time: "when",
-  place: "where",
-  country: "where",
+  date: "born",
+  time: "born",
+  place: "born",
 };
+
+/** iOS-style pill choices: one tap instead of typing. Arrow keys move the
+ *  selection (radio-group semantics, roving tabindex). */
+function GenderChoice({
+  id,
+  value,
+  onChange,
+  disabled,
+  invalid,
+}: {
+  id: string;
+  value: string;
+  onChange: (v: string) => void;
+  disabled: boolean;
+  invalid: boolean;
+}) {
+  const options = COPY.genderOptions;
+  const selected = options.findIndex((o) => o.value === value);
+  const pick = (i: number) => {
+    const next = (i + options.length) % options.length;
+    onChange(options[next].value);
+    document.getElementById(`${id}-${next}`)?.focus();
+  };
+  return (
+    <div
+      className="ios-row group/row interactive"
+      data-invalid={invalid ? "true" : undefined}
+    >
+      <div className="px-4 pt-3 pb-3.5">
+        <p id={`${id}-label`} className={labelTextClass}>
+          {COPY.fields.gender.label}
+        </p>
+        <div
+          role="radiogroup"
+          aria-labelledby={`${id}-label`}
+          aria-invalid={invalid || undefined}
+          className="mt-2.5 flex gap-2"
+        >
+          {options.map((o, i) => {
+            const checked = i === selected;
+            return (
+              <button
+                key={o.value}
+                // First option carries the field id so validation can focus it.
+                id={i === 0 ? id : `${id}-${i}`}
+                type="button"
+                role="radio"
+                aria-checked={checked}
+                tabIndex={checked || (selected === -1 && i === 0) ? 0 : -1}
+                disabled={disabled}
+                onClick={() => onChange(o.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+                    e.preventDefault();
+                    pick(i + 1);
+                  } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+                    e.preventDefault();
+                    pick(i - 1);
+                  }
+                }}
+                className={`interactive h-10 flex-1 rounded-full border font-ui text-[15px] transition-[background-color,border-color,color,transform] duration-200 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blood/60 disabled:cursor-not-allowed disabled:opacity-40 ${
+                  checked
+                    ? "border-ash bg-ash font-medium text-void"
+                    : "border-ash/15 text-ash/70 hover:border-ash/35 hover:text-ash"
+                }`}
+              >
+                {o.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function PersonFields({
   idPrefix,
@@ -259,36 +333,19 @@ export default function PersonFields({
             {...aria("name", hint(f.name.hint))}
           />
         </FieldRow>
-        <FieldRow
+        <GenderChoice
           id={id("gender")}
-          label={f.gender.label}
-          hint={hint(f.gender.hint)}
+          value={value.gender}
+          onChange={(gender) => onChange({ ...value, gender })}
+          disabled={disabled}
           invalid={isInvalid("gender")}
-        >
-          <input
-            id={id("gender")}
-            name="sex"
-            type="text"
-            required
-            value={value.gender}
-            onChange={(e) => onChange({ ...value, gender: e.target.value })}
-            disabled={disabled}
-            autoComplete="sex"
-            autoCapitalize="none"
-            autoCorrect="off"
-            spellCheck={false}
-            enterKeyHint="next"
-            className={stackedInputClass}
-            placeholder={f.gender.placeholder}
-            {...aria("gender", hint(f.gender.hint))}
-          />
-        </FieldRow>
+        />
       </FormGroup>
 
       <FormGroup
-        caption={COPY.groups.when}
-        error={errorGroup === "when" ? error?.message : undefined}
-        errorId={errorId("when")}
+        caption={COPY.groups.born}
+        error={errorGroup === "born" ? error?.message : undefined}
+        errorId={errorId("born")}
       >
         <FieldRow
           id={id("date")}
@@ -334,13 +391,6 @@ export default function PersonFields({
             {...aria("time", hint(f.time.hint))}
           />
         </FieldRow>
-      </FormGroup>
-
-      <FormGroup
-        caption={COPY.groups.where}
-        error={errorGroup === "where" ? error?.message : undefined}
-        errorId={errorId("where")}
-      >
         <FieldRow
           id={id("place")}
           label={f.place.label}
@@ -355,38 +405,13 @@ export default function PersonFields({
             value={value.placeName}
             onChange={(e) => onChange({ ...value, placeName: e.target.value })}
             disabled={disabled}
-            autoComplete="address-level2"
-            autoCapitalize="words"
-            autoCorrect="off"
-            enterKeyHint="next"
-            className={stackedInputClass}
-            placeholder={f.place.placeholder}
-            {...aria("place", hint(f.place.hint))}
-          />
-        </FieldRow>
-        <FieldRow
-          id={id("country")}
-          label={f.country.label}
-          hint={hint(f.country.hint)}
-          invalid={isInvalid("country")}
-        >
-          <input
-            id={id("country")}
-            name="country-name"
-            type="text"
-            required
-            value={value.countryName}
-            onChange={(e) =>
-              onChange({ ...value, countryName: e.target.value })
-            }
-            disabled={disabled}
-            autoComplete="country-name"
+            autoComplete="off"
             autoCapitalize="words"
             autoCorrect="off"
             enterKeyHint="done"
             className={stackedInputClass}
-            placeholder={f.country.placeholder}
-            {...aria("country", hint(f.country.hint))}
+            placeholder={f.place.placeholder}
+            {...aria("place", hint(f.place.hint))}
           />
         </FieldRow>
       </FormGroup>

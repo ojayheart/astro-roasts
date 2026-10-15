@@ -14,7 +14,6 @@ export type FieldKey =
   | "date"
   | "time"
   | "place"
-  | "country"
   | "email";
 
 /**
@@ -60,8 +59,7 @@ export const COPY = {
   /** Small uppercase captions above each grouped card. */
   groups: {
     who: "Who",
-    when: "When",
-    where: "Where",
+    born: "Born",
     email: "Delivery",
   },
 
@@ -69,12 +67,12 @@ export const COPY = {
     name: {
       label: "First name",
       placeholder: "What the roast calls you",
-      hint: "Nicknames fine. Instagram handles are not names.",
+      hint: "",
     },
     gender: {
       label: "Gender",
-      placeholder: "e.g. woman, man, non-binary",
-      hint: "For pronouns only. The roast is equal-opportunity.",
+      placeholder: "",
+      hint: "",
     },
     date: {
       label: "Date of birth",
@@ -88,14 +86,9 @@ export const COPY = {
       hint: "Makes it noticeably sharper. Sorry in advance.",
     },
     place: {
-      label: "Birth place",
-      placeholder: "City or town",
-      hint: "Where you were born, not where you tell people.",
-    },
-    country: {
-      label: "Country",
-      placeholder: "e.g. Ireland",
-      hint: "There's a Paris in Texas. Help us out.",
+      label: "Birthplace",
+      placeholder: "Town, country",
+      hint: "Include the country. There's a Paris in Texas.",
     },
     email: {
       label: "Email for your link",
@@ -103,6 +96,13 @@ export const COPY = {
       hint: "So the link survives you closing the tab.",
     },
   } satisfies Record<FieldKey, FieldCopy>,
+
+  /** Tap-to-pick gender options (value is what the roast receives). */
+  genderOptions: [
+    { value: "woman", label: "Woman" },
+    { value: "man", label: "Man" },
+    { value: "non-binary", label: "Non-binary" },
+  ],
 
   /** Tag shown next to labels of optional fields. */
   optionalTag: "(optional)",
@@ -144,13 +144,11 @@ export const COPY = {
     name: (who: Who) =>
       `Add ${who.possessive} first name. Hard to roast a blank.`,
     gender: (who: Who) =>
-      `Add ${who.possessive} gender, so the insults use the right pronouns.`,
+      `Pick ${who.possessive} gender, so the insults use the right pronouns.`,
     date: (who: Who) =>
       `Add ${who.possessive} date of birth. Without it, the planets have nothing on ${who.object}.`,
     place: (who: Who) =>
-      `Add ${who.possessive} birth city or town. "Earth" is too vague, even for astrology.`,
-    country: (who: Who) =>
-      `Add ${who.possessive} birth country. Several Birminghams exist.`,
+      `Add ${who.possessive} birthplace. "Earth" is too vague, even for astrology.`,
     /** Fallback when /api/generate fails without its own message. */
     generic:
       "We couldn't start your roast. That's on us, not your Saturn. Check your details and try again.",

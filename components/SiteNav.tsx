@@ -54,7 +54,7 @@ export default function SiteNav({
         {disclaimers && (
           <div className="font-mono text-[11px] md:text-xs leading-relaxed tracking-[0.2em] uppercase text-right text-ash/60">
             * Zero Sugar Coating
-            <br />* Mild Emotional Damage
+            <br />* Bruised Ego… Almost Certain
           </div>
         )}
       </nav>
