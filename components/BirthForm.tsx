@@ -1,14 +1,30 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { identifyByEmail, track } from "@/lib/track";
 import PersonFields, {
   EMPTY_PERSON,
+  FieldRow,
+  FormGroup,
+  describedBy,
+  hintIdFor,
+  stackedInputClass,
   type PersonFormValue,
 } from "./PersonFields";
+import { COPY, type FieldKey, type FormMode } from "./birthFormCopy";
 
-type FormMode = "solo" | "couple" | "family";
+type PersonField = Exclude<FieldKey, "email">;
+
+/** Which form value backs each validated field (for clearing inline errors). */
+const VALUE_KEY: Record<PersonField, keyof PersonFormValue> = {
+  name: "name",
+  gender: "gender",
+  date: "date",
+  time: "time",
+  place: "placeName",
+  country: "countryName",
+};
 
 export default function BirthForm() {
   const router = useRouter();
@@ -17,6 +33,10 @@ export default function BirthForm() {
   const [familyUnlocked, setFamilyUnlocked] = useState(false);
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
+  const [fieldError, setFieldError] = useState<{
+    person: number;
+    field: PersonField;
+  } | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -38,6 +58,7 @@ export default function BirthForm() {
 
   function switchMode(next: FormMode) {
     setMode(next);
+    setFieldError(null);
     setPeople((prev) => {
       const target = PEOPLE_BY_MODE[next];
       const copy = prev.slice(0, next === "family" ? 6 : target);
@@ -46,55 +67,29 @@ export default function BirthForm() {
     });
   }
 
-  const inputClass =
-    "w-full bg-transparent border-b border-ash/20 text-lg md:text-xl font-syne font-bold text-ash py-3 focus:border-blood focus-visible:outline-none focus-visible:border-blood transition-colors placeholder:text-ash/20 disabled:opacity-50 disabled:cursor-not-allowed";
-  const labelClass =
-    "block text-xs uppercase tracking-[0.2em] text-ash/50 mb-3 font-mono";
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     // Validate every person
     for (let i = 0; i < people.length; i++) {
       const p = people[i];
-      if (!p.name.trim()) {
-        setError(
-          `Add ${mode === "solo" ? "your" : `person ${i + 1}'s`} first name so the roast can address ${mode === "solo" ? "you" : "them"}.`,
-        );
-        document.getElementById(`p${i}-name`)?.focus();
-        return;
-      }
-      if (!p.gender.trim()) {
-        setError(
-          `Add ${mode === "solo" ? "your" : `person ${i + 1}'s`} gender so the roast uses the right voice.`,
-        );
-        document.getElementById(`p${i}-gender`)?.focus();
-        return;
-      }
-      if (!p.date) {
-        setError(
-          `Add ${mode === "solo" ? "your" : `person ${i + 1}'s`} date of birth so we can calculate the chart.`,
-        );
-        document.getElementById(`p${i}-date`)?.focus();
-        return;
-      }
-      if (!p.placeName.trim()) {
-        setError(
-          `Add ${mode === "solo" ? "your" : `person ${i + 1}'s`} birth place so we can calculate the chart.`,
-        );
-        document.getElementById(`p${i}-place`)?.focus();
-        return;
-      }
-      if (!p.countryName.trim()) {
-        setError(
-          `Add ${mode === "solo" ? "your" : `person ${i + 1}'s`} birth country so we can calculate the chart.`,
-        );
-        document.getElementById(`p${i}-country`)?.focus();
-        return;
-      }
+      const who =
+        mode === "solo" ? COPY.errors.who.solo : COPY.errors.who.person(i + 1);
+      const fail = (field: PersonField, message: string) => {
+        setError(message);
+        setFieldError({ person: i, field });
+        document.getElementById(`p${i}-${field}`)?.focus();
+      };
+      if (!p.name.trim()) return fail("name", COPY.errors.name(who));
+      if (!p.gender.trim()) return fail("gender", COPY.errors.gender(who));
+      if (!p.date) return fail("date", COPY.errors.date(who));
+      if (!p.placeName.trim()) return fail("place", COPY.errors.place(who));
+      if (!p.countryName.trim())
+        return fail("country", COPY.errors.country(who));
     }
 
     setError("");
+    setFieldError(null);
     setLoading(true);
 
     track("birth_form_submitted", {
@@ -145,10 +140,7 @@ export default function BirthForm() {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(
-          data.error ||
-            "We couldn't start your roast. Check your details and try again.",
-        );
+        setError(data.error || COPY.errors.generic);
         setLoading(false);
         return;
       }
@@ -156,118 +148,150 @@ export default function BirthForm() {
       track("roast_generation_started", { roastId: data.id });
       router.push(`/roast/${data.id}`);
     } catch {
-      setError("Connection failed. Check your internet and try again.");
+      setError(COPY.errors.network);
       setLoading(false);
     }
   };
 
-  const priceHint =
+  const price =
     mode === "solo"
       ? "€5"
       : mode === "couple"
         ? "€8"
         : `€${8 + 4 * (people.length - 2)}`;
 
-  const ctaLabel =
-    mode === "solo"
-      ? "Generate my roast"
-      : mode === "couple"
-        ? "Roast us both"
-        : "Roast the whole family";
+  const modes: FormMode[] = [
+    "solo",
+    "couple",
+    ...(familyUnlocked ? (["family"] as const) : []),
+  ];
+
+  const emailHint = COPY.fields.email.hint;
 
   return (
     <form
-      className="space-y-10"
+      className="space-y-8"
       onSubmit={handleSubmit}
       aria-busy={loading}
       noValidate
     >
-      {/* Mode tabs */}
-      <div className="flex gap-6 font-mono text-xs uppercase tracking-[0.2em]">
-        {(
-          [
-            "solo",
-            "couple",
-            ...(familyUnlocked ? ["family"] : []),
-          ] as FormMode[]
-        ).map((m) => (
-          <button
-            key={m}
-            type="button"
-            onClick={() => switchMode(m)}
-            className={`interactive pb-1 border-b-2 transition-colors ${
-              mode === m
-                ? "border-blood text-blood"
-                : "border-transparent text-ash/50 hover:text-ash"
-            }`}
+      {/* Mode switch */}
+      <div className="space-y-3">
+        <SegmentedControl
+          modes={modes}
+          value={mode}
+          onChange={switchMode}
+        />
+        {COPY.modes[mode].subtitle && (
+          <p
+            aria-live="polite"
+            className="px-1 text-center font-ui text-[15px] leading-snug text-ash/55"
           >
-            {m === "solo" ? "Just me" : m === "couple" ? "Us" : "My family"}
-          </button>
-        ))}
+            {COPY.modes[mode].subtitle}
+          </p>
+        )}
       </div>
 
-      <div className="space-y-10">
+      <div className="space-y-6">
         {/* Person fields */}
         {people.map((p, i) => (
-          <div key={i} className="space-y-10">
-            <PersonFields
-              idPrefix={`p${i}`}
-              label={mode === "solo" ? null : `Person ${i + 1}`}
-              value={p}
-              onChange={(updated) => {
-                const copy = [...people];
-                copy[i] = updated;
-                setPeople(copy);
-              }}
-              disabled={loading}
-            />
-            {mode === "family" && i >= 3 && (
-              <button
-                type="button"
-                onClick={() => setPeople(people.filter((_, idx) => idx !== i))}
-                disabled={loading}
-                className="interactive text-xs font-mono uppercase tracking-[0.2em] text-ash/50 hover:text-blood transition-colors"
-              >
-                Remove person {i + 1}
-              </button>
-            )}
-          </div>
+          <PersonFields
+            key={i}
+            idPrefix={`p${i}`}
+            label={mode === "solo" ? null : COPY.person.label(i + 1)}
+            value={p}
+            onChange={(updated) => {
+              const copy = [...people];
+              copy[i] = updated;
+              setPeople(copy);
+              if (
+                fieldError?.person === i &&
+                updated[VALUE_KEY[fieldError.field]] !==
+                  p[VALUE_KEY[fieldError.field]]
+              ) {
+                setFieldError(null);
+              }
+            }}
+            disabled={loading}
+            error={
+              fieldError?.person === i
+                ? { field: fieldError.field, message: error }
+                : null
+            }
+            onRemove={
+              mode === "family" && i >= 3
+                ? () => {
+                    setPeople(people.filter((_, idx) => idx !== i));
+                    setFieldError(null);
+                  }
+                : undefined
+            }
+            removeAriaLabel={COPY.person.removeAriaLabel(i + 1)}
+            showHints={i === 0}
+          />
         ))}
 
-        {/* Family mode: add person button */}
+        {/* Family mode: add person row */}
         {mode === "family" && people.length < 6 && (
-          <button
-            type="button"
-            onClick={() => setPeople([...people, EMPTY_PERSON])}
-            disabled={loading}
-            className="interactive text-xs font-mono uppercase tracking-[0.2em] text-blood hover:text-ash transition-colors"
-          >
-            Add person (+ €4)
-          </button>
+          <div className="ios-group">
+            <button
+              type="button"
+              onClick={() => setPeople([...people, EMPTY_PERSON])}
+              disabled={loading}
+              className="interactive group/add flex min-h-[52px] w-full items-center gap-3 rounded-[15px] px-4 text-left transition-colors duration-200 hover:bg-ash/[0.04] active:bg-ash/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blood/60 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <span
+                aria-hidden="true"
+                className="flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full bg-blood text-void transition-transform duration-200 group-active/add:scale-90"
+              >
+                <svg viewBox="0 0 12 12" className="h-3 w-3" fill="none">
+                  <path
+                    d="M6 1.5v9M1.5 6h9"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </span>
+              <span className="flex-1 font-ui text-[17px] text-blood">
+                {COPY.person.add}
+              </span>
+              <span className="font-mono text-xs tracking-[0.1em] text-ash/40">
+                {COPY.person.addPriceNote}
+              </span>
+            </button>
+          </div>
         )}
 
         {/* Email */}
-        <div className="relative group interactive">
-          <label htmlFor="birth-email" className={labelClass}>
-            Email for your link
-          </label>
-          <input
+        <FormGroup caption={COPY.groups.email}>
+          <FieldRow
             id="birth-email"
-            name="email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            disabled={loading}
-            autoComplete="email"
-            autoCapitalize="off"
-            autoCorrect="off"
-            spellCheck={false}
-            inputMode="email"
-            enterKeyHint="next"
-            className={inputClass}
-            placeholder="Optional, but useful"
-          />
-        </div>
+            label={COPY.fields.email.label}
+            hint={emailHint}
+            optional
+          >
+            <input
+              id="birth-email"
+              name="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              disabled={loading}
+              autoComplete="email"
+              autoCapitalize="off"
+              autoCorrect="off"
+              spellCheck={false}
+              inputMode="email"
+              enterKeyHint="next"
+              className={stackedInputClass}
+              placeholder={COPY.fields.email.placeholder}
+              aria-describedby={describedBy(
+                hintIdFor("birth-email", emailHint),
+              )}
+            />
+          </FieldRow>
+        </FormGroup>
       </div>
 
       {error && (
@@ -275,28 +299,112 @@ export default function BirthForm() {
           id="birth-form-error"
           role="alert"
           aria-live="assertive"
-          className="text-blood text-sm font-mono"
+          className="rounded-2xl border border-blood/25 bg-blood/[0.08] px-4 py-3 font-ui text-[15px] leading-snug text-blood"
         >
           {error}
         </p>
       )}
 
       {/* CTA */}
-      <div className="pt-4">
+      <div className="space-y-3">
         <button
           type="submit"
           disabled={loading}
-          className="interactive w-full bg-ash text-void font-syne font-bold text-lg md:text-2xl uppercase py-5 min-h-[44px] hover:bg-blood hover:text-ash active:bg-blood active:text-ash focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blood focus-visible:ring-offset-2 focus-visible:ring-offset-void transition-colors duration-300 relative overflow-hidden group disabled:opacity-50 disabled:cursor-not-allowed"
+          className="interactive relative flex min-h-[60px] w-full items-center justify-center gap-3 rounded-2xl bg-blood px-5 py-4 text-balance font-syne text-base font-bold uppercase leading-tight tracking-tight text-void shadow-[0_12px_40px_-12px_rgb(255_42_0/0.65),inset_0_1px_0_rgb(255_255_255/0.25)] transition-[transform,filter,box-shadow] duration-200 ease-out hover:brightness-110 hover:shadow-[0_16px_48px_-12px_rgb(255_42_0/0.8),inset_0_1px_0_rgb(255_255_255/0.25)] active:scale-[0.98] active:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ash focus-visible:ring-offset-2 focus-visible:ring-offset-void disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:brightness-100 sm:text-lg md:text-xl md:font-extrabold"
         >
-          <span className="relative z-10">
-            {loading ? "Calculating your chart..." : ctaLabel}
-          </span>
-          <div className="absolute inset-0 bg-blood transform scale-y-0 origin-bottom group-hover:scale-y-100 transition-transform duration-300 ease-in-out z-0" />
+          {loading && (
+            <span
+              aria-hidden="true"
+              className="h-[18px] w-[18px] shrink-0 animate-spin rounded-full border-2 border-void/25 border-t-void"
+            />
+          )}
+          <span>{loading ? COPY.cta.loading : COPY.cta[mode]}</span>
         </button>
-        <p className="text-xs font-mono tracking-[0.15em] text-ash/40 mt-3 uppercase text-center">
-          {priceHint}
-        </p>
+        <div className="space-y-1 text-center">
+          <p className="font-mono text-xs uppercase tracking-[0.15em] text-ash/55">
+            {COPY.priceHint[mode](price)}
+          </p>
+          {COPY.finePrint && (
+            <p className="mx-auto max-w-xs font-ui text-[12px] leading-[17px] text-ash/35">
+              {COPY.finePrint}
+            </p>
+          )}
+        </div>
       </div>
     </form>
+  );
+}
+
+/* ------------------------------------------------------------------------ */
+/* iOS segmented control (radio group with roving tabindex)                 */
+/* ------------------------------------------------------------------------ */
+
+function SegmentedControl({
+  modes,
+  value,
+  onChange,
+}: {
+  modes: FormMode[];
+  value: FormMode;
+  onChange: (m: FormMode) => void;
+}) {
+  const refs = useRef<Array<HTMLButtonElement | null>>([]);
+  const index = Math.max(0, modes.indexOf(value));
+
+  function onKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
+    const step =
+      e.key === "ArrowRight" || e.key === "ArrowDown"
+        ? 1
+        : e.key === "ArrowLeft" || e.key === "ArrowUp"
+          ? -1
+          : 0;
+    let next = -1;
+    if (step) next = (index + step + modes.length) % modes.length;
+    else if (e.key === "Home") next = 0;
+    else if (e.key === "End") next = modes.length - 1;
+    if (next < 0) return;
+    e.preventDefault();
+    onChange(modes[next]);
+    refs.current[next]?.focus();
+  }
+
+  return (
+    <div
+      role="radiogroup"
+      aria-label={COPY.modes.ariaLabel}
+      onKeyDown={onKeyDown}
+      className="relative flex rounded-full border border-ash/10 bg-ash/[0.06] p-1"
+    >
+      {/* Sliding thumb */}
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-y-1 left-1 rounded-full bg-ash/[0.14] shadow-[0_3px_8px_rgb(0_0_0/0.45),inset_0_0_0_0.5px_rgb(229_229_229/0.18)] transition-[transform,width] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]"
+        style={{
+          width: `calc((100% - 0.5rem) / ${modes.length})`,
+          transform: `translateX(${index * 100}%)`,
+        }}
+      />
+      {modes.map((m, i) => {
+        const selected = m === value;
+        return (
+          <button
+            key={m}
+            ref={(el) => {
+              refs.current[i] = el;
+            }}
+            type="button"
+            role="radio"
+            aria-checked={selected}
+            tabIndex={selected ? 0 : -1}
+            onClick={() => onChange(m)}
+            className={`interactive relative z-10 min-h-[40px] flex-1 rounded-full px-3 font-ui text-[15px] font-semibold tracking-[-0.01em] transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blood/70 ${
+              selected ? "text-ash" : "text-ash/50 hover:text-ash/80"
+            }`}
+          >
+            {COPY.modes[m].tab}
+          </button>
+        );
+      })}
+    </div>
   );
 }

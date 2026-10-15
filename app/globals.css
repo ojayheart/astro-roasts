@@ -8,6 +8,9 @@
 
   --font-syne: "Syne", sans-serif;
   --font-mono: "DM Mono", monospace;
+  --font-ui:
+    -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, "Segoe UI",
+    Roboto, "Helvetica Neue", Arial, sans-serif;
 
   --animate-spin-slow: spin 20s linear infinite;
   --animate-pulse-slow: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
@@ -41,14 +44,157 @@ body {
   background: transparent;
 }
 
-/* Form Input Autocomplete Override */
+/* Form Input Autocomplete Override. Inputs inside a grouped card paint the
+   card's surface colour (--autofill-bg) instead of the page void. */
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus,
 input:-webkit-autofill:active {
-  -webkit-box-shadow: 0 0 0 30px #030303 inset !important;
+  -webkit-box-shadow: 0 0 0 1000px var(--autofill-bg, #030303) inset !important;
   -webkit-text-fill-color: #e5e5e5 !important;
+  caret-color: var(--color-blood);
   transition: background-color 5000s ease-in-out 0s;
+}
+
+/* ---------------------------------------------------------------------------
+   Birth form: iOS inset-grouped list
+   ------------------------------------------------------------------------ */
+.ios-group {
+  /* ash at 5% over void, flattened, so autofill can match it exactly */
+  --autofill-bg: #0e0e0e;
+  position: relative;
+  border-radius: 1rem;
+  background-color: rgb(229 229 229 / 0.05);
+  border: 1px solid rgb(229 229 229 / 0.1);
+}
+
+.ios-row {
+  position: relative;
+  transition:
+    background-color 200ms ease,
+    box-shadow 200ms ease;
+}
+.ios-row:first-child {
+  border-top-left-radius: calc(1rem - 1px);
+  border-top-right-radius: calc(1rem - 1px);
+}
+.ios-row:last-child {
+  border-bottom-left-radius: calc(1rem - 1px);
+  border-bottom-right-radius: calc(1rem - 1px);
+}
+/* Hairline separator, inset from the leading edge like UITableView */
+.ios-row + .ios-row::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 1rem;
+  right: 0;
+  height: 1px;
+  background-color: rgb(229 229 229 / 0.1);
+  transition: opacity 200ms ease;
+  pointer-events: none;
+}
+@media (min-resolution: 2dppx) {
+  .ios-row + .ios-row::before {
+    transform: scaleY(0.5);
+    transform-origin: top;
+    background-color: rgb(229 229 229 / 0.16);
+  }
+}
+.ios-row:focus-within {
+  background-color: rgb(255 42 0 / 0.06);
+  box-shadow:
+    inset 0 0 0 1px rgb(255 42 0 / 0.4),
+    inset 0 0 32px rgb(255 42 0 / 0.1);
+}
+.ios-row[data-invalid="true"] {
+  background-color: rgb(255 42 0 / 0.1);
+}
+.ios-row:focus-within::before,
+.ios-row:focus-within + .ios-row::before,
+.ios-row[data-invalid="true"]::before,
+.ios-row[data-invalid="true"] + .ios-row::before {
+  opacity: 0;
+}
+.ios-row:focus-within,
+.ios-row[data-invalid="true"] {
+  --autofill-bg: #170703;
+}
+
+.ios-input {
+  font-family: var(--font-ui);
+  color: var(--color-ash);
+  caret-color: var(--color-blood);
+  outline: none;
+  border-radius: 0;
+  -webkit-tap-highlight-color: transparent;
+  font-variant-numeric: tabular-nums;
+}
+.ios-input::placeholder {
+  color: rgb(229 229 229 / 0.28);
+  opacity: 1;
+}
+.ios-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Native date/time: dark, right-aligned, no stray chrome */
+.ios-datetime {
+  -webkit-appearance: none;
+  appearance: none;
+  color-scheme: dark;
+  min-width: 0;
+  min-height: 52px;
+  text-align: right;
+}
+.ios-datetime::-webkit-date-and-time-value {
+  text-align: right;
+  margin: 0;
+}
+.ios-datetime::-webkit-datetime-edit {
+  display: inline-flex;
+  justify-content: flex-end;
+  flex: 1 1 auto;
+  padding: 0;
+}
+.ios-datetime::-webkit-datetime-edit-fields-wrapper {
+  padding: 0;
+}
+.ios-datetime::-webkit-datetime-edit-text,
+.ios-datetime[data-empty="true"]::-webkit-datetime-edit {
+  color: rgb(229 229 229 / 0.35);
+}
+.ios-datetime::-webkit-datetime-edit-day-field:focus,
+.ios-datetime::-webkit-datetime-edit-month-field:focus,
+.ios-datetime::-webkit-datetime-edit-year-field:focus,
+.ios-datetime::-webkit-datetime-edit-hour-field:focus,
+.ios-datetime::-webkit-datetime-edit-minute-field:focus,
+.ios-datetime::-webkit-datetime-edit-ampm-field:focus {
+  background-color: rgb(255 42 0 / 0.85);
+  color: var(--color-void);
+  border-radius: 4px;
+}
+.ios-datetime::-webkit-calendar-picker-indicator {
+  margin-left: 0.625rem;
+  padding: 3px;
+  border-radius: 6px;
+  opacity: 0.35;
+  cursor: pointer;
+  transition: opacity 200ms ease;
+}
+.ios-datetime:hover::-webkit-calendar-picker-indicator,
+.ios-datetime:focus::-webkit-calendar-picker-indicator {
+  opacity: 0.85;
+}
+/* iOS Safari draws nothing for an empty date/time: show our own placeholder */
+.ios-empty-placeholder {
+  display: none;
+}
+@supports (-webkit-touch-callout: none) {
+  .ios-datetime[data-empty="true"] + .ios-empty-placeholder {
+    display: flex;
+  }
 }
 
 /* Natal wheel — loading screen */
