@@ -125,7 +125,7 @@ public struct Hairline: View { public init() {}; public var body: some View { Re
 
 public struct EmberDot: View { var size: CGFloat = 6; public init(size: CGFloat = 6) { self.size = size }; public var body: some View { Circle().fill(Palette.ember).frame(width: size, height: size) } }
 
-/// Outlined display type, drawn as offset copies behind a ground-coloured fill (SwiftUI has no text stroke).
+/// Outlined display type with a transparent middle (whatever is behind shows through), like the website's `.text-outline`.
 public struct OutlinedText: View {
     let text: String; let font: Font; let tracking: CGFloat; var stroke: Color = Palette.text
     public init(_ text: String, font: Font, tracking: CGFloat, stroke: Color = Palette.text) { self.text = text; self.font = font; self.tracking = tracking; self.stroke = stroke }
@@ -133,10 +133,10 @@ public struct OutlinedText: View {
         ZStack {
             ForEach(0..<8, id: \.self) { i in
                 let a = Double(i) * .pi / 4
-                Text(text).font(font).tracking(tracking).foregroundStyle(stroke).offset(x: cos(a) * 1.1, y: sin(a) * 1.1)
+                Text(text).font(font).tracking(tracking).foregroundStyle(stroke).offset(x: cos(a) * 1.0, y: sin(a) * 1.0)
             }
-            Text(text).font(font).tracking(tracking).foregroundStyle(Palette.ground)
-        }
+            Text(text).font(font).tracking(tracking).foregroundStyle(.black).blendMode(.destinationOut)
+        }.compositingGroup()
     }
 }
 

@@ -12,18 +12,18 @@ struct BirthView: View {
         ZStack {
             ScreenBackground()
             VStack(spacing: 0) {
-                TopBar(title: "Intake", back: { withAnimation(.snappy) { model.route = .welcome } })
+                TopBar(title: "About you", back: { withAnimation(.snappy) { model.route = .welcome } })
                 ScrollView {
                     VStack(alignment: .leading, spacing: 22) {
                         VStack(alignment: .leading, spacing: 8) {
-                            Text("Hand over the evidence.").font(.display(32, .bold)).tracking(-0.8).foregroundStyle(Palette.text)
-                            Text("Exact time means a sharper knife. No time? We still find plenty.").font(.system(size: 15)).foregroundStyle(Palette.text2)
+                            Text("Tell us when you arrived.").font(.display(32, .bold)).tracking(-0.8).foregroundStyle(Palette.text)
+                            Text("The exact time makes it sharper. No time? No problem, we'll still find plenty.").font(.system(size: 15)).foregroundStyle(Palette.text2)
                         }.padding(.horizontal, 8)
                         BirthFormFields(draft: $m.draft, showGender: true, focus: $focus)
                     }.padding(.horizontal, 16).padding(.bottom, 24)
                 }
                 .scrollDismissesKeyboard(.interactively)
-                Button("Roast me") { focus = nil; model.submitBirth() }.buttonStyle(.primary).disabled(!model.draft.valid).opacity(model.draft.valid ? 1 : 0.4)
+                Button("Get my roast") { focus = nil; model.submitBirth() }.buttonStyle(.primary).disabled(!model.draft.valid).opacity(model.draft.valid ? 1 : 0.4)
                     .padding(.horizontal, 16).padding(.bottom, 12)
             }
         }
@@ -43,7 +43,7 @@ struct BirthFormFields: View {
             if showGender {
                 Picker("I am", selection: $draft.gender) { Text("Woman").tag("woman"); Text("Man").tag("man"); Text("Non-binary").tag("non-binary") }.pickerStyle(.segmented)
             }
-            FormGroup(label: "Subject") {
+            FormGroup(label: "About you") {
                 FormRow(nameLabel) {
                     TextField("First name", text: $draft.name).multilineTextAlignment(.trailing).textContentType(.givenName)
                         .focused(focus, equals: .name).submitLabel(.next).onSubmit { focus.wrappedValue = .day }
@@ -72,10 +72,10 @@ struct BirthFormFields: View {
             }
             Text("Check the birth certificate, or ask their mother. She remembers. She remembers everything.").font(.system(size: 12)).foregroundStyle(Palette.text3).padding(.horizontal, 16).padding(.top, -14)
 
-            FormGroup(label: "Crime scene") {
+            FormGroup(label: "Place of birth") {
                 HStack(spacing: 12) {
                     Image(systemName: "magnifyingglass").foregroundStyle(Palette.text3)
-                    TextField("City of birth", text: $search.query).focused(focus, equals: .place).textContentType(.addressCity).autocorrectionDisabled().foregroundStyle(Palette.text)
+                    TextField("Town, city or village", text: $search.query).focused(focus, equals: .place).textContentType(.addressCity).autocorrectionDisabled().foregroundStyle(Palette.text)
                     if draft.place != nil { Image(systemName: "checkmark.circle.fill").foregroundStyle(Palette.moon) }
                 }.frame(minHeight: 50).padding(.horizontal, 16)
                 if let p = draft.place, search.suggestions.isEmpty || focus.wrappedValue != .place {

@@ -11,7 +11,7 @@ struct PlansView: View {
     struct Row: Identifiable { let id = UUID(); let name: String; let free: String; let plus: String }
     let rows: [Row] = [
         .init(name: "Daily burn from your chart", free: "✓", plus: "✓"), .init(name: "Moon dial + widgets", free: "✓", plus: "✓"),
-        .init(name: "Full natal roast", free: "$4.99", plus: "✓"), .init(name: "Your transits on the dial", free: "–", plus: "✓"),
+        .init(name: "Your full roast", free: "$4.99", plus: "✓"), .init(name: "Your transits on the dial", free: "–", plus: "✓"),
         .init(name: "Calendar sync", free: "Moons", plus: "✓"), .init(name: "Human Design roast", free: "Type", plus: "✓"),
         .init(name: "Sunday audio roast", free: "–", plus: "✓"), .init(name: "Situationships + Draft check", free: "–", plus: "✓"),
         .init(name: "Coven overlays", free: "1", plus: "∞"), .init(name: "Roast someone not on the app", free: "$2.99", plus: "Free")

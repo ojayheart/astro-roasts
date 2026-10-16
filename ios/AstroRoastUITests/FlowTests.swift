@@ -17,20 +17,20 @@ final class FlowTests: XCTestCase {
     /// Whole first-run journey with real typing: welcome → birth details → notifications → generating → paywall → unlock → read → Today.
     func testOnboardingToRoastToToday() {
         launch(["-fresh"])
-        tapText("Face it")
+        tapText("Let's begin")
         let name = app.textFields["First name"]; XCTAssertTrue(name.waitForExistence(timeout: 5)); name.tap(); name.typeText("Mara")
         let dd = app.textFields["DD"]; dd.tap(); dd.typeText("14")
         // typing two digits moves focus to month, then year, hour, minute (auto-advance)
         app.typeText("06"); app.typeText("1997"); app.typeText("06"); app.typeText("42")
-        let city = app.textFields["City of birth"]; city.tap(); city.typeText("Leeds")
+        let city = app.textFields["Town, city or village"]; city.tap(); city.typeText("Leeds")
         let leeds = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Leeds'")).firstMatch
         XCTAssertTrue(leeds.waitForExistence(timeout: 5), "city suggestion missing"); leeds.tap()
         attach("birth-filled")
-        XCTAssertTrue(app.buttons["Roast me"].isEnabled)
-        tapText("Roast me")
+        XCTAssertTrue(app.buttons["Get my roast"].isEnabled)
+        tapText("Get my roast")
         tapText("Not now")                                   // notification warm-up
         attach("generating")
-        let unlock = app.buttons["Unlock the damage"]; XCTAssertTrue(unlock.waitForExistence(timeout: 30), "teaser/paywall never appeared")
+        let unlock = app.buttons["Unlock the full roast"]; XCTAssertTrue(unlock.waitForExistence(timeout: 30), "teaser/paywall never appeared")
         attach("teaser")
         unlock.tap()
         tapText("Read the full roast", timeout: 10)
@@ -78,12 +78,12 @@ final class FlowTests: XCTestCase {
     /// Starts a roast, leaves the app, and checks the Live Activity is on the home screen.
     func testLiveActivityAppearsWhenBackgrounded() {
         launch(["-fresh"])
-        tapText("Face it")
+        tapText("Let's begin")
         let name = app.textFields["First name"]; XCTAssertTrue(name.waitForExistence(timeout: 5)); name.tap(); name.typeText("Mara")
         app.textFields["DD"].tap(); app.typeText("14"); app.typeText("06"); app.typeText("1997"); app.typeText("06"); app.typeText("42")
-        let city = app.textFields["City of birth"]; city.tap(); city.typeText("Leeds")
+        let city = app.textFields["Town, city or village"]; city.tap(); city.typeText("Leeds")
         app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Leeds'")).firstMatch.tap()
-        tapText("Roast me"); tapText("Not now")
+        tapText("Get my roast"); tapText("Not now")
         sleep(2)
         XCUIDevice.shared.press(.home)
         sleep(3)

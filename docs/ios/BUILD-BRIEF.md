@@ -15,6 +15,13 @@ Co-Star is cryptic and getting colder (78% of its last 500 reviews are 1–2★:
 - Never take away a free feature once shipped. Never paywall the free widget.
 - Max ~2 notifications a week by default; the widget carries the daily line.
 
+## Tone of voice (applies to every string, including the engine)
+Funny and radically honest, but never threatening, mean or shaming. We tease because we like you.
+- No crime, court or interrogation metaphors (evidence, suspects, verdicts, files, damage, knives). No "you should be embarrassed".
+- Roast habits and quirks, never people's worth, bodies, trauma, or relationships. Never tell anyone to leave a partner or that a friend is a traitor.
+- Every joke leaves the reader feeling seen and a little lighter, with something they can do.
+- Birthplace can be a village: say "place of birth", never "city".
+
 ## Visual system
 - Ground `#030303`, surfaces `#0b0b0b` / `#0e0e0e`, hairlines `#1a1a1a`–`#2a2a2a`.
 - Text `#e5e5e5`, secondary `#a8a8a8`, tertiary `#8f8f8f` (don't go darker for text).

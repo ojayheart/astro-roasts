@@ -2,7 +2,7 @@ import SwiftUI
 import AstroKit
 import Photos
 
-enum ShareStyle: String, CaseIterable { case ember = "Ember", void = "Void", dossier = "Dossier" }
+enum ShareStyle: String, CaseIterable { case ember = "Ember", void = "Void", dossier = "Chart" }
 
 struct ShareCardView: View {
     let content: ShareContent; let style: ShareStyle

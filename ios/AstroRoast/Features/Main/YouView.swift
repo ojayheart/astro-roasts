@@ -6,6 +6,8 @@ struct YouView: View {
     @State private var confirmDelete = false
     @State private var exportURL: URL?
     @State private var showDev = false
+    @State private var confirmAccountDelete: String?
+    @State private var accountError: String?
     @State private var apiBase = RoastAPI.shared.baseURL.absoluteString
 
     var body: some View {
@@ -16,12 +18,12 @@ struct YouView: View {
                     if let n = model.natal {
                         VStack(alignment: .leading, spacing: 14) {
                             HStack(alignment: .bottom) {
-                                VStack(alignment: .leading, spacing: 4) { MonoLabel("Your file", size: 11, tracking: 2.4); Text(model.profileName).font(.display(36, .heavy)).tracking(-1).textCase(.uppercase).foregroundStyle(Palette.text) }
+                                VStack(alignment: .leading, spacing: 4) { MonoLabel("Your chart", size: 11, tracking: 2.4); Text(model.profileName).font(.display(36, .heavy)).tracking(-1).textCase(.uppercase).foregroundStyle(Palette.text) }
                                 Spacer()
                                 if model.isPlus { Text("ROAST+").font(.mono(10)).tracking(1.6).foregroundStyle(Palette.ink).padding(.horizontal, 10).frame(height: 26).background(Palette.moon, in: Capsule()) }
                             }
                             ChartWheel(chart: n).frame(height: 260).frame(maxWidth: .infinity)
-                            HStack(spacing: 8) { Dossier(name: "", sun: n.sunSign, moon: n.moonSign, rising: n.risingSign ?? "—").frame(maxWidth: .infinity) }.hidden().frame(height: 0)
+                            HStack(spacing: 8) { PlacementHeader(name: "", sun: n.sunSign, moon: n.moonSign, rising: n.risingSign ?? "—").frame(maxWidth: .infinity) }.hidden().frame(height: 0)
                             HStack { big("Sun", n.sunSign, Zodiac.glyph(n.lon(.sun))); big("Moon", n.moonSign, Zodiac.glyph(n.lon(.moon))); big("Rising", n.risingSign ?? "—", n.ascendant.map { Zodiac.glyph($0) } ?? "") }
                         }
                     }
@@ -33,12 +35,25 @@ struct YouView: View {
                         link("speaker.wave.2", "Sunday roast", model.isPlus ? nil : "Roast+", .sunday)
                         link("text.bubble", "Draft check", model.isPlus ? nil : "Roast+", .draft)
                     }
+                    section("Your account") {
+                        if model.linked.isEmpty {
+                            row("envelope", "Link your email", "Keep every roast together") { model.sheet = .signIn }
+                        } else {
+                            ForEach(model.linked, id: \.self) { e in
+                                Menu {
+                                    Button("Sign out", role: .destructive) { model.signOut(e) }
+                                    Button("Delete my account…", role: .destructive) { confirmAccountDelete = e }
+                                } label: { HStack { Image(systemName: "envelope.fill").frame(width: 24); Text(e).font(.system(size: 16)).lineLimit(1); Spacer(); Image(systemName: "ellipsis").font(.system(size: 13)).foregroundStyle(Palette.text3) }.foregroundStyle(Palette.text).padding(.vertical, 13).overlay(alignment: .top) { Hairline() } }
+                            }
+                            row("plus.circle", "Link another email", "") { model.sheet = .signIn }
+                        }
+                        link("rectangle.stack", "My roasts", model.allRoasts.isEmpty ? nil : "\(model.allRoasts.count)", .roasts)
+                    }
                     section("Settings") {
                         row("calendar", "Calendar sync", model.state.calendar.enabled ? "On" : "Off") { model.sheet = .calendar }
                         notifRow
                         row("sparkles", model.isPlus ? "Roast+ active" : "Get Roast+", model.isPlus ? "" : "7 days free") { model.sheet = .plans }
                         row("arrow.clockwise", "Restore purchases", "") { Task { await model.purchases.restore() } }
-                        row("link", "Bring a roast from the web", "") { model.sheet = .adopt }
                     }
                     section("Your data") {
                         if let exportURL { ShareLink(item: exportURL) { HStack { Image(systemName: "square.and.arrow.up").frame(width: 24); Text("Export my data").font(.system(size: 16)); Spacer() }.foregroundStyle(Palette.text).padding(.vertical, 13) } }
@@ -47,7 +62,7 @@ struct YouView: View {
                         Link(destination: URL(string: "https://astroroast.com/privacy")!) { HStack { Image(systemName: "hand.raised").frame(width: 24); Text("Privacy").font(.system(size: 16)); Spacer() }.foregroundStyle(Palette.text).padding(.vertical, 13) }
                         Link(destination: URL(string: "https://astroroast.com/terms")!) { HStack { Image(systemName: "doc.plaintext").frame(width: 24); Text("Terms").font(.system(size: 16)); Spacer() }.foregroundStyle(Palette.text).padding(.vertical, 13) }
                     }
-                    Text("Entertainment only. Saturn takes no questions.").font(.mono(10)).tracking(1.6).foregroundStyle(Palette.text3).frame(maxWidth: .infinity).onTapGesture(count: 5) { showDev = true }
+                    Text("ASTROROAST \(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "")").font(.mono(10)).tracking(1.6).foregroundStyle(Palette.text3).frame(maxWidth: .infinity).onTapGesture(count: 5) { showDev = true }
                     if showDev {
                         VStack(alignment: .leading, spacing: 8) {
                             MonoLabel("Developer", size: 10)
@@ -59,6 +74,10 @@ struct YouView: View {
             }.scrollIndicators(.hidden)
         }
         .toolbar(.hidden, for: .navigationBar)
+        .confirmationDialog("Delete your account?", isPresented: Binding(get: { confirmAccountDelete != nil }, set: { if !$0 { confirmAccountDelete = nil } }), titleVisibility: .visible) {
+            Button("Delete my account", role: .destructive) { if let e = confirmAccountDelete { Task { do { try await model.deleteAccount(e) } catch { accountError = (error as? LocalizedError)?.errorDescription } } } }
+        } message: { Text("This unlinks your email from every roast and signs you out here. Roast pages that someone already holds a private link to keep working.") }
+        .alert("Couldn't delete", isPresented: Binding(get: { accountError != nil }, set: { if !$0 { accountError = nil } })) { Button("OK", role: .cancel) {} } message: { Text(accountError ?? "") }
         .confirmationDialog("Delete your profile, people and roasts from this phone?", isPresented: $confirmDelete, titleVisibility: .visible) { Button("Delete everything", role: .destructive) { model.resetEverything() } } message: { Text("Roasts you've bought stay on our servers; paste the link to bring one back.") }
     }
 
@@ -196,7 +215,7 @@ struct BodygraphView: View {
                         HStack(spacing: 0) { stat("Type", hd.type); stat("Authority", hd.authority); stat("Profile", hd.profile) }.overlay(alignment: .top) { Hairline() }.overlay(alignment: .bottom) { Hairline() }
                         Text(HumanDesign.typeRoast(hd.type)).font(.display(20, .semibold)).lineSpacing(2).foregroundStyle(Palette.text)
                         Text("\(HumanDesign.strategyRoast(hd.type)) \(HumanDesign.authorityRoast(hd.authority))").font(.system(size: 14)).lineSpacing(4).foregroundStyle(Palette.text2)
-                        PlusGate(title: "Every center, roasted", blurb: "Open and defined centers, channels and the rest of the diagram, each with a verdict.") {
+                        PlusGate(title: "Every center, roasted", blurb: "Open and defined centers, channels and the rest of the diagram, each with a joke.") {
                             VStack(spacing: 0) {
                                 ForEach(HDCenter.allCases, id: \.self) { c in
                                     let d = hd.defined.contains(c)
@@ -207,7 +226,7 @@ struct BodygraphView: View {
                                 }
                             }.frame(minHeight: 300)
                         }.frame(minHeight: 340)
-                        Text("Human Design is for entertainment. The chart is calculated from your birth moment and the position of the Sun 88° earlier.").font(.system(size: 12)).foregroundStyle(Palette.text3)
+                        Text("Calculated from your birth moment and the position of the Sun 88° earlier.").font(.system(size: 12)).foregroundStyle(Palette.text3)
                     }.padding(.horizontal, 22).padding(.bottom, 30).foregroundStyle(Palette.text)
                 }.scrollIndicators(.hidden)
             } else { ProgressView().tint(Palette.text2) }

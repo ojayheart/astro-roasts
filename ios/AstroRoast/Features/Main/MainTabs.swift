@@ -9,7 +9,7 @@ struct ShareContent: Identifiable, Hashable {
 }
 
 enum Dest: Hashable {
-    case why(Date), roast, situations, receipts, sunday, draft, bodygraph, person(UUID)
+    case why(Date), roast, situations, receipts, sunday, draft, bodygraph, person(UUID), roasts
 }
 
 struct MainTabs: View {
@@ -31,7 +31,8 @@ struct MainTabs: View {
             case .addPerson: AnyoneView(addOnly: true).presentationBackground(Palette.ground)
             case .day(let d): DayDetailView(date: d).presentationDetents([.large]).presentationBackground(Palette.surface)
             case .share(let c): ShareSheetView(content: c).presentationBackground(Palette.ground)
-            case .adopt: AdoptRoastSheet().presentationDetents([.medium]).presentationBackground(Palette.surface)
+            case .adopt: SignInSheet().presentationDetents([.large]).presentationBackground(Palette.surface)
+            case .signIn: SignInSheet().presentationDetents([.large]).presentationBackground(Palette.surface)
             case .widgets: WidgetPreviewView().presentationBackground(Color(white: 0.12))
             }
         }
@@ -48,6 +49,8 @@ struct MainTabs: View {
         case "roast": model.openRoast = true
         case "share": model.share(model.today?.headline ?? "Quiet sky.", kicker: "Today")
         case "plans": model.sheet = .plans
+        case "signin": model.sheet = .signIn
+        case "roasts": model.path.append(Dest.roasts)
         case "widgets": model.sheet = .widgets
         case "calendar": model.sheet = .calendar
         case "anyone": model.sheet = .anyone
@@ -74,6 +77,7 @@ extension View {
             case .draft: DraftView()
             case .bodygraph: BodygraphView()
             case .person(let id): PersonDetailView(id: id)
+            case .roasts: RoastsView()
             }
         }
     }

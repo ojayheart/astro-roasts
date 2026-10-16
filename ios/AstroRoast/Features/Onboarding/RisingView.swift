@@ -10,7 +10,7 @@ struct RisingView: View {
         "Gemini": "People think you're friendly. You're taking notes for a podcast nobody asked for.",
         "Cancer": "You look like the host. You are already worried about whether everyone's eaten.",
         "Leo": "You enter rooms like they were waiting. They were. Now please stop doing the hair thing.",
-        "Virgo": "You walk into a room already editing it. People think you're calm. You're auditing.",
+        "Virgo": "You walk into a room already editing it. People think you're calm. You're quietly proofreading.",
         "Libra": "You're lovely to everyone, and it takes you forty minutes to pick a table. Conflict gives you hives.",
         "Scorpio": "You say little and your eyes do the rest. People confess things to you in queues.",
         "Sagittarius": "You arrive late, laughing, with a story that started in another country.",
@@ -24,8 +24,8 @@ struct RisingView: View {
             ScreenBackground(glow: true)
             VStack(alignment: .leading, spacing: 18) {
                 TopBar(title: "No birth time · no problem", back: { withAnimation(.snappy) { model.route = .birth } })
-                RevealLines([("We roasted", .solid), ("both. Pick the", .solid), ("one that hurt.", .ember)], size: 40).padding(.top, 12)
-                Text("Your Sun and Moon are certain. Your rising sign depends on the time, so here are both suspects.").font(.system(size: 14)).foregroundStyle(Palette.text2).lineSpacing(3)
+                RevealLines([("Two options.", .solid), ("Which one's", .solid), ("you?", .ember)], size: 40).padding(.top, 12)
+                Text("Your Sun and Moon are certain. Your rising sign depends on the time, so here are both.").font(.system(size: 14)).foregroundStyle(Palette.text2).lineSpacing(3)
                 if let c {
                     ForEach(0..<2, id: \.self) { i in
                         let sign = i == 0 ? c.early : c.late
@@ -33,7 +33,7 @@ struct RisingView: View {
                             VStack(alignment: .leading, spacing: 8) {
                                 HStack { Text("\(sign) rising").font(.display(19, .bold)); Spacer(); MonoLabel(i == 0 ? "Before ~\(Self.t(c.flipLocalMinutes))" : "After ~\(Self.t(c.flipLocalMinutes))", size: 10, tracking: 1.4) }
                                 Text(Self.roasts[sign] ?? "").font(.system(size: 15)).foregroundStyle(Palette.text2).lineSpacing(3).multilineTextAlignment(.leading)
-                                Text(pick == i ? "This one hurt. Locked in." : "Tap if this one hurt more").font(.system(size: 13)).foregroundStyle(pick == i ? Palette.emberSoft : Palette.text3)
+                                Text(pick == i ? "That's the one. Locked in." : "Tap if this sounds more like you").font(.system(size: 13)).foregroundStyle(pick == i ? Palette.emberSoft : Palette.text3)
                             }
                             .padding(16).frame(maxWidth: .infinity, alignment: .leading)
                             .background(pick == i ? Palette.surface2 : Palette.surface, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
@@ -42,8 +42,8 @@ struct RisingView: View {
                     }
                 }
                 Spacer()
-                Button("Roast me as \(c.map { pick == 0 ? $0.early : $0.late } ?? "…") rising") { model.chooseRising(early: pick == 0) }.buttonStyle(.primary)
-                Text("Not proof, just a strong hunch with jokes. Find your real time later and we'll quietly fix everything.").font(.system(size: 12)).foregroundStyle(Palette.text3).multilineTextAlignment(.center).frame(maxWidth: .infinity)
+                Button("Continue as \(c.map { pick == 0 ? $0.early : $0.late } ?? "…") rising") { model.chooseRising(early: pick == 0) }.buttonStyle(.primary)
+                Text("Not proof, just a strong hunch with jokes. Find your real time later and we'll quietly update everything.").font(.system(size: 12)).foregroundStyle(Palette.text3).multilineTextAlignment(.center).frame(maxWidth: .infinity)
             }.padding(.horizontal, 20).padding(.bottom, 12)
         }
         .onAppear { if model.natal?.risingCandidates() == nil { model.chooseRising(early: true) } }

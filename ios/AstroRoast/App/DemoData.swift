@@ -23,7 +23,7 @@ enum DemoData {
         let paras = text.components(separatedBy: "\n\n")
         return RoastPayload(id: "demo", name: b.name, status: "ready", sunSign: n.sunSign, moonSign: n.moonSign, rising: n.risingSign ?? "Cancer",
                             teaser: paras.prefix(5).joined(separator: "\n\n") + " -", fullText: text,
-                            callouts: ["Emotionally, you are a panic room with excellent soft furnishings.", "You don't hold grudges. You curate them."],
+                            callouts: ["Emotionally, you are a cosy waiting room with excellent soft furnishings.", "You don't hold grudges. You curate them."],
                             paid: paid, stagePct: 100, kind: "solo", isDemo: true)
     }
 
@@ -31,7 +31,7 @@ enum DemoData {
         """
         Right. Sit down, \(name). Gemini Sun, Libra Moon, Cancer rising: that is a person who arrives like the host, charms the room like a diplomat, and then goes home to cry in a very well-decorated kitchen. The Cancer rising is the front door: warm, a bit protective, always asking if you've eaten. The Gemini Sun is the voice inside saying "but what if we also did a podcast". The Libra Moon is the one quietly holding a spreadsheet of everyone's feelings and refusing to publish it.
 
-        Let's start with the Moon, because it's the one running the place. Libra Moon means peace is a physical need, like water or Wi-Fi. You will agree to a restaurant you hate to avoid eleven seconds of tension, and then you'll be quietly cross about it until Thursday. You say "honestly I don't mind" with the face of someone who very much minds. Emotionally, you are a panic room with excellent soft furnishings.
+        Let's start with the Moon, because it's the one running the place. Libra Moon means peace is a physical need, like water or Wi-Fi. You will agree to a restaurant you hate to avoid eleven seconds of tension, and then you'll be quietly cross about it until Thursday. You say "honestly I don't mind" with the face of someone who very much minds. Emotionally, you are a cosy waiting room with excellent soft furnishings.
 
         Venus is in Cancer, which is lovely and also a problem. You love like a lighthouse: warm, constant, a bit lonely, and absolutely will not leave the rock. You keep the cinema ticket from the first date. You remember what they ordered. Mars is in Virgo, so your anger arrives as a list: dated, itemised, delivered calmly, and somehow worse than shouting. You don't hold grudges. You curate them.
 

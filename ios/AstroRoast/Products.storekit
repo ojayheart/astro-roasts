@@ -2,7 +2,7 @@
   "identifier" : "A5710001",
   "nonRenewingSubscriptions" : [],
   "products" : [
-    { "displayPrice" : "4.99", "familyShareable" : false, "internalID" : "A1000001", "localizations" : [ { "description" : "Your full natal roast, yours forever.", "displayName" : "Full roast", "locale" : "en_US" } ], "productID" : "com.astroroast.app.roast", "referenceName" : "Full roast", "type" : "Consumable" },
+    { "displayPrice" : "4.99", "familyShareable" : false, "internalID" : "A1000001", "localizations" : [ { "description" : "Your full roast, yours forever.", "displayName" : "Full roast", "locale" : "en_US" } ], "productID" : "com.astroroast.app.roast", "referenceName" : "Full roast", "type" : "Consumable" },
     { "displayPrice" : "2.99", "familyShareable" : false, "internalID" : "A1000002", "localizations" : [ { "description" : "Roast someone who isn't on the app.", "displayName" : "Roast someone", "locale" : "en_US" } ], "productID" : "com.astroroast.app.roast.other", "referenceName" : "Roast someone", "type" : "Consumable" },
     { "displayPrice" : "7.99", "familyShareable" : false, "internalID" : "A1000003", "localizations" : [ { "description" : "A couple roast for two charts.", "displayName" : "Couple roast", "locale" : "en_US" } ], "productID" : "com.astroroast.app.roast.couple", "referenceName" : "Couple roast", "type" : "Consumable" }
   ],

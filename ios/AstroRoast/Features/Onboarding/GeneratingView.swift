@@ -12,7 +12,7 @@ struct GeneratingView: View {
             ScreenBackground(glow: true)
             VStack(spacing: 22) {
                 Spacer().frame(height: 18)
-                HStack { MonoLabel("File · \(model.profileName)"); Spacer(); if model.demo { MonoLabel("Sample", color: Palette.emberSoft) } }.padding(.horizontal, 24)
+                HStack { MonoLabel("Chart · \(model.profileName)"); Spacer(); if model.demo { MonoLabel("Sample", color: Palette.emberSoft) } }.padding(.horizontal, 24)
                 if let chart = model.natal { ChartWheel(chart: chart, progress: shownPct / 100).padding(.horizontal, 28) }
                 VStack(spacing: 8) {
                     Text("\(Int(shownPct))%").font(.display(60, .semibold)).tracking(-2).foregroundStyle(Palette.text).monospacedDigit().contentTransition(.numericText())

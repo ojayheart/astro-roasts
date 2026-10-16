@@ -18,7 +18,7 @@ Needs Xcode 26 and an iOS 26 simulator runtime. Free disk space matters: a debug
 ### Targets
 | Target | What |
 |---|---|
-| `AstroKit` (framework) | Everything that isn't UI chrome: ephemeris, natal chart, transits, the voice engine, Human Design, calendar plan, models, persistence, API client, theme, widget views |
+| `AstroKit` (framework) | Everything that isn't UI chrome: ephemeris, chart maths, transits, the voice engine, Human Design, calendar plan, models, persistence, API client, theme, widget views |
 | `AstroRoast` (app) | Screens, app state, StoreKit 2, notifications, EventKit, Live Activity |
 | `AstroWidgets` (extension) | Home/Lock Screen widgets, Live Activity UI |
 | `AstroKitTests` | Engine tests against Swiss Ephemeris reference vectors |
@@ -60,6 +60,6 @@ cd .. && node --test test/apple-iap.test.ts      # server-side purchase verifica
 - **App Store Connect**: create the products in `Purchases.ID` (3 consumables + 1 subscription group with monthly/yearly and a 7-day trial), set the team in `project.yml`, bundle id `com.astroroast.app` (override on the server with `APPLE_BUNDLE_ID`).
 - **Deploy** `/api/ios/v1/unlock` before purchases can unlock roasts in a real build. Local Xcode StoreKit testing signs with Xcode's own certificate, so use `APPLE_IAP_ALLOW_XCODE=1` and `APPLE_IAP_TEST_ROOT_PEM` on a dev server only.
 - **Push when a roast is ready** needs APNs from the pipeline; the Live Activity runs on a timer and the app notifies when it's open.
-- **Human Design** uses the standard gate wheel (matches the Rave Mandala order) and rules, but hasn't been compared with an external calculator beyond structural tests. It's labelled entertainment.
+- **Human Design** uses the standard gate wheel (matches the Rave Mandala order) and rules, but hasn't been compared with an external calculator beyond structural tests. 
 - Astrocartography is parked in `docs/ios/parked/Cartography.swift` (engine written and tested ad hoc, no UI).
 - Draft check is rules-based; an LLM rewrite would need a new server endpoint.

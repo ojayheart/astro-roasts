@@ -10,7 +10,7 @@ struct CovenView: View {
                 VStack(alignment: .leading, spacing: 18) {
                     HStack(alignment: .bottom) {
                         VStack(alignment: .leading, spacing: 4) {
-                            MonoLabel("\(model.state.people.count) \(model.state.people.count == 1 ? "suspect" : "suspects")", size: 11, tracking: 2.4)
+                            MonoLabel("\(model.state.people.count) \(model.state.people.count == 1 ? "person" : "people") in your coven", size: 11, tracking: 2.4)
                             Text("Coven").font(.display(36, .heavy)).tracking(-1).textCase(.uppercase).foregroundStyle(Palette.text)
                         }
                         Spacer()
@@ -52,7 +52,7 @@ struct CovenView: View {
 struct Avatar: View {
     let name: String; var size: CGFloat = 40
     var body: some View {
-        Text(String(name.prefix(1)).uppercased()).font(.display(size * 0.4, .heavy)).foregroundStyle(Palette.ink).frame(width: size, height: size).background(Palette.moon, in: Circle())
+        Text(String(name.prefix(1)).uppercased()).font(.display(size * 0.4, .heavy)).foregroundStyle(Palette.ink).frame(width: size, height: size).background(Palette.moon, in: Circle()).accessibilityHidden(true)
     }
 }
 
@@ -153,12 +153,12 @@ struct AnyoneView: View {
         ZStack {
             ScreenBackground()
             VStack(spacing: 0) {
-                HStack { Button { dismiss() } label: { Image(systemName: "xmark").font(.system(size: 16, weight: .semibold)).frame(width: 44, height: 44) }.foregroundStyle(Palette.text2).accessibilityLabel("Close"); Spacer(); MonoLabel(addOnly ? "New suspect" : "Not on the app"); Spacer(); Spacer().frame(width: 44) }.padding(.horizontal, 12)
+                HStack { Button { dismiss() } label: { Image(systemName: "xmark").font(.system(size: 16, weight: .semibold)).frame(width: 44, height: 44) }.foregroundStyle(Palette.text2).accessibilityLabel("Close"); Spacer(); MonoLabel(addOnly ? "Add someone" : "Not on the app"); Spacer(); Spacer().frame(width: 44) }.padding(.horizontal, 12)
                 ScrollView {
                     VStack(alignment: .leading, spacing: 20) {
                         VStack(alignment: .leading, spacing: 8) {
-                            Text(addOnly ? "Add someone to your Coven." : "Roast someone who isn't here.").font(.display(30, .bold)).tracking(-0.8).foregroundStyle(Palette.text)
-                            Text("They don't need the app. They don't need to know. Yet.").font(.system(size: 14)).foregroundStyle(Palette.text2)
+                            Text(addOnly ? "Add someone to your Coven." : "Roast someone who isn't on the app.").font(.display(30, .bold)).tracking(-0.8).foregroundStyle(Palette.text)
+                            Text("A friend, a flatmate, your boss. They don't need the app, and they won't be told.").font(.system(size: 14)).foregroundStyle(Palette.text2)
                         }
                         VStack(alignment: .leading, spacing: 8) {
                             MonoLabel("Who are they to you", size: 11, tracking: 2).padding(.leading, 4)

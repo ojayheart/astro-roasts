@@ -28,7 +28,7 @@ public enum Voice {
             case .sun: return "your ego"; case .moon: return "your feelings"; case .mercury: return "the way you talk"
             case .venus: return "your love life"; case .mars: return "your drive"; case .jupiter: return "your big plans"
             case .saturn: return "your boundaries"; case .uranus: return "your need for freedom"
-            case .neptune: return "your delusions"; case .pluto: return "your control issues"; case .node: return "your destiny"
+            case .neptune: return "your daydreams"; case .pluto: return "your control issues"; case .node: return "your destiny"
             }
         }
     }
@@ -63,9 +63,9 @@ public enum Voice {
             .soft: ["Luck leans toward {N} without being asked.", "Something good wanders into {N}."],
             .fuse: ["Jupiter has parked on {N}. Everything is too much, in a good way.", "{N} is getting the royal treatment."]],
         .saturn: [
-            .hard: ["The landlord has notes about {N}.", "Reality is inspecting {N} with a clipboard."],
+            .hard: ["The landlord has some thoughts about {N}.", "Reality is giving {N} a gentle once-over."],
             .soft: ["Hard work pays {N} a small, honest wage.", "Boring discipline quietly fixes {N}."],
-            .fuse: ["Saturn is standing on {N}. It will not move.", "{N} is going through an audit."]],
+            .fuse: ["Saturn is standing on {N}. It will not move.", "{N} is getting a once-over."]],
         .uranus: [
             .hard: ["Chaos is rewiring {N} without permission.", "{N} is about to receive a surprise."],
             .soft: ["A good surprise lands on {N}.", "{N} is allowed to change its mind."],
@@ -75,7 +75,7 @@ public enum Voice {
             .soft: ["{N} gets a soft, dreamy glow.", "Intuition is helping {N}, for free."],
             .fuse: ["Neptune is dissolving the edges of {N}.", "{N} is slightly out of focus. Nobody mind."]],
         .pluto: [
-            .hard: ["Something in the basement is talking to {N}.", "{N} is being excavated."],
+            .hard: ["Something in the basement is talking to {N}.", "{N} is getting a deep clean."],
             .soft: ["A deep change quietly strengthens {N}.", "Pluto is on {N}'s side, which is rare."],
             .fuse: ["Pluto is renovating {N} from the foundation.", "{N} is being rebuilt. Wear a hard hat."]],
         .node: [.hard: ["Destiny is tapping {N} on the shoulder."], .soft: ["Destiny is tapping {N} on the shoulder."], .fuse: ["Destiny is tapping {N} on the shoulder."]]
@@ -127,7 +127,7 @@ public enum Voice {
         "Leo": ("Moon in Leo: would like to be noticed, please.", "Dramatic", ["Wear the bold thing", "Be generous"], ["Fish for compliments"], "Start a speech"),
         "Virgo": ("Moon in Virgo: reorganising things that were fine.", "Fussy", ["Tidy one drawer", "Make a list"], ["Fix other people"], "Alphabetise anything"),
         "Libra": ("Moon in Libra: cannot choose a restaurant.", "Charming", ["Pick one thing quickly", "Be nice"], ["Ask everyone's opinion"], "Say \"I don't mind\""),
-        "Scorpio": ("Moon in Scorpio: knows what you did.", "Brooding", ["Keep a secret", "Dig into something"], ["Test people"], "Read their old messages"),
+        "Scorpio": ("Moon in Scorpio: remembers everything, forgives selectively.", "Brooding", ["Keep a secret", "Dig into something"], ["Test people"], "Read their old messages"),
         "Sagittarius": ("Moon in Sagittarius: booking flights in its head.", "Restless", ["Go outside", "Say yes"], ["Promise anything"], "Book the flight"),
         "Capricorn": ("Moon in Capricorn: competent, slightly cold, quietly proud.", "Smug", ["Get ahead of the week", "Be useful"], ["Skip lunch"], "Cancel rest"),
         "Aquarius": ("Moon in Aquarius: loves humanity, avoids humans.", "Detached", ["Do your own thing", "Help from afar"], ["Overshare"], "Explain your feelings as a system"),
@@ -147,7 +147,7 @@ public enum Voice {
         .mars: "about every two years", .jupiter: "about every twelve years", .saturn: "about every 29 years",
         .uranus: "maybe once or twice a lifetime", .neptune: "about once a lifetime", .pluto: "about once a lifetime", .node: "every 18 years"
     ]
-    static let lastTimeJokes = ["You know what you did.", "Think about it.", "Don't pretend you don't remember.", "Check your camera roll.", "We have receipts."]
+    static let lastTimeJokes = ["Ring a bell?", "Think about it.", "You'll remember.", "Check your camera roll.", "We took notes."]
 
     // MARK: determinism
 
@@ -160,7 +160,7 @@ public enum Voice {
 
     // MARK: public API
 
-    static let pluralDomains: Set<String> = ["your feelings", "your big plans", "your boundaries", "your delusions", "your control issues"]
+    static let pluralDomains: Set<String> = ["your feelings", "your big plans", "your boundaries", "your daydreams"]
     public static func sentence(for hit: TransitHit, seed s: Int) -> String {
         let t = tone(hit.aspect)
         let tpl = pick(templates[hit.transiting]?[t] ?? ["Something is happening to {N}."], seed: s)

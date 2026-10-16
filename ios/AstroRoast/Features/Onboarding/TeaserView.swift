@@ -5,16 +5,21 @@ struct TeaserView: View {
     @Environment(AppModel.self) private var model
     @State private var showPay = false
     @State private var busy = false
+    @State private var showSignIn = false
 
     var body: some View {
         let r = model.roast
         let paras = r?.paragraphs ?? []
         ZStack(alignment: .bottom) {
             ScreenBackground()
+                .sheet(isPresented: $showSignIn) { SignInSheet().presentationDetents([.large]).presentationBackground(Palette.surface) }
             ScrollView {
                 VStack(alignment: .leading, spacing: 22) {
-                    Dossier(name: r?.name ?? model.profileName, sun: r?.sunSign ?? model.natal?.sunSign ?? "", moon: r?.moonSign ?? model.natal?.moonSign ?? "", rising: r?.rising ?? model.natal?.risingSign ?? "—")
-                    RevealLines([("The dossier", .solid), ("on \(r?.name ?? model.profileName).", .ember)], size: 44)
+                    PlacementHeader(name: r?.name ?? model.profileName, sun: r?.sunSign ?? model.natal?.sunSign ?? "", moon: r?.moonSign ?? model.natal?.moonSign ?? "", rising: r?.rising ?? model.natal?.risingSign ?? "—")
+                    if model.linked.isEmpty && !(model.demo) {
+                        Button { showSignIn = true } label: { HStack(spacing: 10) { Image(systemName: "envelope"); Text("Link your email to keep every roast in one place").font(.system(size: 13)); Spacer(); Image(systemName: "chevron.right").font(.system(size: 11)) }.foregroundStyle(Palette.text2).padding(12).overlay(RoundedRectangle(cornerRadius: 12).stroke(Palette.line)) }
+                    }
+                    RevealLines([("Here's your", .solid), ("roast, \(r?.name ?? model.profileName).", .ember)], size: 44)
                     VStack(alignment: .leading, spacing: 18) {
                         ForEach(Array(paras.prefix(2).enumerated()), id: \.offset) { _, p in
                             Text(Emphasis.attributed(p)).font(.system(size: 17)).lineSpacing(6).foregroundStyle(Palette.text.opacity(0.88))
@@ -35,7 +40,7 @@ struct TeaserView: View {
     }
 }
 
-struct Dossier: View {
+struct PlacementHeader: View {
     let name: String, sun: String, moon: String, rising: String
     var body: some View {
         ZStack(alignment: .topLeading) {
@@ -59,7 +64,7 @@ struct PaywallCard: View {
             VStack(alignment: .leading, spacing: 7) {
                 bullet("Every planet, house and aspect. Nine more sections."); bullet("Yours forever, on this phone and the web."); bullet("Unlocks your daily burns. Free, for life.")
             }
-            Button { unlock() } label: { if busy { ProgressView().tint(Palette.ink) } else { Text("Unlock the damage") } }.buttonStyle(.primary).disabled(busy)
+            Button { unlock() } label: { if busy { ProgressView().tint(Palette.ink) } else { Text("Unlock the full roast") } }.buttonStyle(.primary).disabled(busy)
             HStack { Button("Continue free", action: skip).font(.system(size: 15)).foregroundStyle(Palette.text2); Spacer(); MonoLabel("One-time. No subscription.", size: 9, tracking: 1.4) }
         }
         .padding(20).background(Palette.surface, in: RoundedRectangle(cornerRadius: 26, style: .continuous))

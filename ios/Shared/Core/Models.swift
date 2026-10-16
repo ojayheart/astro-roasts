@@ -21,6 +21,7 @@ public struct RoastPayload: Codable, Hashable, Identifiable, Sendable {
     public var subjectNames: [String]?
     public var amountMinorUnits: Int?
     public var isDemo: Bool? = nil
+    public var createdAt: String? = nil
     public init(id: String, name: String, status: String, sunSign: String? = nil, moonSign: String? = nil, rising: String? = nil, teaser: String? = nil, fullText: String? = nil, callouts: [String]? = nil, paid: Bool = false, stagePct: Int? = nil, kind: String? = "solo", isDemo: Bool? = nil) {
         self.id = id; self.name = name; self.status = status; self.sunSign = sunSign; self.moonSign = moonSign; self.rising = rising
         self.teaser = teaser; self.fullText = fullText; self.callouts = callouts; self.paid = paid; self.stagePct = stagePct; self.kind = kind; self.isDemo = isDemo
@@ -80,4 +81,18 @@ public enum DayKey {
         let c = calendar.dateComponents([.year, .month, .day], from: d)
         return String(format: "%04d-%02d-%02d", c.year ?? 0, c.month ?? 0, c.day ?? 0)
     }
+}
+
+public struct CloudBirth: Codable, Hashable, Sendable {
+    public var name: String
+    public var gender: String?
+    public var date: String          // yyyy-MM-dd
+    public var time: String?         // HH:mm
+    public var place: String         // "Leeds, United Kingdom"
+}
+/// A roast that belongs to a signed-in email, with the owner's birth details so a profile can be restored without retyping.
+public struct CloudRoast: Codable, Hashable, Identifiable, Sendable {
+    public var roast: RoastPayload
+    public var birth: CloudBirth
+    public var id: String { roast.id }
 }

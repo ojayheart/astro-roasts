@@ -97,7 +97,7 @@ struct RoastReaderView: View {
                 Spacer()
                 Text("The rest is\nthe good part.").font(.display(36, .heavy)).tracking(-1).foregroundStyle(Palette.text)
                 Text("Nine more sections: every planet, every house, every aspect. Yours forever.").font(.system(size: 16)).foregroundStyle(Palette.text2)
-                Button { Task { busy = true; defer { busy = false }; await model.buyRoast() } } label: { if busy { ProgressView().tint(Palette.ink) } else { Text("Unlock the damage · \(model.purchases.price(Purchases.ID.roast, fallback: "$4.99"))") } }.buttonStyle(.primary).disabled(busy)
+                Button { Task { busy = true; defer { busy = false }; await model.buyRoast() } } label: { if busy { ProgressView().tint(Palette.ink) } else { Text("Unlock the full roast · \(model.purchases.price(Purchases.ID.roast, fallback: "$4.99"))") } }.buttonStyle(.primary).disabled(busy)
                 Button("Or get Roast+ and everything else") { model.sheet = .plans; dismiss() }.font(.system(size: 15)).foregroundStyle(Palette.text2)
                 Spacer()
             }.padding(.horizontal, 26)

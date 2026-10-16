@@ -43,15 +43,18 @@ final class AppModel {
     var generationError: String?
     var openRoast = false
     var tab = 0
+    var linked: [String] = []                 // signed-in emails
+    var cloud: [CloudRoast] = []
+    @ObservationIgnored private var memTokens: [String: String] = [:]   // demo mode never touches the Keychain
     var deepLink: String?
     var sheet: Sheet?
     var path = NavigationPath()
     @ObservationIgnored private var readingCache: [String: DayReading] = [:]
 
     enum Sheet: Identifiable {
-        case plans, calendar, anyone, addPerson, day(Date), share(ShareContent), adopt, widgets
+        case plans, calendar, anyone, addPerson, day(Date), share(ShareContent), adopt, widgets, signIn
         var id: String {
-            switch self { case .plans: "plans"; case .calendar: "calendar"; case .anyone: "anyone"; case .addPerson: "addPerson"; case .day(let d): "day\(d.timeIntervalSince1970)"; case .share(let c): "share\(c.id)"; case .adopt: "adopt"; case .widgets: "widgets" }
+            switch self { case .plans: "plans"; case .calendar: "calendar"; case .anyone: "anyone"; case .addPerson: "addPerson"; case .day(let d): "day\(d.timeIntervalSince1970)"; case .share(let c): "share\(c.id)"; case .adopt: "adopt"; case .widgets: "widgets"; case .signIn: "signIn" }
         }
     }
 
@@ -81,12 +84,12 @@ final class AppModel {
     private var activity: Activity<RoastActivityAttributes>?
 
     static let statuses = [
-        "Locating your planets. Bracing for impact…", "Calculating exactly where it went wrong…", "Cross-referencing your delusions…",
-        "Consulting Saturn. Saturn is disappointed…", "Measuring the gap between you and your potential…", "Asking Mercury why you said that in 2019…",
-        "Tallying the red flags. Running low on ink…", "Translating your trauma into degrees and minutes…", "Notifying your rising sign. It already knew…",
-        "Reviewing your texts with the Moon. Oh no…", "Asking Venus what that was about. She's still laughing…", "Pulling your file. It has its own gravity…",
-        "Confirming with three separate planets. All three agree…", "Interviewing your inner child. Lawyer present…", "Calibrating the roast. Removing the padding…",
-        "Finding the part you hoped we'd miss…", "Sealing the chart. The universe signs in red…", "Almost done. You're not going to love this…"
+        "Locating your planets…", "Working out where everyone ended up…", "Checking in with the Moon. She has feelings about this…",
+        "Consulting Saturn. Saturn is being Saturn…", "Measuring your potential. It's considerable…", "Asking Mercury about that thing you said in 2019…",
+        "Counting your placements. Some good ones in here…", "Translating your life into degrees and minutes…", "Letting your rising sign know we're on our way…",
+        "Asking Venus what she thinks. She's smiling…", "Pulling out your chart. It has its own gravity…", "Checking three planets agree. They do…",
+        "Having a word with your inner child. They're thrilled…", "Writing it up. Keeping all the good bits…", "Finding the funny part. There are several…",
+        "Sealing the chart. The universe signs in ember…", "Almost done. You'll like this more than you expect…"
     ]
 
     init(demo: Bool) {
@@ -97,8 +100,11 @@ final class AppModel {
         route = s.onboardingDone ? .main : .welcome
         natal = s.profile.map { NatalChart(birth: $0) }
         roast = s.currentRoast
+        if CommandLine.arguments.contains("-resetstate") { Keychain.accounts().forEach { Keychain.remove($0) } }   // clean slate for tests
+        linked = demo ? [] : Keychain.accounts()
         recordOpen()
         applyDebugArguments()
+        if !linked.isEmpty { Task { await refreshCloud() } }
     }
 
     /// Debug aids for design review: -route <welcome|birth|rising|warmup|generating|teaser|main>, -tab <today|month|coven|you>, -open <screen>
@@ -171,7 +177,7 @@ final class AppModel {
             do {
                 var person = RoastAPI.person(b, gender: state.gender)
                 if state.timeAssumed { person.time = nil }   // an unknown birth time stays unknown on the server
-                let id = try await RoastAPI.shared.generate(person: person)
+                let id = try await RoastAPI.shared.generate(person: person, email: linked.first)
                 var r = RoastPayload(id: id, name: b.name, status: "generating", kind: "solo")
                 roast = r; state.currentRoast = r
                 var misses = 0
@@ -246,7 +252,7 @@ final class AppModel {
             upsert(r); return r
         }
         let id: String
-        if people.count == 1 { id = try await RoastAPI.shared.generate(person: RoastAPI.person(people[0].birth, gender: "non-binary")) }
+        if people.count == 1 { id = try await RoastAPI.shared.generate(person: RoastAPI.person(people[0].birth, gender: "non-binary"), email: linked.first) }
         else { id = try await RoastAPI.shared.generateGroup(kind: "couple", people: people.enumerated().map { RoastAPI.person($0.element.birth, gender: $0.offset == 0 ? state.gender : "non-binary") }, relationship: relationship) }
         var misses = 0
         for _ in 0..<80 {
@@ -258,6 +264,79 @@ final class AppModel {
             } catch let e as APIError { misses += 1; if misses > 6 { throw e } } catch { misses += 1 }
         }
         throw APIError.badStatus(504, "That one's taking a while. Check back in a minute.")
+    }
+
+    // MARK: accounts
+
+    private func token(for email: String) -> String? { demo ? memTokens[email] : Keychain.get(email) }
+    var allRoasts: [RoastPayload] {
+        var byID: [String: RoastPayload] = [:]
+        for r in state.roasts { byID[r.id] = r }
+        for c in cloud { byID[c.roast.id] = c.roast }
+        return byID.values.sorted { ($0.createdAt ?? "") > ($1.createdAt ?? "") }
+    }
+
+    func requestCode(email: String) async throws { try await RoastAPI.shared.authStart(email: email) }
+
+    /// Verifies the code, keeps the token, pulls every roast on that email, and attaches roasts made on this phone before signing in.
+    func signIn(email: String, code: String) async throws -> [CloudRoast] {
+        let token = try await RoastAPI.shared.authVerify(email: email, code: code)
+        if demo { memTokens[email] = token } else { Keychain.set(token, for: email) }
+        if !linked.contains(email) { linked.append(email); linked.sort() }
+        await refreshCloud()
+        for r in state.roasts where r.isDemo != true && !cloud.contains(where: { $0.id == r.id }) {
+            if (try? await RoastAPI.shared.claim(roastID: r.id, token: token)) != nil { await refreshCloud() }
+        }
+        return cloud
+    }
+
+    func refreshCloud() async {
+        var all: [CloudRoast] = []
+        for email in linked {
+            guard let t = token(for: email) else { continue }
+            do { all += try await RoastAPI.shared.listRoasts(token: t) }
+            catch APIError.unauthorized { signOut(email) }
+            catch { continue }
+        }
+        var seen = Set<String>()
+        cloud = all.filter { seen.insert($0.id).inserted }.sorted { ($0.roast.createdAt ?? "") > ($1.roast.createdAt ?? "") }
+        for c in cloud { upsert(c.roast) }
+    }
+
+    func signOut(_ email: String) {
+        if demo { memTokens[email] = nil } else { Keychain.remove(email) }
+        linked.removeAll { $0 == email }
+        cloud = []
+        if !linked.isEmpty { Task { await refreshCloud() } }
+    }
+
+    func deleteAccount(_ email: String) async throws {
+        if let t = token(for: email) { try await RoastAPI.shared.deleteAccount(token: t) }
+        signOut(email)
+    }
+
+    /// Makes someone the person this phone is about, using the birth details saved with their roast. Returns false if the place couldn't be found.
+    func adoptProfile(from c: CloudRoast) async -> Bool {
+        let d = c.birth.date.split(separator: "-").compactMap { Int($0) }
+        guard d.count == 3 else { return false }
+        let t = c.birth.time?.split(separator: ":").compactMap { Int($0) }
+        guard let place = await PlaceSearch.geocode(c.birth.place),
+              let b = BirthData.make(name: c.birth.name, year: d[0], month: d[1], day: d[2], hour: t?.first, minute: (t?.count ?? 0) > 1 ? t?[1] : nil,
+                                     latitude: place.lat, longitude: place.lon, timeZoneID: place.tzID, placeName: place.name, countryName: place.country) else { return false }
+        state.profile = b; state.gender = c.birth.gender ?? state.gender; state.timeAssumed = b.timeKnown == false
+        natal = NatalChart(birth: b); readingCache = [:]
+        roast = c.roast; state.currentRoast = c.roast; upsert(c.roast)
+        completeOnboarding()
+        return true
+    }
+
+    /// When the saved place can't be found, open the birth form with everything else filled in.
+    func prefillDraft(from c: CloudRoast) {
+        var d = BirthDraft(); d.name = c.birth.name; d.gender = c.birth.gender ?? "non-binary"
+        let p = c.birth.date.split(separator: "-").map(String.init)
+        if p.count == 3 { d.year = p[0]; d.month = p[1]; d.day = p[2] }
+        if let t = c.birth.time { let q = t.split(separator: ":").map(String.init); if q.count > 1 { d.hour = q[0]; d.minute = q[1] } } else { d.timeKnown = false }
+        draft = d; roast = c.roast; upsert(c.roast); route = .birth
     }
 
     // MARK: Live Activity

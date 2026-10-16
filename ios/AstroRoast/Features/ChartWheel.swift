@@ -55,6 +55,6 @@ struct ChartWheel: View {
             }
         }
         .aspectRatio(1, contentMode: .fit)
-        .accessibilityElement().accessibilityLabel("Natal chart wheel: Sun in \(chart.sunSign), Moon in \(chart.moonSign)")
+        .accessibilityElement().accessibilityLabel("Your chart: Sun in \(chart.sunSign), Moon in \(chart.moonSign)")
     }
 }

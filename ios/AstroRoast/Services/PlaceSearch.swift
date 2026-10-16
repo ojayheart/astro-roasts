@@ -28,10 +28,23 @@ final class PlaceSearch: NSObject, MKLocalSearchCompleterDelegate {
     static let canned: [PlaceResult] = [
         PlaceResult(name: "Leeds", country: "United Kingdom", lat: 53.80, lon: -1.55, tzID: "Europe/London"),
         PlaceResult(name: "Auckland", country: "New Zealand", lat: -36.85, lon: 174.76, tzID: "Pacific/Auckland"),
-        PlaceResult(name: "New York", country: "United States", lat: 40.71, lon: -74.01, tzID: "America/New_York")
+        PlaceResult(name: "New York", country: "United States", lat: 40.71, lon: -74.01, tzID: "America/New_York"),
+        PlaceResult(name: "Hokitika", country: "New Zealand", lat: -42.72, lon: 170.97, tzID: "Pacific/Auckland")
     ]
     static var useCanned: Bool { CommandLine.arguments.contains("-demo") || CommandLine.arguments.contains("-cannedplaces") }
     var cannedMatches: [PlaceResult] { PlaceSearch.useCanned && query.count >= 2 ? PlaceSearch.canned.filter { $0.name.lowercased().hasPrefix(query.lowercased()) } : [] }
+
+    /// Finds a place from the name we saved with a roast ("Leeds, United Kingdom"), including small towns and villages.
+    static func geocode(_ text: String) async -> PlaceResult? {
+        if useCanned {
+            let first = text.split(separator: ",").first.map { $0.trimmingCharacters(in: .whitespaces).lowercased() } ?? ""
+            if let hit = canned.first(where: { $0.name.lowercased() == first }) { return hit }
+        }
+        let req = MKLocalSearch.Request(); req.naturalLanguageQuery = text; req.resultTypes = .address
+        guard let item = try? await MKLocalSearch(request: req).start().mapItems.first else { return nil }
+        let pm = item.placemark
+        return PlaceResult(name: pm.locality ?? pm.name ?? text, country: pm.country ?? "", lat: pm.coordinate.latitude, lon: pm.coordinate.longitude, tzID: item.timeZone?.identifier ?? pm.timeZone?.identifier ?? TimeZone.current.identifier)
+    }
 
     func resolve(_ c: MKLocalSearchCompletion) async -> PlaceResult? {
         let req = MKLocalSearch.Request(completion: c)

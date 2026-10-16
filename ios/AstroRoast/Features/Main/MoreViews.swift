@@ -111,7 +111,7 @@ struct ReceiptsView: View {
                             }.padding(.vertical, 11).overlay(alignment: .top) { Hairline() }
                         }
                     }
-                    Card(padding: 14, corner: 16, fill: .clear, stroke: Palette.line) { HStack(spacing: 12) { Text((model.state.profile.map { $0.instant.formatted(.dateTime.day().month(.abbreviated).timeZone(.specificName(.short))) } ?? "").components(separatedBy: " ").prefix(2).joined(separator: " ").uppercased()).font(.display(18, .heavy)).foregroundStyle(Palette.ember); Text("Your year, pre-roasted, unlocks on your birthday. Twelve months, twelve verdicts.").font(.system(size: 13)).foregroundStyle(Palette.text2) } }
+                    Card(padding: 14, corner: 16, fill: .clear, stroke: Palette.line) { HStack(spacing: 12) { Text((model.state.profile.map { $0.instant.formatted(.dateTime.day().month(.abbreviated).timeZone(.specificName(.short))) } ?? "").components(separatedBy: " ").prefix(2).joined(separator: " ").uppercased()).font(.display(18, .heavy)).foregroundStyle(Palette.ember); Text("Your year, pre-roasted, unlocks on your birthday. Twelve months, twelve forecasts.").font(.system(size: 13)).foregroundStyle(Palette.text2) } }
                 }.padding(.horizontal, 22).padding(.bottom, 30)
             }.scrollIndicators(.hidden)
         }.foregroundStyle(Palette.text)
@@ -160,7 +160,7 @@ struct DraftView: View {
         VStack(alignment: .leading, spacing: 14) {
             Card(padding: 16, corner: 20) {
                 VStack(alignment: .leading, spacing: 12) {
-                    HStack { MonoLabel("Verdict", size: 10, tracking: 2); Spacer()
+                    HStack { MonoLabel("Our take", size: 10, tracking: 2); Spacer()
                         HStack(spacing: 6) { ForEach([DraftResult.Verdict.send, .rewrite, .bin], id: \.self) { v in Text(v.rawValue.uppercased()).font(.mono(10)).tracking(1.2).padding(.horizontal, 10).frame(height: 26).foregroundStyle(v == r.verdict ? Palette.ink : Palette.text3).background(v == r.verdict ? Palette.moon : .clear, in: Capsule()).overlay(Capsule().stroke(v == r.verdict ? Palette.moon : Palette.line)) } } }
                     ForEach(r.reasons, id: \.self) { Text($0).font(.system(size: 15)).lineSpacing(3).foregroundStyle(Palette.text2) }
                     if r.reasons.isEmpty { Text("Reads fine. Send it, and don't re-read it.").font(.system(size: 15)).foregroundStyle(Palette.text2) }

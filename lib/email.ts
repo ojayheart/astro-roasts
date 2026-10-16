@@ -77,3 +77,26 @@ export async function sendRoastEmail(
   }
   return true;
 }
+
+/** Sign-in code for the iOS app. Returns false when email isn't configured or Resend rejects it. */
+export async function sendLoginCodeEmail(to: string, code: string): Promise<boolean> {
+  const resend = getResend();
+  if (!resend) return false;
+  const { error } = await resend.emails.send({
+    from: "Astro Roast <roast@astroroast.com>",
+    to,
+    subject: `Your AstroRoast code: ${code}`,
+    html: `
+      <div style="font-family: -apple-system, Helvetica, Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 36px 20px; color: #E5E5E5; background: #030303;">
+        <p style="font-size: 15px; line-height: 1.6; margin: 0 0 20px;">Here's your code to bring your roasts into the app:</p>
+        <p style="font-size: 38px; letter-spacing: 8px; font-weight: 700; margin: 0 0 20px;">${escapeHtml(code)}</p>
+        <p style="font-size: 13px; line-height: 1.6; color: #8f8f8f; margin: 0;">It works for the next 10 minutes. If you didn't ask for it, you can ignore this email and nothing happens.</p>
+      </div>`,
+    text: `Your AstroRoast code is ${code}. It works for 10 minutes. If you didn't ask for it, ignore this email.`,
+  });
+  if (error) {
+    console.error("Resend login-code error:", error);
+    return false;
+  }
+  return true;
+}
