@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Share card</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&amp;family=Syne:wght@600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#030303}
+a{color:#ff4a1c}a:hover{color:#ff5a36}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #000000; color: #e5e5e5; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; display: flex; flex-direction: column; align-items: center; padding: 60px 0 0">
+<div style="display: flex; gap: 8px; margin-bottom: 18px">
+<button type="button" aria-pressed="true" style="height: 32px; padding: 0 14px; border-radius: 16px; border: 0; background: #e5e5e5; color: #030303; font: inherit; font-size: 13px; font-weight: 600">Blood</button>
+<button type="button" aria-pressed="false" style="height: 32px; padding: 0 14px; border-radius: 16px; border: 1px solid #2a2a2a; background: transparent; color: #c4c4c4; font: inherit; font-size: 13px">Void</button>
+<button type="button" aria-pressed="false" style="height: 32px; padding: 0 14px; border-radius: 16px; border: 1px solid #2a2a2a; background: transparent; color: #c4c4c4; font: inherit; font-size: 13px">Dossier</button>
+</div>
+<div style="width: 246px; height: 437px; border-radius: 18px; background: {{cardBg}}; color: #030303; position: relative; overflow: hidden; box-sizing: border-box; padding: 26px 22px; display: flex; flex-direction: column; box-shadow: 0 30px 60px rgba(255,74,28,0.1)">
+<svg aria-hidden="true" viewBox="0 0 100 100" fill="none" stroke="#030303" stroke-width="0.35" style="position: absolute; width: 380px; height: 380px; left: -40px; top: 150px; opacity: 0.18"><circle cx="50" cy="50" r="48" stroke-dasharray="1 2"></circle><circle cx="50" cy="50" r="36"></circle><path d="M50 2 L50 98 M2 50 L98 50"></path></svg>
+<span style="font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.24em; font-weight: 500; position: relative">MOON ♏︎ · MARS □ MOON</span>
+<div style="flex-grow: 1; display: flex; align-items: center; position: relative">
+<p style="margin: 0; font-family: 'Syne', sans-serif; font-weight: 800; font-size: 30px; line-height: 0.98; letter-spacing: -0.03em; text-transform: uppercase">You don’t hold grudges. You curate them.</p>
+</div>
+<div style="display: flex; justify-content: space-between; align-items: flex-end; position: relative; font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.18em; font-weight: 500">
+<span>MARA · GEM / SCO / VIR</span>
+<span>ASTROROAST.COM</span>
+</div>
+</div>
+<div style="flex-grow: 1"></div>
+<div style="width: 100%; box-sizing: border-box; border-radius: 22px 22px 0 0; background: #141414; padding: 12px 20px 34px; display: flex; flex-direction: column; gap: 18px">
+<span aria-hidden="true" style="align-self: center; width: 36px; height: 5px; border-radius: 3px; background: #3a3a3a"></span>
+<div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px">
+<button type="button" style="display: flex; flex-direction: column; align-items: center; gap: 8px; border: 0; background: transparent; color: #e5e5e5; font: inherit; font-size: 12px; padding: 0">
+<span style="width: 56px; height: 56px; border-radius: 16px; background: #262626; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#e5e5e5" stroke-width="1.8"><rect x="4" y="2" width="16" height="20" rx="4"></rect><circle cx="12" cy="12" r="3.2"></circle></svg></span>Story</button>
+<button type="button" style="display: flex; flex-direction: column; align-items: center; gap: 8px; border: 0; background: transparent; color: #e5e5e5; font: inherit; font-size: 12px; padding: 0">
+<span style="width: 56px; height: 56px; border-radius: 16px; background: #262626; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#e5e5e5" stroke-width="1.8" stroke-linejoin="round"><path d="M4 5h16v11H9l-5 4z"></path></svg></span>Message</button>
+<button type="button" style="display: flex; flex-direction: column; align-items: center; gap: 8px; border: 0; background: transparent; color: #e5e5e5; font: inherit; font-size: 12px; padding: 0">
+<span style="width: 56px; height: 56px; border-radius: 16px; background: #262626; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#e5e5e5" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5"></path><path d="M5 20h14"></path></svg></span>Save</button>
+<button type="button" style="display: flex; flex-direction: column; align-items: center; gap: 8px; border: 0; background: transparent; color: #e5e5e5; font: inherit; font-size: 12px; padding: 0">
+<span style="width: 56px; height: 56px; border-radius: 16px; background: #262626; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#e5e5e5" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"></path><path d="M14 10a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"></path></svg></span>Copy link</button>
+</div>
+<div style="display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 12px; background: #1c1c1c">
+<span style="font-family: 'DM Mono', monospace; font-size: 11px; color: #ff6a4a; letter-spacing: 0.1em">+1 ROAST</span>
+<span style="font-size: 13px; color: #c4c4c4; line-height: 1.35">Whoever opens your link gets their teaser free. You get a group roast credit when they unlock.</span>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"cardBg":{"editor":"color","default":"#ff4a1c","options":["#ff4a1c","#e5e5e5","#ff5a1f"]},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { cardBg: this.props.cardBg ?? '#ff4a1c' };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Situationships with planets</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&amp;family=Syne:wght@500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#030303}
+a{color:#d9d4cc}a:hover{color:#ffffff}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #030303; color: #e5e5e5; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; display: flex; flex-direction: column; padding: 56px 24px 30px; gap: 14px">
+<div style="display: flex; align-items: center; justify-content: space-between; height: 44px">
+<a href="Month.dc.html" aria-label="Back to Month" style="width: 44px; height: 44px; display: flex; align-items: center; color: #8f8f8f">
+<svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"></path></svg>
+</a>
+<span style="font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.25em; color: #8f8f8f">LONG GAME</span>
+<span style="width: 44px"></span>
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<h1 style="margin: 0; font-family: 'Syne', sans-serif; font-weight: 800; font-size: 34px; line-height: 0.95; letter-spacing: -0.03em; text-transform: uppercase">Your situation&shy;ships</h1>
+<p style="margin: 0; font-size: 14px; color: #a8a8a8; line-height: 1.45">The planets you’re currently entangled with, how long it lasts, and what to actually do about it.</p>
+</div>
+<div aria-hidden="true" style="position: relative; height: 16px; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.15em; color: #5f5f5f">
+<span>OCT</span><span>NOV</span><span>DEC</span><span>JAN</span><span>FEB</span><span>MAR</span>
+</div>
+<sc-for list="{{items}}" as="it" hint-placeholder-count="4">
+<div style="display: flex; flex-direction: column; gap: 8px; padding-bottom: 14px; border-bottom: 1px solid #161616">
+<div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px">
+<span style="font-family: 'Syne', sans-serif; font-weight: 600; font-size: 16px">{{it.name}}</span>
+<span style="font-family: 'DM Mono', monospace; font-size: 9.5px; letter-spacing: 0.14em; color: {{it.statusColor}}; white-space: nowrap">{{it.status}}</span>
+</div>
+<div style="position: relative; height: 10px">
+<span style="position: absolute; left: 0; right: 0; top: 4px; height: 2px; background: #141414"></span>
+<span style="position: absolute; left: {{it.x}}px; width: {{it.w}}px; top: 3px; height: 4px; border-radius: 2px; background: {{it.bar}}"></span>
+<span style="position: absolute; left: {{it.peak}}px; top: 0; width: 10px; height: 10px; margin-left: -5px; border-radius: 5px; background: {{it.peakColor}}"></span>
+<span style="position: absolute; left: 28px; top: -3px; width: 1px; height: 16px; background: #d9d4cc; opacity: 0.5"></span>
+</div>
+<div style="display: flex; justify-content: space-between; gap: 12px; font-size: 13px">
+<span style="color: #c4c4c4; line-height: 1.4">{{it.todo}}</span>
+<span style="font-family: 'DM Mono', monospace; font-size: 10px; color: #8f8f8f; white-space: nowrap; padding-top: 2px">{{it.dates}}</span>
+</div>
+</div>
+</sc-for>
+<div style="flex-grow: 1"></div>
+<span style="font-size: 12px; color: #8f8f8f; text-align: center">Line = today. Dot = when it peaks. Tap any one for the full roast.</span>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"ember":{"editor":"color","default":"#ff4a1c"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const ember = this.props.ember ?? '#ff4a1c';
+    const items = [
+      { name: 'Saturn □ your Venus', status: 'IT’S COMPLICATED', hot: true, x: 0, w: 289, peak: 112, todo: 'Explains the situationship. Define nothing until March.', dates: 'AUG 12 – MAR 3' },
+      { name: 'Mercury retrograde', status: 'ON A BREAK IN 13 DAYS', hot: false, x: 52, w: 29, peak: 66, todo: 'Back up your phone. Do not back up to your ex.', dates: 'OCT 29 – NOV 13' },
+      { name: 'Uranus △ your Moon', status: 'SURPRISINGLY HEALTHY', hot: false, x: 0, w: 151, peak: 63, todo: 'You’re allowed to change your mind. Out loud, even.', dates: 'JUN – DEC 20' },
+      { name: 'Jupiter in your 10th', status: 'TALKING STAGE WITH SUCCESS', hot: true, x: 0, w: 342, peak: 85, todo: 'Ask for the raise in November. Your boss is weirdly receptive.', dates: 'UNTIL JUN' }
+    ];
+    return {
+      items: items.map((i) => ({ ...i, bar: i.hot ? ember : '#5f5f5f', peakColor: i.hot ? ember : '#d9d4cc', statusColor: i.hot ? '#ff6a4a' : '#a8a8a8' }))
+    };
+  }
+}
+</script>
+</body>
+</html>
