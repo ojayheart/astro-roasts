@@ -35,7 +35,7 @@ export default function PaywallCTA({
       <div className="paywall-ui w-full flex flex-col items-center my-10 md:my-12 px-6">
         <div className="w-full max-w-md flex flex-col items-center">
           <span className="text-[10px] md:text-xs font-mono tracking-[0.15em] text-ash/60 mb-4 uppercase text-center">
-            The full set: every planet, house, aspect, and callback.
+            The full set: every flaw, every pattern, every callback.
           </span>
 
           <button
