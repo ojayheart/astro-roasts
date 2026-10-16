@@ -299,7 +299,8 @@ final class AppModel {
             catch { continue }
         }
         var seen = Set<String>()
-        cloud = all.filter { seen.insert($0.id).inserted }.sorted { ($0.roast.createdAt ?? "") > ($1.roast.createdAt ?? "") }
+        // roasts that failed to generate are not shown (they have no text and can't be opened)
+        cloud = CloudRoast.visible(all).filter { seen.insert($0.id).inserted }.sorted { ($0.roast.createdAt ?? "") > ($1.roast.createdAt ?? "") }
         for c in cloud { upsert(c.roast) }
     }
 

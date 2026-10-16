@@ -138,3 +138,37 @@ final class CalendarPlanTests: XCTestCase {
         XCTAssertFalse(ics.contains("\n\n"))
     }
 }
+
+/// Decodes a response captured from the real /api/ios/v1/roasts (names and text anonymised), so the app is pinned to what the server really sends.
+final class CloudRoastsRealShapeTests: XCTestCase {
+    struct Reply: Decodable { let roasts: [CloudRoast] }
+    func load() throws -> [CloudRoast] {
+        let url = Bundle(for: CloudRoastsRealShapeTests.self).url(forResource: "real-cloud-roasts", withExtension: "json")!
+        return try JSONDecoder().decode(Reply.self, from: Data(contentsOf: url)).roasts
+    }
+    func testRealServerResponseDecodes() throws {
+        let all = try load()
+        XCTAssertEqual(all.count, 7)
+        XCTAssertTrue(all.allSatisfy { !$0.birth.date.isEmpty && !$0.birth.place.isEmpty })
+        XCTAssertEqual(all.filter { $0.roast.kind == "couple" }.count, 1)
+        XCTAssertEqual(all.filter { $0.roast.status == "error" }.count, 3)
+        XCTAssertTrue(all.allSatisfy { $0.roast.createdAt != nil }, "createdAt is used for ordering")
+    }
+    func testFailedRoastsAreHiddenAndTheSamePersonAppearsOnce() throws {
+        let visible = CloudRoast.visible(try load())
+        XCTAssertEqual(visible.count, 4)
+        XCTAssertFalse(visible.contains { $0.roast.status == "error" })
+        let people = CloudRoast.people(visible)
+        XCTAssertEqual(people.count, 2, "one solo person roasted several times + the couple owner")
+        XCTAssertEqual(people.first?.roast.kind, "solo")
+    }
+    func testBirthDetailsRebuildAProfile() throws {
+        let c = try XCTUnwrap(CloudRoast.people(CloudRoast.visible(try load())).first)
+        let d = c.birth.date.split(separator: "-").compactMap { Int($0) }, t = c.birth.time?.split(separator: ":").compactMap { Int($0) }
+        XCTAssertEqual(d.count, 3)
+        let b = BirthData.make(name: c.birth.name, year: d[0], month: d[1], day: d[2], hour: t?.first, minute: t?.last, latitude: -41.29, longitude: 174.78, timeZoneID: "Pacific/Auckland", placeName: "Wellington", countryName: "New Zealand")
+        let n = NatalChart(birth: try XCTUnwrap(b))
+        // the server's own roast for this person says the same signs (Aquarius Sun, Taurus Moon, Aries rising)
+        XCTAssertEqual(n.sunSign, c.roast.sunSign); XCTAssertEqual(n.moonSign, c.roast.moonSign); XCTAssertEqual(n.risingSign, c.roast.rising)
+    }
+}

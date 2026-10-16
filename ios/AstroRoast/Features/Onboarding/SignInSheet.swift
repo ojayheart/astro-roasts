@@ -60,7 +60,7 @@ struct SignInSheet: View {
         }.task { try? await Task.sleep(for: .milliseconds(450)); focus = true }   // wait for the step transition, then raise the keyboard
     }
     var foundStep: some View {
-        let people = Self.people(found)
+        let people = CloudRoast.people(found)
         return VStack(alignment: .leading, spacing: 14) {
             Text(model.state.profile == nil ? "We found \(found.count) roast\(found.count == 1 ? "" : "s"). Which one is you?" : "We found \(found.count) roast\(found.count == 1 ? "" : "s").").font(.display(28, .bold)).tracking(-0.6)
             if model.state.profile == nil {
@@ -114,12 +114,6 @@ struct SignInSheet: View {
         let f = DateFormatter(); f.dateFormat = "yyyy-MM-dd"; guard let d = f.date(from: iso) else { return iso }
         return d.formatted(.dateTime.day().month(.abbreviated).year())
     }
-    /// One row per person (name + birthday), solo roasts first, so "which one is you?" isn't cluttered by couple roasts.
-    static func people(_ all: [CloudRoast]) -> [CloudRoast] {
-        var seen = Set<String>()
-        return all.sorted { ($0.roast.kind ?? "solo") == "solo" && ($1.roast.kind ?? "solo") != "solo" }.filter { seen.insert($0.birth.name.lowercased() + $0.birth.date).inserted }
-    }
-
     // MARK: actions
     func send(resend: Bool = false) async {
         busy = true; error = nil; defer { busy = false }

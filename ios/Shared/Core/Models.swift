@@ -95,4 +95,21 @@ public struct CloudRoast: Codable, Hashable, Identifiable, Sendable {
     public var roast: RoastPayload
     public var birth: CloudBirth
     public var id: String { roast.id }
+
+    /// Roasts worth showing: failed ones have no text and can't be opened.
+    public static func visible(_ all: [CloudRoast]) -> [CloudRoast] { all.filter { $0.roast.status != "error" } }
+
+    /// One entry per person, solo roasts first. The same person is often roasted several times under slightly different names
+    /// ("Oliver", "Oliver Hart"), so people are matched by birth moment and place, and the fullest name wins.
+    public static func people(_ all: [CloudRoast]) -> [CloudRoast] {
+        func key(_ c: CloudRoast) -> String { [c.birth.date, c.birth.time ?? "", c.birth.place.lowercased()].joined(separator: "|") }
+        let solo = all.filter { ($0.roast.kind ?? "solo") == "solo" }
+        let pool = solo.isEmpty ? all : solo + all.filter { ($0.roast.kind ?? "solo") != "solo" }
+        var best: [String: CloudRoast] = [:], order: [String] = []
+        for c in pool {
+            let k = key(c)
+            if let cur = best[k] { if c.birth.name.count > cur.birth.name.count { best[k] = c } } else { best[k] = c; order.append(k) }
+        }
+        return order.compactMap { best[$0] }
+    }
 }
