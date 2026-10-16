@@ -12,7 +12,7 @@ enum DemoData {
         let mum = BirthData.make(name: "Mum", year: 1968, month: 2, day: 21, hour: 3, minute: 30, latitude: 53.48, longitude: -2.24, timeZoneID: "Europe/London", placeName: "Manchester", countryName: "United Kingdom")!
         var a = Person(birth: sam, role: "Partner"); a.overlaySource = true
         s.people = [a, Person(birth: mum, role: "Mum")]
-        s.currentRoast = roast(for: birth, paid: false)
+        s.currentRoast = roast(for: birth, paid: CommandLine.arguments.contains("-paid"))
         s.roasts = [s.currentRoast!]
         return s
     }
