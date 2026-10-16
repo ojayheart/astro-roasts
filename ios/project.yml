@@ -32,6 +32,8 @@ targets:
     platform: iOS
     sources:
       - path: AstroRoast
+        excludes:
+          - Products.storekit          # local StoreKit test config: used by the scheme, never shipped
     resources: []
     dependencies:
       - target: AstroKit
@@ -52,7 +54,7 @@ targets:
         CFBundleURLTypes:
           - CFBundleURLName: com.astroroast.app
             CFBundleURLSchemes: [astroroast]
-        NSCalendarsFullAccessUsageDescription: AstroRoast adds your moon phases and big transits to the calendar you choose. Nothing is read.
+        NSCalendarsFullAccessUsageDescription: AstroRoast adds your moon phases and big transits to the calendar you choose, and can remove the events it added. It doesn't use any of your other events.
         NSCalendarsWriteOnlyAccessUsageDescription: AstroRoast adds your moon phases and big transits to the calendar you choose.
         NSPhotoLibraryAddUsageDescription: Save your roast cards to Photos.
         NSUserNotificationsUsageDescription: A couple of heads-up notifications a week, only for the big stuff.

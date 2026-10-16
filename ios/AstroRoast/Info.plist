@@ -39,7 +39,7 @@
 		<true/>
 	</dict>
 	<key>NSCalendarsFullAccessUsageDescription</key>
-	<string>AstroRoast adds your moon phases and big transits to the calendar you choose. Nothing is read.</string>
+	<string>AstroRoast adds your moon phases and big transits to the calendar you choose, and can remove the events it added. It doesn't use any of your other events.</string>
 	<key>NSCalendarsWriteOnlyAccessUsageDescription</key>
 	<string>AstroRoast adds your moon phases and big transits to the calendar you choose.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
