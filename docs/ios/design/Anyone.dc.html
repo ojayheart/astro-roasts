@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Roast someone not on the app</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&amp;family=Syne:wght@500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#030303}
+a{color:#d9d4cc}a:hover{color:#ffffff}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #030303; color: #e5e5e5; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; display: flex; flex-direction: column; padding: 56px 16px 34px; gap: 18px">
+<div style="display: flex; align-items: center; justify-content: space-between; height: 44px">
+<a href="Coven.dc.html" aria-label="Back to Coven" style="width: 44px; height: 44px; display: flex; align-items: center; color: #8f8f8f">
+<svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"></path></svg>
+</a>
+<span style="font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.25em; color: #8f8f8f">NEW SUSPECT</span>
+<span style="width: 44px"></span>
+</div>
+<div style="padding: 0 8px; display: flex; flex-direction: column; gap: 8px">
+<h1 style="margin: 0; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 30px; line-height: 1.05; letter-spacing: -0.02em">Roast someone who isn’t here.</h1>
+<p style="margin: 0; font-size: 14px; line-height: 1.45; color: #a8a8a8">They don’t need the app. They don’t need to know. Yet.</p>
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<span style="padding: 0 16px; font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.2em; color: #8f8f8f">WHO ARE THEY TO YOU</span>
+<div role="radiogroup" aria-label="Relationship" style="display: flex; flex-wrap: wrap; gap: 8px; padding: 0 8px">
+<sc-for list="{{roles}}" as="r" hint-placeholder-count="6">
+<button type="button" role="radio" aria-checked="{{r.checked}}" onClick="{{r.pick}}" style="height: 36px; padding: 0 14px; border-radius: 18px; border: 1px solid {{r.border}}; background: {{r.bg}}; color: {{r.fg}}; font: inherit; font-size: 14px">{{r.label}}</button>
+</sc-for>
+</div>
+</div>
+<div style="border-radius: 14px; background: #0e0e0e; border: 1px solid #1f1f1f; overflow: hidden">
+<label style="display: flex; align-items: center; justify-content: space-between; min-height: 50px; padding: 0 16px; border-bottom: 1px solid #1f1f1f; font-size: 16px"><span>Name</span><input value="Dave" aria-label="Their name" style="background: transparent; border: 0; color: #e5e5e5; font: inherit; text-align: right; width: 180px; outline: none"></label>
+<label style="display: flex; align-items: center; justify-content: space-between; min-height: 50px; padding: 0 16px; border-bottom: 1px solid #1f1f1f; font-size: 16px"><span>Birthday</span><span style="padding: 6px 10px; border-radius: 8px; background: #1c1c1c">3 Mar 1981</span></label>
+<label style="display: flex; align-items: center; justify-content: space-between; min-height: 50px; padding: 0 16px; border-bottom: 1px solid #1f1f1f; font-size: 16px"><span>Birth time</span><span style="color: #8f8f8f; font-size: 15px">No idea (fine)</span></label>
+<label style="display: flex; align-items: center; justify-content: space-between; min-height: 50px; padding: 0 16px; font-size: 16px"><span>Born in</span><span style="color: #e5e5e5">Swindon</span></label>
+</div>
+<div style="padding: 14px 16px; border-radius: 14px; border: 1px solid #1a1a1a; display: flex; flex-direction: column; gap: 8px">
+<span style="font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.2em; color: #8f8f8f">YOU GET</span>
+<span style="font-size: 14px; line-height: 1.5; color: #c4c4c4">Dave, roasted as your {{roleLower}}. How Dave’s chart clashes with yours. A share card that invites Dave to claim their own chart, if you’re brave.</span>
+</div>
+<div style="flex-grow: 1"></div>
+<button type="button" style="height: 54px; border-radius: 14px; border: 0; background: #d9d4cc; color: #0a0a0a; font: inherit; font-size: 17px; font-weight: 600">Roast Dave · $2.99</button>
+<span style="text-align: center; font-size: 12px; line-height: 1.45; color: #8f8f8f; padding: 0 12px">Free with Roast+. We roast traits, not people’s worth. Dave stays private unless you share.</span>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  state = { role: 'Boss' };
+  renderVals() {
+    const list = ['Boss', 'Ex', 'Crush', 'Mum', 'Flatmate', 'Cat'];
+    const roles = list.map((label) => {
+      const on = label === this.state.role;
+      return { label, checked: on ? 'true' : 'false', border: on ? '#d9d4cc' : '#2a2a2a', bg: on ? '#d9d4cc' : 'transparent', fg: on ? '#0a0a0a' : '#c4c4c4', pick: () => this.setState({ role: label }) };
+    });
+    return { roles, roleLower: this.state.role.toLowerCase() };
+  }
+}
+</script>
+</body>
+</html>

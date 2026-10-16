@@ -1,0 +1,126 @@
+name: AstroRoast
+options:
+  bundleIdPrefix: com.astroroast
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+  generateEmptyDirectories: true
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    MARKETING_VERSION: "1.0.0"
+    CURRENT_PROJECT_VERSION: "1"
+    CODE_SIGN_STYLE: Automatic
+    DEVELOPMENT_TEAM: K4R775K8T2
+    ENABLE_USER_SCRIPT_SANDBOXING: NO
+    DEAD_CODE_STRIPPING: YES
+targets:
+  AstroKit:
+    type: framework
+    platform: iOS
+    sources:
+      - path: Shared
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.astroroast.app.kit
+        GENERATE_INFOPLIST_FILE: YES
+        DEFINES_MODULE: YES
+        SKIP_INSTALL: YES
+        BUILD_LIBRARY_FOR_DISTRIBUTION: NO
+  AstroRoast:
+    type: application
+    platform: iOS
+    sources:
+      - path: AstroRoast
+        excludes:
+          - Products.storekit          # local StoreKit test config: used by the scheme, never shipped
+    resources: []
+    dependencies:
+      - target: AstroKit
+        embed: true
+      - target: AstroWidgets
+        embed: true
+    entitlements:
+      path: AstroRoast/AstroRoast.entitlements
+      properties:
+        com.apple.security.application-groups: [group.com.astroroast.app]
+    info:
+      path: AstroRoast/Info.plist
+      properties:
+        CFBundleDisplayName: AstroRoast
+        UILaunchScreen: {UIColorName: Ground}
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        NSSupportsLiveActivities: true
+        CFBundleURLTypes:
+          - CFBundleURLName: com.astroroast.app
+            CFBundleURLSchemes: [astroroast]
+        NSCalendarsFullAccessUsageDescription: AstroRoast adds your moon phases and big transits to the calendar you choose, and can remove the events it added. It doesn't use any of your other events.
+        NSCalendarsWriteOnlyAccessUsageDescription: AstroRoast adds your moon phases and big transits to the calendar you choose.
+        NSPhotoLibraryAddUsageDescription: Save your roast cards to Photos.
+        NSUserNotificationsUsageDescription: A couple of heads-up notifications a week, only for the big stuff.
+        ITSAppUsesNonExemptEncryption: false
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.astroroast.app
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        TARGETED_DEVICE_FAMILY: "1"
+  AstroWidgets:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: Widgets
+    dependencies:
+      - target: AstroKit
+        embed: false
+    entitlements:
+      path: Widgets/AstroWidgets.entitlements
+      properties:
+        com.apple.security.application-groups: [group.com.astroroast.app]
+    info:
+      path: Widgets/Info.plist
+      properties:
+        CFBundleDisplayName: AstroRoast
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.astroroast.app.widgets
+        LD_RUNPATH_SEARCH_PATHS: ["$(inherited)", "@executable_path/Frameworks", "@executable_path/../../Frameworks"]
+        SKIP_INSTALL: YES
+  AstroKitTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: AstroKitTests
+    dependencies:
+      - target: AstroKit
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.astroroast.app.kittests
+        GENERATE_INFOPLIST_FILE: YES
+  AstroRoastUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: AstroRoastUITests
+    dependencies:
+      - target: AstroRoast
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.astroroast.app.uitests
+        GENERATE_INFOPLIST_FILE: YES
+schemes:
+  AstroRoast:
+    build:
+      targets:
+        AstroRoast: all
+        AstroKitTests: [test]
+        AstroRoastUITests: [test]
+    run:
+      config: Debug
+      storeKitConfiguration: AstroRoast/Products.storekit
+    test:
+      targets: [AstroKitTests, AstroRoastUITests]
+      storeKitConfiguration: AstroRoast/Products.storekit

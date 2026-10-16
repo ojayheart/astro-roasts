@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Month moon dial</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&amp;family=Syne:wght@500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#030303}
+a{color:#d9d4cc}a:hover{color:#ffffff}
+@keyframes drift{to{transform:rotate(360deg)}}
+@keyframes breathe{0%,100%{opacity:.9}50%{opacity:.3}}
+.drift{transform-origin:170px 170px;transform-box:view-box;animation:drift 300s linear infinite}
+.breathe{animation:breathe 7s ease-in-out infinite}
+@media (prefers-reduced-motion: reduce){.drift,.breathe{animation:none}}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #030303; color: #e5e5e5; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; display: flex; flex-direction: column; padding: 56px 0 34px; overflow: hidden; position: relative">
+<div style="display: flex; align-items: center; justify-content: space-between; height: 44px; padding: 0 24px">
+<a href="Today.dc.html" aria-label="Back to Today" style="width: 44px; height: 44px; display: flex; align-items: center; color: #8f8f8f">
+<svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"></path></svg>
+</a>
+<div style="display: flex; align-items: center; gap: 18px; font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.22em">
+<button type="button" aria-label="October" style="border: 0; background: transparent; color: #5f5f5f; font: inherit; height: 44px">OCT</button>
+<span aria-current="date" style="color: #d9d4cc">NOV 2026</span>
+<button type="button" aria-label="December" style="border: 0; background: transparent; color: #5f5f5f; font: inherit; height: 44px">DEC</button>
+</div>
+<a href="Calendar.dc.html" aria-label="Calendar sync settings" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: flex-end; color: #8f8f8f">
+<svg aria-hidden="true" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg>
+</a>
+</div>
+<div style="position: relative; width: 320px; height: 320px; align-self: center; margin-top: 10px">
+<svg role="img" aria-label="Moon dial. Drag to turn it; the day at the top is selected." viewBox="-6 -6 352 352" onPointerDown="{{down}}" onPointerMove="{{move}}" onPointerUp="{{up}}" onPointerCancel="{{up}}" style="width: 320px; height: 320px; touch-action: none; cursor: grab; display: block">
+<circle class="drift" cx="170" cy="170" r="160" fill="none" stroke="#1a1a1a" stroke-width="1" stroke-dasharray="1 7"></circle>
+<circle cx="170" cy="30" r="11.5" fill="none" stroke="#d9d4cc" stroke-width="0.9"></circle>
+<path d="M166 2 L174 2 L170 8 Z" fill="{{ember}}"></path>
+<g style="transform: rotate({{rot}}deg); transform-origin: 170px 170px; transform-box: view-box; transition: {{ringT}}">
+<circle cx="170" cy="170" r="140" fill="none" stroke="#121212" stroke-width="1"></circle>
+<circle cx="170" cy="170" r="112" fill="none" stroke="#161616" stroke-width="1"></circle>
+<circle cx="170" cy="170" r="112" fill="none" stroke="{{ember}}" stroke-width="1.5" stroke-linecap="round" stroke-dasharray="187.7 516" stroke-dashoffset="-140.7" transform="rotate(-90 170 170)" opacity="0.4"></circle>
+<circle cx="170" cy="170" r="96" fill="none" stroke="#1d1d1d" stroke-width="1" stroke-dasharray="2 4" opacity="{{covenRing}}"></circle>
+<circle cx="170.0" cy="30.0" r="6.5" fill="#141414"></circle><path d="M170.0 23.5 A6.5 6.5 0 0 0 170.0 36.5 A0.5 6.5 0 0 0 170.0 23.5Z" fill="#d9d4cc"></path>
+<circle cx="199.1" cy="33.1" r="6.5" fill="#141414"></circle><path d="M199.1 26.6 A6.5 6.5 0 0 0 199.1 39.6 A0.9 6.5 0 0 1 199.1 26.6Z" fill="#d9d4cc"></path>
+<circle cx="226.9" cy="42.1" r="6.5" fill="#141414"></circle><path d="M226.9 35.6 A6.5 6.5 0 0 0 226.9 48.6 A2.3 6.5 0 0 1 226.9 35.6Z" fill="#d9d4cc"></path>
+<circle cx="252.3" cy="56.7" r="6.5" fill="#141414"></circle><path d="M252.3 50.2 A6.5 6.5 0 0 0 252.3 63.2 A3.6 6.5 0 0 1 252.3 50.2Z" fill="#d9d4cc"></path>
+<circle cx="274.0" cy="76.3" r="6.5" fill="#141414"></circle><path d="M274.0 69.8 A6.5 6.5 0 0 0 274.0 82.8 A4.6 6.5 0 0 1 274.0 69.8Z" fill="#d9d4cc"></path>
+<circle cx="291.2" cy="100.0" r="6.5" fill="#141414"></circle><path d="M291.2 93.5 A6.5 6.5 0 0 0 291.2 106.5 A5.5 6.5 0 0 1 291.2 93.5Z" fill="#d9d4cc"></path>
+<circle cx="303.1" cy="126.7" r="6.5" fill="#141414"></circle><path d="M303.1 120.2 A6.5 6.5 0 0 0 303.1 133.2 A6.1 6.5 0 0 1 303.1 120.2Z" fill="#d9d4cc"></path>
+<circle cx="309.2" cy="155.4" r="6.5" fill="#141414"></circle><path d="M309.2 148.9 A6.5 6.5 0 0 0 309.2 161.9 A6.4 6.5 0 0 1 309.2 148.9Z" fill="#d9d4cc"></path>
+<circle cx="309.2" cy="184.6" r="6.5" fill="#141414" stroke="#3a3a3a" stroke-width="0.6"></circle><path d="M309.2 178.1 A6.5 6.5 0 0 1 309.2 191.1 A6.5 6.5 0 0 0 309.2 178.1Z" fill="#d9d4cc"></path>
+<circle cx="303.1" cy="213.3" r="6.5" fill="#141414"></circle><path d="M303.1 206.8 A6.5 6.5 0 0 1 303.1 219.8 A6.3 6.5 0 0 0 303.1 206.8Z" fill="#d9d4cc"></path>
+<circle cx="291.2" cy="240.0" r="6.5" fill="#141414"></circle><path d="M291.2 233.5 A6.5 6.5 0 0 1 291.2 246.5 A5.9 6.5 0 0 0 291.2 233.5Z" fill="#d9d4cc"></path>
+<circle cx="274.0" cy="263.7" r="6.5" fill="#141414"></circle><path d="M274.0 257.2 A6.5 6.5 0 0 1 274.0 270.2 A5.3 6.5 0 0 0 274.0 257.2Z" fill="#d9d4cc"></path>
+<circle cx="252.3" cy="283.3" r="6.5" fill="#141414"></circle><path d="M252.3 276.8 A6.5 6.5 0 0 1 252.3 289.8 A4.5 6.5 0 0 0 252.3 276.8Z" fill="#d9d4cc"></path>
+<circle cx="226.9" cy="297.9" r="6.5" fill="#141414"></circle><path d="M226.9 291.4 A6.5 6.5 0 0 1 226.9 304.4 A3.5 6.5 0 0 0 226.9 291.4Z" fill="#d9d4cc"></path>
+<circle cx="199.1" cy="306.9" r="6.5" fill="#141414"></circle><path d="M199.1 300.4 A6.5 6.5 0 0 1 199.1 313.4 A2.4 6.5 0 0 0 199.1 300.4Z" fill="#d9d4cc"></path>
+<circle cx="170.0" cy="310.0" r="6.5" fill="#141414"></circle><path d="M170.0 303.5 A6.5 6.5 0 0 1 170.0 316.5 A1.2 6.5 0 0 0 170.0 303.5Z" fill="#d9d4cc"></path>
+<circle cx="140.9" cy="306.9" r="6.5" fill="#141414"></circle><path d="M140.9 300.4 A6.5 6.5 0 0 1 140.9 313.4 A0.0 6.5 0 0 1 140.9 300.4Z" fill="#d9d4cc"></path>
+<circle cx="113.1" cy="297.9" r="6.5" fill="#141414"></circle><path d="M113.1 291.4 A6.5 6.5 0 0 1 113.1 304.4 A1.3 6.5 0 0 1 113.1 291.4Z" fill="#d9d4cc"></path>
+<circle cx="87.7" cy="283.3" r="6.5" fill="#141414"></circle><path d="M87.7 276.8 A6.5 6.5 0 0 1 87.7 289.8 A2.6 6.5 0 0 1 87.7 276.8Z" fill="#d9d4cc"></path>
+<circle cx="66.0" cy="263.7" r="6.5" fill="#141414"></circle><path d="M66.0 257.2 A6.5 6.5 0 0 1 66.0 270.2 A3.7 6.5 0 0 1 66.0 257.2Z" fill="#d9d4cc"></path>
+<circle cx="48.8" cy="240.0" r="6.5" fill="#141414"></circle><path d="M48.8 233.5 A6.5 6.5 0 0 1 48.8 246.5 A4.8 6.5 0 0 1 48.8 233.5Z" fill="#d9d4cc"></path>
+<circle cx="36.9" cy="213.3" r="6.5" fill="#141414"></circle><path d="M36.9 206.8 A6.5 6.5 0 0 1 36.9 219.8 A5.7 6.5 0 0 1 36.9 206.8Z" fill="#d9d4cc"></path>
+<circle cx="30.8" cy="184.6" r="6.5" fill="#141414"></circle><path d="M30.8 178.1 A6.5 6.5 0 0 1 30.8 191.1 A6.3 6.5 0 0 1 30.8 178.1Z" fill="#d9d4cc"></path>
+<circle cx="30.8" cy="155.4" r="6.5" fill="#141414"></circle><path d="M30.8 148.9 A6.5 6.5 0 0 1 30.8 161.9 A6.5 6.5 0 0 1 30.8 148.9Z" fill="#d9d4cc"></path>
+<circle cx="36.9" cy="126.7" r="6.5" fill="#141414"></circle><path d="M36.9 120.2 A6.5 6.5 0 0 0 36.9 133.2 A6.3 6.5 0 0 0 36.9 120.2Z" fill="#d9d4cc"></path>
+<circle cx="48.8" cy="100.0" r="6.5" fill="#141414"></circle><path d="M48.8 93.5 A6.5 6.5 0 0 0 48.8 106.5 A5.8 6.5 0 0 0 48.8 93.5Z" fill="#d9d4cc"></path>
+<circle cx="66.0" cy="76.3" r="6.5" fill="#141414"></circle><path d="M66.0 69.8 A6.5 6.5 0 0 0 66.0 82.8 A4.9 6.5 0 0 0 66.0 69.8Z" fill="#d9d4cc"></path>
+<circle cx="87.7" cy="56.7" r="6.5" fill="#141414"></circle><path d="M87.7 50.2 A6.5 6.5 0 0 0 87.7 63.2 A3.8 6.5 0 0 0 87.7 50.2Z" fill="#d9d4cc"></path>
+<circle cx="113.1" cy="42.1" r="6.5" fill="#141414"></circle><path d="M113.1 35.6 A6.5 6.5 0 0 0 113.1 48.6 A2.5 6.5 0 0 0 113.1 35.6Z" fill="#d9d4cc"></path>
+<circle cx="140.9" cy="33.1" r="6.5" fill="#141414"></circle><path d="M140.9 26.6 A6.5 6.5 0 0 0 140.9 39.6 A1.1 6.5 0 0 0 140.9 26.6Z" fill="#d9d4cc"></path>
+<g fill="#d9d4cc" opacity="0.55">
+<circle cx="235.8" cy="260.6" r="2"></circle>
+<circle cx="215.6" cy="272.3" r="2"></circle>
+<circle cx="193.3" cy="279.6" r="2"></circle>
+<circle cx="63.5" cy="204.6" r="2"></circle>
+<circle cx="73" cy="114" r="2"></circle>
+</g>
+<circle class="breathe" cx="170" cy="58" r="9" fill="{{ember}}" opacity="0.18"></circle>
+<circle cx="170" cy="58" r="3" fill="{{ember}}"></circle>
+<circle class="breathe" cx="235.8" cy="79.4" r="9" fill="{{ember}}" opacity="0.18"></circle>
+<circle cx="235.8" cy="79.4" r="3" fill="{{ember}}"></circle>
+<circle class="breathe" cx="276.5" cy="135.4" r="9" fill="{{ember}}" opacity="0.18"></circle>
+<circle cx="276.5" cy="135.4" r="3" fill="{{ember}}"></circle>
+<circle class="breathe" cx="276.5" cy="204.6" r="9" fill="{{ember}}" opacity="0.18"></circle>
+<circle cx="276.5" cy="204.6" r="3" fill="{{ember}}"></circle>
+<circle class="breathe" cx="124.4" cy="272.3" r="9" fill="{{ember}}" opacity="0.18"></circle>
+<circle cx="124.4" cy="272.3" r="3" fill="{{ember}}"></circle>
+<circle class="breathe" cx="63.5" cy="135.4" r="9" fill="{{ember}}" opacity="0.18"></circle>
+<circle cx="63.5" cy="135.4" r="3" fill="{{ember}}"></circle>
+<g opacity="{{samOp}}" fill="none" stroke="#d9d4cc" stroke-width="1.2" style="transition: opacity 400ms">
+<circle cx="209" cy="82.3" r="3.5"></circle>
+<circle cx="241.3" cy="234.2" r="3.5"></circle>
+<circle cx="98.7" cy="234.2" r="3.5"></circle>
+</g>
+<g opacity="{{mumOp}}" fill="#d9d4cc" style="transition: opacity 400ms">
+<path d="M253.1 118 L257.1 122 L253.1 126 L249.1 122Z"></path>
+<path d="M74.5 156 L78.5 160 L74.5 164 L70.5 160Z"></path>
+</g>
+</g>
+</svg>
+<div style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 168px; display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; pointer-events: none">
+<span style="font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.24em; color: #8f8f8f">{{sel.dow}} {{sel.num}} NOV</span>
+<span style="font-family: 'Syne', sans-serif; font-weight: 600; font-size: 21px; line-height: 1.1; letter-spacing: -0.01em; color: #e5e5e5">{{sel.phase}}</span>
+<span style="font-size: 12px; line-height: 1.35; color: #8f8f8f">{{sel.title}}</span>
+</div>
+</div>
+<div role="group" aria-label="Overlay your people" style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 14px">
+<span style="font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.2em; color: #5f5f5f; margin-right: 4px">OVERLAY</span>
+<button type="button" aria-pressed="{{samPressed}}" onClick="{{toggleSam}}" style="height: 34px; padding: 0 14px; border-radius: 17px; border: 1px solid {{samBorder}}; background: transparent; color: {{samText}}; font: inherit; font-size: 13px; display: flex; align-items: center; gap: 8px; transition: all 300ms">
+<svg aria-hidden="true" width="10" height="10" viewBox="0 0 10 10"><circle cx="5" cy="5" r="3.5" fill="none" stroke="currentColor" stroke-width="1.3"></circle></svg>Sam</button>
+<button type="button" aria-pressed="{{mumPressed}}" onClick="{{toggleMum}}" style="height: 34px; padding: 0 14px; border-radius: 17px; border: 1px solid {{mumBorder}}; background: transparent; color: {{mumText}}; font: inherit; font-size: 13px; display: flex; align-items: center; gap: 8px; transition: all 300ms">
+<svg aria-hidden="true" width="10" height="10" viewBox="0 0 10 10"><path d="M5 1 L9 5 L5 9 L1 5Z" fill="currentColor"></path></svg>Mum</button>
+</div>
+<div style="margin-top: 22px; width: 390px; overflow: hidden; padding: 0 20px; box-sizing: border-box">
+<div style="display: flex; gap: 10px; transform: translateX({{trackX}}px); transition: {{trackT}}">
+<sc-for list="{{days}}" as="item" hint-placeholder-count="5">
+<button type="button" onClick="{{item.pick}}" aria-label="{{item.aria}}" style="flex: 0 0 132px; height: 158px; box-sizing: border-box; border-radius: 18px; padding: 14px; background: #0b0b0b; border: 1px solid {{item.border}}; text-align: left; color: #e5e5e5; font: inherit; display: flex; flex-direction: column; gap: 6px; opacity: {{item.op}}; transition: opacity 300ms, border-color 300ms">
+<span style="display: flex; align-items: center; justify-content: space-between; width: 100%; font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.18em; color: #8f8f8f">{{item.dow}} {{item.num}}
+<sc-if value="{{item.personal}}" hint-placeholder-val="{{ false }}"><span style="width: 6px; height: 6px; border-radius: 3px; background: {{ember}}"></span></sc-if>
+</span>
+<span style="font-family: 'Syne', sans-serif; font-weight: 600; font-size: 14px; line-height: 1.15; color: #e5e5e5">{{item.title}}</span>
+<span style="font-size: 12px; line-height: 1.35; color: #8f8f8f">{{item.line}}</span>
+<sc-if value="{{item.hasCoven}}" hint-placeholder-val="{{ false }}"><span style="font-size: 11.5px; line-height: 1.3; color: #d9d4cc; border-top: 1px solid #1d1d1d; padding-top: 6px">{{item.coven}}</span></sc-if>
+</button>
+</sc-for>
+</div>
+</div>
+<div style="flex-grow: 1"></div>
+<div style="display: flex; justify-content: center; gap: 28px">
+<button type="button" style="height: 44px; padding: 0; border: 0; background: transparent; color: #d9d4cc; font: inherit; font-size: 15px; display: flex; align-items: center; gap: 8px">
+<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18M12 13v5M9.5 15.5h5"></path></svg>Add to calendar</button>
+<a href="Today.dc.html" style="height: 44px; display: flex; align-items: center; color: #8f8f8f; text-decoration: none; font-size: 15px">Read the full burn →</a>
+</div>
+<sc-if value="{{open}}" hint-placeholder-val="{{ false }}">
+<div style="position: absolute; left: 0; top: 0; right: 0; bottom: 0; display: flex; flex-direction: column">
+<button type="button" aria-label="Close the day" onClick="{{closeSheet}}" style="flex: 1; min-height: 120px; border: 0; padding: 0; background: rgba(0,0,0,0.62)"></button>
+<div role="dialog" aria-label="{{sel.aria}}" style="background: #0e0e0e; border-top: 1px solid #1f1f1f; border-radius: 28px 28px 0 0; padding: 10px 24px 38px; display: flex; flex-direction: column; gap: 14px">
+<span aria-hidden="true" style="align-self: center; width: 36px; height: 5px; border-radius: 3px; background: #2e2e2e"></span>
+<span style="font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.22em; color: #8f8f8f">{{sel.dow}} {{sel.num}} NOVEMBER · {{sel.phaseCaps}}</span>
+<span style="font-family: 'Syne', sans-serif; font-weight: 700; font-size: 27px; line-height: 1.05; letter-spacing: -0.02em; color: #e5e5e5">{{sel.title}}</span>
+<span style="font-size: 15px; line-height: 1.5; color: #a8a8a8">{{sel.line}}</span>
+<div style="display: flex; flex-direction: column; border-top: 1px solid #1d1d1d">
+<div style="display: flex; justify-content: space-between; gap: 12px; padding: 12px 0; border-bottom: 1px solid #1d1d1d; font-size: 14px"><span style="color: #e5e5e5; white-space: nowrap">Moon in {{sel.moon}}</span><span style="color: #8f8f8f; text-align: right">{{sel.mood}}</span></div>
+<sc-if value="{{sel.personal}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; align-items: center; gap: 10px; padding: 12px 0; border-bottom: 1px solid #1d1d1d; font-size: 14px; color: #e5e5e5"><span style="width: 6px; height: 6px; border-radius: 3px; background: {{ember}}"></span>Touches your chart directly</div>
+</sc-if>
+<sc-if value="{{hasSelCoven}}" hint-placeholder-val="{{ false }}">
+<div style="padding: 12px 0; border-bottom: 1px solid #1d1d1d; font-size: 14px; line-height: 1.4; color: #d9d4cc">{{selCoven}}</div>
+</sc-if>
+</div>
+<sc-if value="{{roasted}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 8px; padding: 4px 0">
+<span style="font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.22em; color: {{ember}}">YOUR ROAST · {{sel.dow}} {{sel.num}}</span>
+<p style="margin: 0; font-family: 'Syne', sans-serif; font-weight: 600; font-size: 18px; line-height: 1.3; color: #e5e5e5">{{sel.roast}}</p>
+</div>
+</sc-if>
+<div style="display: flex; gap: 10px; padding-top: 4px">
+<sc-if value="{{notRoasted}}" hint-placeholder-val="{{ true }}">
+<button type="button" onClick="{{roastIt}}" style="flex: 1; height: 52px; border-radius: 14px; border: 0; background: #d9d4cc; color: #0a0a0a; font: inherit; font-size: 16px; font-weight: 600">Roast this day</button>
+</sc-if>
+<sc-if value="{{roasted}}" hint-placeholder-val="{{ false }}">
+<a href="Share.dc.html" style="flex: 1; height: 52px; border-radius: 14px; background: #d9d4cc; color: #0a0a0a; text-decoration: none; font-size: 16px; font-weight: 600; display: flex; align-items: center; justify-content: center">Share this roast</a>
+</sc-if>
+<button type="button" aria-label="Add this day to your calendar" style="width: 52px; height: 52px; border-radius: 14px; border: 1px solid #2a2a2a; background: transparent; color: #d9d4cc; display: flex; align-items: center; justify-content: center">
+<svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18M12 13v5M9.5 15.5h5"></path></svg>
+</button>
+</div>
+</div>
+</div>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"ember":{"editor":"color","default":"#ff4a1c","options":["#ff4a1c","#ff2a00","#d9a679"]},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  state = { rot: -156, dragging: false, sam: true, mum: false, open: false, roasted: -1 };
+
+  dayData() {
+    const elong = [265.4,278.3,290.9,303.3,315.5,327.5,339.3,350.9,2.4,13.6,24.7,35.7,46.6,57.4,68.2,79.1,90.1,101.5,113.2,125.3,137.9,151.0,164.5,178.3,192.4,206.5,220.4,234.1,247.5,260.4];
+    const events = {
+      1: ['Mars △ your Saturn', 'Discipline shows up. Briefly. Use it.', true],
+      4: ['Uranus △ your Moon', 'A feeling you’ve had since 2019 gets an update.', true],
+      7: ['Mars ☍ your Jupiter', 'You will overpromise by lunch.', true],
+      9: ['New Moon in Scorpio', 'Plant something. Not a grudge.', false],
+      10: ['Mars ✶ your Sun', 'Energy’s up. Spend it on a task, not a person.', true],
+      13: ['Mercury turns direct', 'Texts make sense again. Mostly.', false],
+      14: ['Venus turns direct', 'Your love life gets its licence back.', false],
+      15: ['Mars ☌ Jupiter', 'Everyone is overconfident. Including you.', false],
+      17: ['First quarter', 'Make one decision. Just one.', false],
+      18: ['Venus △ your Sun', 'You look great. Unfortunately, you know it.', true],
+      22: ['Sun into Sagittarius', 'Everyone books a flight they can’t afford.', false],
+      24: ['Full Moon in Gemini', 'Something you said in May comes back.', false],
+      25: ['Uranus ☍ your Pluto', 'Control issues, remastered.', true],
+      26: ['Mars into Virgo', 'The spreadsheet era begins.', false]
+    };
+    const coven = {
+      3: ['sam', 'Sam’s Mars squares your Venus. Pick the restaurant yourself.'],
+      12: ['sam', 'Sam is weirdly agreeable. Ask now.'],
+      20: ['sam', 'Sam needs a night in. Let it happen.'],
+      6: ['mum', 'Mum’s Moon is touchy. Compliment the garden.'],
+      24: ['mum', 'Full Moon on Mum’s Sun. Call before she calls you.']
+    };
+    const roasts = {
+      1: 'Saturn hands you a clipboard and Mars actually uses it. Enjoy being the most productive person in the building until roughly 4pm, when you reward yourself with a three-hour nap and call it recovery.',
+      7: 'Mars opposes your Jupiter, so your ambition writes cheques your calendar cannot cash. By lunch you will have agreed to two projects, one dinner and a half-marathon. Say “let me check” once. Just once.',
+      9: 'New Moon in Scorpio: the universe’s official grudge-planting season. Write down what you want. Then cross out the part that is really about revenge.',
+      10: 'Mars flatters your Sun and you mistake energy for permission. Clean the flat, send the invoice, leave your ex’s Instagram alone. All three are cardio.',
+      14: 'Venus finally stops reversing out of your love life. You will feel brave. You will draft something to an ex. You will look at it for eleven minutes. Delete it, eat a croissant, and wait for someone who replies in full sentences.',
+      18: 'Venus trines your Sun. You look incredible and the problem is you know it, so you’ll stand near reflective surfaces all day. Book the photo. Skip the caption with a moon emoji.',
+      24: 'Full Moon in Gemini lights up something you said back in May. Someone remembers it word for word. Your options are to apologise or to deny it with confidence. You will, of course, explain it for forty minutes.',
+      25: 'Uranus opposes your Pluto: your control issues get a firmware update. Something you planned meticulously changes at the last minute. Breathe. It was never really your spreadsheet.'
+    };
+    const moons = ['Cancer','Leo','Leo','Virgo','Virgo','Libra','Libra','Scorpio','Scorpio','Scorpio','Sagittarius','Sagittarius','Capricorn','Capricorn','Capricorn','Aquarius','Aquarius','Pisces','Pisces','Pisces','Aries','Aries','Taurus','Taurus','Gemini','Gemini','Cancer','Cancer','Leo','Leo'];
+    const moods = { Aries: 'Short fuse, fast forgiveness.', Taurus: 'Wants snacks and no surprises.', Gemini: 'Twelve tabs open.', Cancer: 'Nostalgic about last Tuesday.', Leo: 'Would like to be noticed, please.', Virgo: 'Reorganising things that were fine.', Libra: 'Can’t pick a restaurant.', Scorpio: 'Knows what you did.', Sagittarius: 'Booking flights in its head.', Capricorn: 'Competent, slightly cold.', Aquarius: 'Loves humanity, avoids humans.', Pisces: 'Crying at adverts.' };
+    const quiet = ['Quiet sky. Do the laundry.', 'Nothing major. Suspicious, honestly.', 'Low drama. Enjoy it while it lasts.', 'A good day to answer one email.'];
+    const dows = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
+    const phase = (e) => e < 7 || e > 353 ? 'New Moon' : e < 84 ? 'Waxing crescent' : e < 96 ? 'First quarter' : e < 173 ? 'Waxing gibbous' : e < 187 ? 'Full Moon' : e < 264 ? 'Waning gibbous' : e < 276 ? 'Last quarter' : 'Waning crescent';
+    return elong.map((e, k) => {
+      const d = k + 1;
+      const ev = events[d];
+      const moon = moons[k];
+      const roast = roasts[d] || ('A ' + phase(e).toLowerCase() + ' with the Moon in ' + moon + ', so on paper nothing happens. You will invent a problem by 3pm anyway. Spend the calm on something boring and good for you. Yes, the laundry.');
+      return { d, dow: dows[k % 7], num: String(d), phase: phase(e), phaseCaps: phase(e).toUpperCase(), title: ev ? ev[0] : phase(e), line: ev ? ev[1] : quiet[k % 4], personal: ev ? ev[2] : false, coven: coven[d], moon, mood: moods[moon], roast, aria: dows[k % 7] + ' ' + d + ' November' };
+    });
+  }
+
+  angle(e) {
+    const r = e.currentTarget.getBoundingClientRect();
+    return Math.atan2(e.clientY - (r.top + r.height / 2), e.clientX - (r.left + r.width / 2)) * 180 / Math.PI;
+  }
+
+  renderVals() {
+    const s = this.state;
+    const ember = this.props.ember ?? '#ff4a1c';
+    const f = (((-s.rot / 12) % 30) + 30) % 30;
+    const sel = Math.round(f) % 30;
+    const data = this.dayData();
+    const days = data.map((x, k) => {
+      const show = x.coven && ((x.coven[0] === 'sam' && s.sam) || (x.coven[0] === 'mum' && s.mum));
+      const dist = Math.min(Math.abs(k - sel), 30 - Math.abs(k - sel));
+      return {
+        ...x,
+        hasCoven: !!show,
+        coven: show ? x.coven[1] : '',
+        border: k === sel ? '#d9d4cc' : '#1a1a1a',
+        op: dist === 0 ? 1 : dist === 1 ? 0.6 : 0.3,
+        aria: x.dow + ' ' + x.num + ' November: ' + x.title + (k === sel ? '. Open the day' : ''),
+        pick: () => {
+          if (k === sel) { this.setState({ open: true }); return; }
+          const base = -k * 12;
+          this.setState({ rot: base + 360 * Math.round((this.state.rot - base) / 360) });
+        }
+      };
+    });
+    const ease = 'transform 650ms cubic-bezier(.2,.8,.2,1)';
+    return {
+      ember,
+      rot: s.rot,
+      ringT: s.dragging ? 'none' : ease,
+      trackT: s.dragging ? 'none' : ease,
+      trackX: 109 - f * 142,
+      days,
+      sel: data[sel],
+      open: s.open,
+      roasted: s.roasted === sel,
+      notRoasted: s.roasted !== sel,
+      hasSelCoven: !!data[sel].coven,
+      selCoven: data[sel].coven ? data[sel].coven[1] : '',
+      closeSheet: () => this.setState({ open: false }),
+      roastIt: () => this.setState({ roasted: sel }),
+      samOp: s.sam ? 1 : 0,
+      mumOp: s.mum ? 1 : 0,
+      covenRing: s.sam || s.mum ? 1 : 0,
+      samPressed: s.sam ? 'true' : 'false',
+      mumPressed: s.mum ? 'true' : 'false',
+      samBorder: s.sam ? '#d9d4cc' : '#2a2a2a',
+      mumBorder: s.mum ? '#d9d4cc' : '#2a2a2a',
+      samText: s.sam ? '#e5e5e5' : '#8f8f8f',
+      mumText: s.mum ? '#e5e5e5' : '#8f8f8f',
+      toggleSam: () => this.setState({ sam: !this.state.sam }),
+      toggleMum: () => this.setState({ mum: !this.state.mum }),
+      down: (e) => {
+        try { e.currentTarget.setPointerCapture(e.pointerId); } catch (_) {}
+        this.drag = { a: this.angle(e), r: this.state.rot };
+        this.setState({ dragging: true });
+      },
+      move: (e) => {
+        if (!this.drag) return;
+        let d = this.angle(e) - this.drag.a;
+        if (d > 180) d -= 360;
+        if (d < -180) d += 360;
+        this.drag.a += d;
+        this.drag.r += d;
+        this.setState({ rot: this.drag.r });
+      },
+      up: () => {
+        if (!this.drag) return;
+        this.drag = null;
+        this.setState({ dragging: false, rot: Math.round(this.state.rot / 12) * 12 });
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

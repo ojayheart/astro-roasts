@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Draft check</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&amp;family=Syne:wght@500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#030303}
+a{color:#d9d4cc}a:hover{color:#ffffff}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #030303; color: #e5e5e5; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; display: flex; flex-direction: column; padding: 56px 20px 30px; gap: 16px">
+<div style="display: flex; align-items: center; justify-content: space-between; height: 44px">
+<a href="Today.dc.html" aria-label="Back to Today" style="width: 44px; height: 44px; display: flex; align-items: center; color: #8f8f8f">
+<svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"></path></svg>
+</a>
+<span style="font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.25em; color: #8f8f8f">DRAFT CHECK</span>
+<span style="width: 44px"></span>
+</div>
+<h1 style="margin: 0; padding: 0 4px; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 28px; line-height: 1.05; letter-spacing: -0.02em">Before you send that.</h1>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<span style="padding: 0 4px; font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.2em; color: #8f8f8f">YOUR DRAFT · TO SAM</span>
+<div style="align-self: flex-end; max-width: 300px; border-radius: 20px 20px 6px 20px; background: #262626; padding: 12px 14px; font-size: 15px; line-height: 1.45">hey so I’ve been thinking about what you said on Saturday and honestly I think we need to talk properly about it, like really talk, not tonight but soon?? no pressure x</div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 12px; padding: 16px; border-radius: 20px; background: #0e0e0e; border: 1px solid #1f1f1f">
+<div style="display: flex; justify-content: space-between; align-items: center">
+<span style="font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.2em; color: #8f8f8f">VERDICT</span>
+<div role="group" aria-label="Verdict" style="display: flex; gap: 6px">
+<span style="height: 26px; padding: 0 10px; border-radius: 13px; border: 1px solid #262626; color: #5f5f5f; font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.12em; display: flex; align-items: center">SEND</span>
+<span style="height: 26px; padding: 0 10px; border-radius: 13px; background: #d9d4cc; color: #0a0a0a; font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.12em; display: flex; align-items: center">REWRITE</span>
+<span style="height: 26px; padding: 0 10px; border-radius: 13px; border: 1px solid #262626; color: #5f5f5f; font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.12em; display: flex; align-items: center">BIN IT</span>
+</div>
+</div>
+<p style="margin: 0; font-size: 15px; line-height: 1.5; color: #c4c4c4">Two question marks and “no pressure” is pressure in a trench coat. Mars is squaring your Mercury until Thursday, so everything you type today arrives 30% more intense than you meant it.</p>
+<div style="display: flex; gap: 6px; flex-wrap: wrap">
+<span style="height: 24px; padding: 0 9px; border-radius: 12px; border: 1px solid #2a2a2a; font-family: 'DM Mono', monospace; font-size: 10px; color: #a8a8a8; display: flex; align-items: center">♂ □ ☿ TILL THU</span>
+<span style="height: 24px; padding: 0 9px; border-radius: 12px; border: 1px solid #2a2a2a; font-family: 'DM Mono', monospace; font-size: 10px; color: #a8a8a8; display: flex; align-items: center">SAM’S MOON ♏︎</span>
+</div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<span style="padding: 0 4px; font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.2em; color: {{ember}}">TRY THIS INSTEAD</span>
+<div style="align-self: flex-end; max-width: 300px; border-radius: 20px 20px 6px 20px; background: #d9d4cc; color: #0a0a0a; padding: 12px 14px; font-size: 15px; line-height: 1.45">Been thinking about Saturday. Fancy a walk on Friday and a proper chat?</div>
+<span style="align-self: flex-end; font-size: 12px; color: #8f8f8f">Friday: Venus is on your side. Sam’s Scorpio Moon prefers a plan to a cliffhanger.</span>
+</div>
+<div style="flex-grow: 1"></div>
+<div style="display: flex; gap: 10px">
+<button type="button" onClick="{{copy}}" style="flex: 1; height: 50px; border-radius: 14px; border: 0; background: #d9d4cc; color: #0a0a0a; font: inherit; font-size: 16px; font-weight: 600">{{copyLabel}}</button>
+<button type="button" style="flex: 1; height: 50px; border-radius: 14px; border: 1px solid #2a2a2a; background: transparent; color: #e5e5e5; font: inherit; font-size: 16px">Remind me Friday</button>
+</div>
+<span style="text-align: center; font-size: 12px; color: #8f8f8f">Works from the share sheet in any messaging app. Nothing is sent for you.</span>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"ember":{"editor":"color","default":"#ff4a1c"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  state = { copied: false };
+  renderVals() {
+    return {
+      ember: this.props.ember ?? '#ff4a1c',
+      copyLabel: this.state.copied ? 'Copied' : 'Copy rewrite',
+      copy: () => this.setState({ copied: true })
+    };
+  }
+}
+</script>
+</body>
+</html>

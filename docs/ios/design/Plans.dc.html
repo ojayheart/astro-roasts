@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Free vs Roast+</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&amp;family=Syne:wght@500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#030303}
+a{color:#d9d4cc}a:hover{color:#ffffff}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #030303; color: #e5e5e5; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; display: flex; flex-direction: column; padding: 56px 20px 30px; gap: 16px">
+<div style="display: flex; justify-content: space-between; align-items: center; height: 44px">
+<button type="button" aria-label="Close" style="width: 44px; height: 44px; border: 0; background: transparent; color: #8f8f8f; padding: 0; display: flex; align-items: center">
+<svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+</button>
+<button type="button" style="height: 44px; border: 0; background: transparent; color: #8f8f8f; font: inherit; font-size: 14px">Restore</button>
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<h1 style="margin: 0; font-family: 'Syne', sans-serif; font-weight: 800; font-size: 44px; letter-spacing: -0.04em; text-transform: uppercase; line-height: 0.9">Roast<span style="color: {{accent}}">+</span></h1>
+<p style="margin: 0; font-size: 15px; line-height: 1.5; color: #a8a8a8">The free app tells you who you are. Roast+ tells you what’s coming, where to go, and who to avoid.</p>
+</div>
+<div style="display: grid; grid-template-columns: minmax(0, 1fr) 64px 64px; align-items: center; font-size: 14px">
+<span></span>
+<span style="font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.16em; color: #8f8f8f; text-align: center; padding-bottom: 8px">FREE</span>
+<span style="font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.16em; color: {{accent}}; text-align: center; padding-bottom: 8px">ROAST+</span>
+<span style="padding: 11px 0; border-top: 1px solid #1a1a1a">Daily burn from your chart</span><span style="text-align: center; padding: 11px 0; border-top: 1px solid #1a1a1a">✓</span><span style="text-align: center; padding: 11px 0; border-top: 1px solid #1a1a1a">✓</span>
+<span style="padding: 11px 0; border-top: 1px solid #1a1a1a">Moon dial + widgets</span><span style="text-align: center; padding: 11px 0; border-top: 1px solid #1a1a1a">✓</span><span style="text-align: center; padding: 11px 0; border-top: 1px solid #1a1a1a">✓</span>
+<span style="padding: 11px 0; border-top: 1px solid #1a1a1a">Full natal roast</span><span style="text-align: center; padding: 11px 0; border-top: 1px solid #1a1a1a; color: #8f8f8f; font-size: 12px">$4.99</span><span style="text-align: center; padding: 11px 0; border-top: 1px solid #1a1a1a">✓</span>
+<span style="padding: 11px 0; border-top: 1px solid #1a1a1a">Your transits on the month dial</span><span style="text-align: center; padding: 11px 0; border-top: 1px solid #1a1a1a; color: #5f5f5f">–</span><span style="text-align: center; padding: 11px 0; border-top: 1px solid #1a1a1a">✓</span>
+<span style="padding: 11px 0; border-top: 1px solid #1a1a1a">Calendar sync</span><span style="text-align: center; padding: 11px 0; border-top: 1px solid #1a1a1a; color: #8f8f8f; font-size: 12px">Moons</span><span style="text-align: center; padding: 11px 0; border-top: 1px solid #1a1a1a">✓</span>
+<span style="padding: 11px 0; border-top: 1px solid #1a1a1a">Astro map</span><span style="text-align: center; padding: 11px 0; border-top: 1px solid #1a1a1a; color: #8f8f8f; font-size: 12px">Top 3</span><span style="text-align: center; padding: 11px 0; border-top: 1px solid #1a1a1a">✓</span>
+<span style="padding: 11px 0; border-top: 1px solid #1a1a1a">Human Design roast</span><span style="text-align: center; padding: 11px 0; border-top: 1px solid #1a1a1a; color: #8f8f8f; font-size: 12px">Type</span><span style="text-align: center; padding: 11px 0; border-top: 1px solid #1a1a1a">✓</span>
+<span style="padding: 11px 0; border-top: 1px solid #1a1a1a; border-bottom: 1px solid #1a1a1a">Coven group roasts</span><span style="text-align: center; padding: 11px 0; border-top: 1px solid #1a1a1a; border-bottom: 1px solid #1a1a1a; color: #8f8f8f; font-size: 12px">1</span><span style="text-align: center; padding: 11px 0; border-top: 1px solid #1a1a1a; border-bottom: 1px solid #1a1a1a">∞</span>
+</div>
+<div style="flex-grow: 1"></div>
+<div role="radiogroup" aria-label="Billing period" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+<button type="button" role="radio" aria-checked="true" style="border-radius: 14px; border: 1.5px solid #d9d4cc; background: #141414; color: #e5e5e5; padding: 12px; text-align: left; font: inherit; display: flex; flex-direction: column; gap: 2px">
+<span style="font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.16em; color: {{accent}}">YEARLY · SAVE 44%</span>
+<span style="font-size: 17px; font-weight: 600">$39.99</span>
+<span style="font-size: 12px; color: #8f8f8f">$3.33 a month</span>
+</button>
+<button type="button" role="radio" aria-checked="false" style="border-radius: 14px; border: 1px solid #2a2a2a; background: transparent; color: #e5e5e5; padding: 12px; text-align: left; font: inherit; display: flex; flex-direction: column; gap: 2px">
+<span style="font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.16em; color: #8f8f8f">MONTHLY</span>
+<span style="font-size: 17px; font-weight: 600">$5.99</span>
+<span style="font-size: 12px; color: #8f8f8f">Commitment issues</span>
+</button>
+</div>
+<button type="button" style="height: 54px; border-radius: 14px; border: 0; background: #d9d4cc; color: #0a0a0a; font: inherit; font-size: 17px; font-weight: 600">Try 7 days free</button>
+<span style="text-align: center; font-size: 12px; color: #8f8f8f; line-height: 1.4">Cancel in two taps from Settings. We’ll remind you the day before the trial ends. Saturn would never.</span>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#ff4a1c"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { accent: this.props.accent ?? '#ff4a1c' };
+  }
+}
+</script>
+</body>
+</html>
