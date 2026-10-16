@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
     const ent = entitlementFor(verified.tx, roast);
     if (!ent.ok) return NextResponse.json({ error: ent.error }, { status: 403 });
 
-    await db.update(roasts).set({ paid: true }).where(eq(roasts.id, roastId));
+    await db.update(roasts).set({ paid: true, unlockedVia: ent.via }).where(eq(roasts.id, roastId));
     // If the roast is already written this sends the buyer's email; otherwise the pipeline sends it when it finishes.
     await sendRoastEmailIfReady(roastId).catch((err) =>
       Sentry.captureException(err),

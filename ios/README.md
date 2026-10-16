@@ -34,6 +34,11 @@ Needs Xcode 26 and an iOS 26 simulator runtime. Free disk space matters: a debug
   then sets `paid`. An active Roast+ subscription unlocks any roast. Product ids live in `AstroRoast/Products.storekit` (local testing) and `Purchases.ID`.
 - **Voice.** Daily lines are written from the real transit (`Voice.swift`), deterministic per day, never the same headline two days running.
 - **Draft check** runs rules on the phone; nothing is sent anywhere.
+- **Accounts = an email.** `POST /api/ios/v1/auth/start` emails a 6-digit code (HMAC of email + 10-minute window, no table needed), `/auth/verify`
+  returns a signed one-year token, `GET /api/ios/v1/roasts` lists every roast owned by that email together with the owner's birth details, so the app restores
+  the profile (places are found again on the phone, small towns included). `/roasts/claim` attaches a roast made before sign-in; `DELETE /api/ios/v1/account`
+  unlinks the email (in-app account deletion). Tokens live in the Keychain, and several emails can be linked. Server env: `IOS_AUTH_SECRET` (24+ chars),
+  `RESEND_API_KEY`; set `IOS_AUTH_DEBUG_CODE=1` on a dev server only to get the code back in the response.
 
 ## Launch arguments (design review and tests)
 | Argument | Effect |
@@ -58,7 +63,7 @@ cd .. && node --test test/apple-iap.test.ts      # server-side purchase verifica
 
 ## Not done / needs you
 - **App Store Connect**: create the products in `Purchases.ID` (3 consumables + 1 subscription group with monthly/yearly and a 7-day trial), set the team in `project.yml`, bundle id `com.astroroast.app` (override on the server with `APPLE_BUNDLE_ID`).
-- **Deploy** `/api/ios/v1/unlock` before purchases can unlock roasts in a real build. Local Xcode StoreKit testing signs with Xcode's own certificate, so use `APPLE_IAP_ALLOW_XCODE=1` and `APPLE_IAP_TEST_ROOT_PEM` on a dev server only.
+- **Deploy** the `/api/ios/v1/*` routes and set `IOS_AUTH_SECRET` before purchases or sign-in work in a real build. Local Xcode StoreKit testing signs with Xcode's own certificate, so use `APPLE_IAP_ALLOW_XCODE=1` and `APPLE_IAP_TEST_ROOT_PEM` on a dev server only.
 - **Push when a roast is ready** needs APNs from the pipeline; the Live Activity runs on a timer and the app notifies when it's open.
 - **Human Design** uses the standard gate wheel (matches the Rave Mandala order) and rules, but hasn't been compared with an external calculator beyond structural tests. 
 - Astrocartography is parked in `docs/ios/parked/Cartography.swift` (engine written and tested ad hoc, no UI).
