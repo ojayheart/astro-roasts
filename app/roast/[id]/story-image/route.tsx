@@ -87,7 +87,7 @@ export async function GET(
         }}
       >
         <div style={{ width: 80, height: 3, backgroundColor: BLOOD }} />
-        Case file — {nameLine.length > 24 ? "Astro Roasts" : nameLine}
+        Roasted — {nameLine.length > 24 ? "Astro Roasts" : nameLine}
       </div>
 
       <div

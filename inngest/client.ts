@@ -17,7 +17,7 @@ export type RoastGenerateEvent = {
     time?: string | null;
     city?: string;
     kind?: "solo" | "couple" | "family";
-    relationship?: "couple" | "family";
+    relationship?: string;
     people?: Array<{
       name: string;
       gender: string;
@@ -29,5 +29,12 @@ export type RoastGenerateEvent = {
     mcSubscriberId?: string;
     /** Present when the roast came in via Meta's direct Instagram webhook */
     igSenderId?: string;
+  };
+};
+
+export type RoastAnnotateEvent = {
+  name: "roast/annotate";
+  data: {
+    roastId: string;
   };
 };

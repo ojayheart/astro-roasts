@@ -3,21 +3,26 @@ import * as Sentry from "@sentry/nextjs";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { roasts } from "@/lib/db/schema";
-import { resolveBirthLocation } from "@/lib/location";
+import { computeChart, type ChartSubject } from "@/lib/compute-chart";
 import type { ChartResponse, NatalChart } from "@/lib/types";
 
-export const maxDuration = 30;
+export const maxDuration = 60;
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
- * Fast chart call for the loading screen. Resolves the roast's birth data to
- * coordinates and asks the runner to compute the chart deterministically
- * (natal_chart.py --json, no LLM, ~1s). Result is cached on roasts.chart_json.
+ * Fast chart call for the loading screen and the roast page's wheel. Resolves
+ * each subject's birth data to coordinates and asks the runner to compute the
+ * chart deterministically (natal_chart.py --json, no LLM, ~1s each).
  *
- * Every failure path returns 200 {chart:null} — the loading screen falls back
- * to its chart-less layout and the roast pipeline is never affected.
+ * Solo roasts cache one chart on roasts.chart_json. Group roasts additionally
+ * cache every subject's chart on roasts.subject_charts, which is what the
+ * synastry bi-wheel reads — before this, person 2's chart was never computed at
+ * all and only their sun/moon/rising survived in extra_placements.
+ *
+ * Every failure path returns 200 {chart:null} — callers fall back to the
+ * chart-less layout and the roast pipeline is never affected.
  */
 export async function POST(req: NextRequest) {
   const nullResponse = NextResponse.json({ chart: null } as ChartResponse);
@@ -33,125 +38,70 @@ export async function POST(req: NextRequest) {
     });
     if (!roast || !roast.user) return nullResponse;
 
-    // Cache hit
-    if (roast.chartJson) {
+    // Subjects in position order. Solo roasts have no rows here, so fall back
+    // to the owner — every roast has at least one chart to cast.
+    const people: ChartSubject[] = roast.subjects?.length
+      ? [...roast.subjects]
+          .sort((a, b) => a.position - b.position)
+          .map((s) => s.user)
+      : [roast.user];
+    const isGroup = people.length > 1;
+
+    const cachedSubjectCharts = roast.subjectCharts as NatalChart[] | null;
+    const subjectCacheComplete =
+      Array.isArray(cachedSubjectCharts) &&
+      cachedSubjectCharts.length === people.length;
+
+    // Fully cached — nothing to compute.
+    if (roast.chartJson && (!isGroup || subjectCacheComplete)) {
       return NextResponse.json({
         chart: roast.chartJson as NatalChart,
+        charts: isGroup ? cachedSubjectCharts! : undefined,
       } as ChartResponse);
     }
 
-    const { name, dob, birthTime, birthCity } = roast.user;
-    const [year, month, day] = dob.split("-").map(Number);
-    if (!year || !month || !day) return nullResponse;
+    // Person 1 may already be cached from an earlier call even when the rest
+    // aren't; don't pay for it twice.
+    const cachedFirst = roast.chartJson as NatalChart | null;
+    const charts = await Promise.all(
+      people.map((person, i) =>
+        i === 0 && cachedFirst
+          ? Promise.resolve(cachedFirst)
+          : computeChart(person),
+      ),
+    );
 
-    let hour: number | null = null;
-    let minute = 0;
-    if (birthTime) {
-      const [h, m] = birthTime.split(":").map(Number);
-      if (Number.isInteger(h)) {
-        hour = h;
-        minute = Number.isInteger(m) ? m : 0;
-      }
-    }
+    const first = charts[0];
+    if (!first) return nullResponse;
 
-    // Resolve coordinates: built-in city list first, Open-Meteo geocoding
-    // fallback for everywhere else (free, returns lat/lon + IANA timezone).
-    let { lat, lon, tz, knownCoordinates } = resolveBirthLocation(birthCity);
-    if (!knownCoordinates) {
-      const [cityPartRaw, ...rest] = birthCity.split(",");
-      const cityPart = cityPartRaw?.trim();
-      if (!cityPart) return nullResponse;
-      // Normalise common country abbreviations to the full names Open-Meteo
-      // returns, so "Wellington, NZ" / "London, UK" / "New York, USA" still
-      // match instead of silently failing.
-      const countryRaw = rest.join(",").trim().toLowerCase();
-      const COUNTRY_ABBR: Record<string, string> = {
-        nz: "new zealand",
-        us: "united states",
-        usa: "united states",
-        uk: "united kingdom",
-        uae: "united arab emirates",
-        cz: "czechia",
-        au: "australia",
-      };
-      const countryPart = COUNTRY_ABBR[countryRaw] ?? countryRaw;
-      const geoRes = await fetch(
-        `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cityPart)}&count=5&language=en&format=json`,
-        { signal: AbortSignal.timeout(4000) },
-      );
-      if (!geoRes.ok) return nullResponse;
-      const geo = (await geoRes.json()) as {
-        results?: {
-          latitude?: number;
-          longitude?: number;
-          timezone?: string;
-          country?: string;
-        }[];
-      };
-      const candidates = (geo.results ?? []).filter(
-        (r) =>
-          typeof r.latitude === "number" &&
-          typeof r.longitude === "number" &&
-          typeof r.timezone === "string",
-      );
-      // Prefer a country match for disambiguation (a misspelled city can
-      // fuzzy-match a same-named village on the wrong continent), but never
-      // fail outright on a messy or abbreviated country string — fall back to
-      // the top-ranked hit. The wheel is decorative; a best-effort chart beats
-      // no chart at all.
-      const matched = countryPart
-        ? candidates.find((r) =>
-            (r.country ?? "").toLowerCase().includes(countryPart),
-          )
-        : undefined;
-      const hit = matched ?? candidates[0];
-      if (!hit) return nullResponse;
-      lat = hit.latitude!;
-      lon = hit.longitude!;
-      tz = hit.timezone!;
-    }
-
-    const runnerUrl = process.env.ROAST_RUNNER_URL;
-    const runnerSecret = process.env.ROAST_RUNNER_SECRET;
-    if (!runnerUrl || !runnerSecret) return nullResponse;
-
-    const chartRes = await fetch(`${runnerUrl}/chart`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${runnerSecret}`,
-      },
-      body: JSON.stringify({
-        name,
-        year,
-        month,
-        day,
-        hour,
-        minute,
-        lat,
-        lon,
-        tz,
-      }),
-      signal: AbortSignal.timeout(20_000),
-    });
-    if (!chartRes.ok) {
-      Sentry.withScope((scope) => {
-        scope.setTag("route", "/api/chart");
-        scope.setContext("chart", { roastId, status: chartRes.status });
-        Sentry.captureMessage("Chart runner call failed", "warning");
-      });
-      return nullResponse;
-    }
-
-    const chart = (await chartRes.json()) as NatalChart;
-    if (chart?.schema !== 1) return nullResponse;
-
+    // Persist whatever resolved. A group whose second chart failed still gets
+    // its first cached, and the next call retries only the missing one.
+    const allResolved = charts.every((c): c is NatalChart => c !== null);
     await db
       .update(roasts)
-      .set({ chartJson: chart })
+      .set({
+        chartJson: first,
+        ...(isGroup && allResolved ? { subjectCharts: charts } : {}),
+      })
       .where(eq(roasts.id, roastId));
 
-    return NextResponse.json({ chart } as ChartResponse);
+    if (isGroup && !allResolved) {
+      Sentry.withScope((scope) => {
+        scope.setTag("route", "/api/chart");
+        scope.setTag("subsystem", "synastry");
+        scope.setContext("chart", {
+          roastId,
+          people: people.length,
+          resolved: charts.filter(Boolean).length,
+        });
+        Sentry.captureMessage("Group roast missing a subject chart", "warning");
+      });
+    }
+
+    return NextResponse.json({
+      chart: first,
+      charts: isGroup && allResolved ? (charts as NatalChart[]) : undefined,
+    } as ChartResponse);
   } catch (error) {
     Sentry.withScope((scope) => {
       scope.setTag("route", "/api/chart");

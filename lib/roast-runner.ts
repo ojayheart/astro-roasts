@@ -1,4 +1,5 @@
 import type { PersonInput } from "./group";
+import type { RoastEvidence } from "./roast-evidence";
 
 export interface RoastRunnerPayload {
   roastId: string;
@@ -8,6 +9,7 @@ export interface RoastRunnerPayload {
   time: string | null;
   birthPlace: string;
   hasBirthTime: boolean;
+  evidence?: RoastEvidence;
 }
 
 export interface ChartPlacements {
@@ -42,6 +44,7 @@ export function buildRoastRunnerPayload(input: {
   date: string;
   time: string | null;
   birthPlace: string;
+  evidence?: RoastEvidence;
 }): RoastRunnerPayload {
   return {
     roastId: input.roastId,
@@ -51,6 +54,7 @@ export function buildRoastRunnerPayload(input: {
     time: input.time,
     birthPlace: input.birthPlace,
     hasBirthTime: !!input.time,
+    ...(input.evidence ? { evidence: input.evidence } : {}),
   };
 }
 
@@ -107,14 +111,14 @@ export function extractChartPlacements(chartData: string): ChartPlacements {
 export interface GroupRoastRunnerPayload {
   roastId: string;
   mode: "group";
-  relationship: "couple" | "family";
-  people: Array<PersonInput & { hasBirthTime: boolean }>;
+  relationship: string;
+  people: Array<PersonInput & { hasBirthTime: boolean; evidence?: RoastEvidence }>;
 }
 
 export function buildGroupRunnerPayload(input: {
   roastId: string;
-  relationship: "couple" | "family";
-  people: PersonInput[];
+  relationship: string;
+  people: Array<PersonInput & { evidence?: RoastEvidence }>;
 }): GroupRoastRunnerPayload {
   return {
     roastId: input.roastId,

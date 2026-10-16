@@ -18,7 +18,7 @@ export type AgentAction =
   | { action: "generate_solo"; person: PersonInput; confirmMessage: string }
   | {
       action: "generate_group";
-      relationship: "couple" | "family";
+      relationship: string;
       people: PersonInput[];
       confirmMessage: string;
     };

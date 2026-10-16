@@ -6,18 +6,22 @@ import TeaserView from "@/components/TeaserView";
 import FullRoastView from "@/components/FullRoastView";
 import type { ChartPlacement, NatalChart, RoastData } from "@/lib/types";
 import { track } from "@/lib/track";
+import { startRoastPolling } from "@/lib/roast-polling";
 
 interface RoastClientProps {
   roastId: string;
   initialData: RoastData;
+  currency?: string;
 }
 
 export default function RoastClient({
   roastId,
   initialData,
+  currency = "usd",
 }: RoastClientProps) {
   const [data, setData] = useState<RoastData>(initialData);
   const [chart, setChart] = useState<NatalChart | null>(null);
+  const [partnerChart, setPartnerChart] = useState<NatalChart | null>(null);
   const loadingStartedAt = useRef<number>(0);
   const finishedFiredRef = useRef(false);
   const teaserFiredRef = useRef(false);
@@ -37,8 +41,13 @@ export default function RoastClient({
       body: JSON.stringify({ roastId }),
     })
       .then((res) => res.json())
-      .then((json: { chart?: NatalChart | null }) => {
+      .then((json: { chart?: NatalChart | null; charts?: NatalChart[] }) => {
         if (json.chart) setChart(json.chart);
+        // A duo roast returns both, so the wait shows the pair, not one of them.
+        if (json.charts?.length === 2) {
+          setChart(json.charts[0]);
+          setPartnerChart(json.charts[1]);
+        }
       })
       .catch(() => {
         // Fallback layout handles it.
@@ -98,109 +107,31 @@ export default function RoastClient({
     { planet: "Saturn", sign: data.saturnSign || "" },
   ].filter((placement) => placement.sign);
 
-  // Poll while generating (3 minutes of *foreground* time). Backgrounded tabs
-  // don't accrue toward the timeout — otherwise a 4-minute coffee break with
-  // the tab hidden would flip a finished roast into a permanent error state.
+  // Generation can exceed three minutes. Only the server decides when it failed.
   useEffect(() => {
     if (data.status !== "generating") return;
 
-    const TIMEOUT_MS = 3 * 60 * 1000;
-    let foregroundMs = 0;
-    let lastVisible = Date.now();
-    let cancelled = false;
-
-    const onVisibility = () => {
-      const now = Date.now();
-      if (document.visibilityState === "visible") {
-        lastVisible = now;
-      } else {
-        foregroundMs += now - lastVisible;
-      }
-    };
-    document.addEventListener("visibilitychange", onVisibility);
-
-    const finalCheck = async () => {
-      try {
-        const res = await fetch(`/api/roast/${roastId}`);
-        const json = await res.json();
-        if (json.status === "ready") {
-          if (!cancelled) {
-            setData({
-              id: roastId,
-              name: json.name,
-              status: "ready",
-              sunSign: json.sunSign || "",
-              moonSign: json.moonSign || "",
-              rising: json.rising || "",
-              mercurySign: json.mercurySign || "",
-              venusSign: json.venusSign || "",
-              marsSign: json.marsSign || "",
-              jupiterSign: json.jupiterSign || "",
-              saturnSign: json.saturnSign || "",
-              teaser: json.teaser || "",
-              fullText: json.fullText || "",
-              callouts: json.callouts || [],
-              paid: json.paid || false,
-              createdAt: data.createdAt,
-              stagePct: 100,
-            });
-            return;
-          }
-        }
-      } catch {
-        // Swallow; we're about to flip to error anyway.
-      }
-      if (!cancelled) setData((prev) => ({ ...prev, status: "error" }));
-    };
-
-    const interval = setInterval(async () => {
-      if (document.visibilityState !== "visible") return;
-      const elapsed = foregroundMs + (Date.now() - lastVisible);
-      if (elapsed > TIMEOUT_MS) {
-        clearInterval(interval);
-        await finalCheck();
-        return;
-      }
-
-      try {
-        const res = await fetch(`/api/roast/${roastId}`);
-        const json = await res.json();
-
-        if (json.status === "ready" || json.status === "generating") {
-          setData({
-            id: roastId,
-            name: json.name,
-            status: json.status,
-            sunSign: json.sunSign || "",
-            moonSign: json.moonSign || "",
-            rising: json.rising || "",
-            mercurySign: json.mercurySign || "",
-            venusSign: json.venusSign || "",
-            marsSign: json.marsSign || "",
-            jupiterSign: json.jupiterSign || "",
-            saturnSign: json.saturnSign || "",
-            teaser: json.teaser || "",
-            fullText: json.fullText || "",
-            callouts: json.callouts || [],
-            paid: json.paid || false,
-            createdAt: data.createdAt,
-            stagePct:
-              json.status === "ready" ? 100 : Number(json.stagePct ?? 0),
-          });
-        } else if (json.status === "error") {
-          setData((prev) => ({ ...prev, status: "error" }));
-        }
-      } catch {
-        // Network error, keep polling
-      }
-    }, 2000);
-
-    return () => {
-      cancelled = true;
-      clearInterval(interval);
-      document.removeEventListener("visibilitychange", onVisibility);
-    };
-  }, [data.status, roastId, data.createdAt]);
+    return startRoastPolling(
+      async (signal) => {
+        const res = await fetch(`/api/roast/${roastId}`, {
+          signal,
+          cache: "no-store",
+        });
+        if (!res.ok) throw new Error(`Roast status request failed (${res.status})`);
+        return (await res.json()) as Partial<RoastData> & { status: string };
+      },
+      (json) => {
+        // Preserve fields omitted from unpaid responses, including group details.
+        setData((prev) => ({
+          ...prev,
+          ...json,
+          id: roastId,
+          stagePct: json.status === "ready" ? 100 : Number(json.stagePct ?? 0),
+        }));
+      },
+      () => document.visibilityState === "visible",
+    );
+  }, [data.status, roastId]);
 
   // After Stripe payment the buyer lands here with `?paid=1`. Stripe also
   // appends `session_id` (hosted Checkout) or `payment_intent` (embedded flow).
@@ -221,10 +152,20 @@ export default function RoastClient({
     const startTime = Date.now();
     const TIMEOUT_MS = 60 * 1000;
 
-    const reveal = () => {
-      if (cancelled) return;
-      setData((prev) => ({ ...prev, paid: true }));
-      track("payment_succeeded", { roastId });
+    // Flipping `paid` locally is NOT enough: the server withholds fullText,
+    // callouts and the outer-planet placements from an unpaid payload, so a
+    // bare `{...prev, paid: true}` renders FullRoastView with an empty body —
+    // header, then straight to the upsell. Refetch, and only reveal once the
+    // prose is actually in hand.
+    const fetchAndReveal = async (): Promise<boolean> => {
+      const res = await fetch(`/api/roast/${roastId}`);
+      const json = await res.json();
+      if (!json?.paid || !json?.fullText) return false;
+      if (!cancelled) {
+        setData((prev) => ({ ...prev, ...json, id: roastId, paid: true }));
+        track("payment_succeeded", { roastId });
+      }
+      return true;
     };
 
     // Webhook-independent confirmation via the Stripe id in the URL.
@@ -237,7 +178,7 @@ export default function RoastClient({
           body: JSON.stringify({ roastId, sessionId, paymentIntentId }),
         });
         const json = await res.json();
-        if (json.paid) reveal();
+        if (json.paid) await fetchAndReveal();
       } catch {
         // Fall back to the poll below.
       }
@@ -249,12 +190,7 @@ export default function RoastClient({
         return;
       }
       try {
-        const res = await fetch(`/api/roast/${roastId}`);
-        const json = await res.json();
-        if (json.paid) {
-          clearInterval(interval);
-          reveal();
-        }
+        if (await fetchAndReveal()) clearInterval(interval);
       } catch {
         // Network error, keep polling
       }
@@ -273,6 +209,10 @@ export default function RoastClient({
         placements={placements}
         targetPct={data.stagePct ?? 0}
         chart={chart}
+        partnerChart={partnerChart}
+        mode={data.kind && data.kind !== "solo" ? "duo" : "solo"}
+        names={data.subjectNames ?? []}
+        relationship={data.relationship || "a pair"}
       />
     );
   }
@@ -315,11 +255,13 @@ export default function RoastClient({
         roastId={roastId}
         subjectNames={data.subjectNames}
         extraPlacements={data.extraPlacements}
+        relationship={data.relationship}
+        currency={currency}
       />
     );
   }
 
-  // Unpaid -> teaser + scroll-triggered paywall (handled inside TeaserView)
+  // Unpaid -> teaser + inline paywall (handled inside TeaserView)
   return (
     <TeaserView
       name={data.name}
@@ -331,6 +273,20 @@ export default function RoastClient({
       subjectNames={data.subjectNames}
       extraPlacements={data.extraPlacements}
       amountMinorUnits={data.amountMinorUnits}
+      currency={currency}
+      onUnlocked={async () => {
+        // Refetch rather than flipping `paid` locally — the unpaid payload
+        // has no fullText, so a bare flag flip renders an empty roast.
+        try {
+          const res = await fetch(`/api/roast/${roastId}`);
+          const json = await res.json();
+          if (json?.paid && json?.fullText) {
+            setData((prev) => ({ ...prev, ...json, id: roastId, paid: true }));
+          }
+        } catch {
+          // Leave the teaser up; the user can retry.
+        }
+      }}
     />
   );
 }

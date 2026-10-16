@@ -40,6 +40,13 @@ export interface EventMap {
   payment_succeeded: { roastId: string };
   payment_failed: { roastId: string; error: string };
   share_clicked: { roastId: string; method: string };
+  share_to_unlock_clicked: { roastId: string };
+  share_to_unlock_shared: { roastId: string; method: string };
+  unlock_via_share_succeeded: { roastId: string };
+  unlock_via_share_failed: { roastId: string; reason: string };
+  promo_code_submitted: { roastId: string };
+  promo_code_unlocked: { roastId: string };
+  promo_code_discounted: { roastId: string; percentOff: number };
 }
 
 type EventName = keyof EventMap;

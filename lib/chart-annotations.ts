@@ -1,4 +1,8 @@
-import Anthropic from "@anthropic-ai/sdk";
+import {
+  computeSynastry,
+  synastryAspectId,
+  type SynastryAspect,
+} from "./synastry.ts";
 import type { NatalAspect, NatalChart } from "./types";
 
 // Per-element copy for the interactive natal wheel. `facts` is computed
@@ -11,7 +15,15 @@ export interface ChartAnnotation {
 }
 export type ChartAnnotations = Record<string, ChartAnnotation>;
 
-export type ElementKind = "planet" | "angle" | "aspect" | "house" | "sign";
+export type ElementKind =
+  "planet" | "angle" | "aspect" | "house" | "sign" | "synastry";
+
+/**
+ * Which chart an element belongs to on a duo roast. Solo roasts never carry
+ * one, so their ids stay exactly as they were and old cached annotations keep
+ * resolving.
+ */
+export type PersonSlot = "a" | "b";
 
 export interface ElementSpec {
   id: string;
@@ -152,77 +164,151 @@ export function enumerateElements(chart: NatalChart): ElementSpec[] {
   return out;
 }
 
-const SYSTEM = `You write micro-captions for an astrology "roast" — the user taps an element of their birth chart and you give them one genuinely funny, affectionate read of what it says about them, in the roast's own voice.
+/**
+ * Cached annotations written before this roast became a bi-wheel are keyed by
+ * solo ids ("planet:Sun"), which match nothing the duo wheel draws — every tap
+ * would come back blank. Detect that and regenerate rather than serve a wheel
+ * that silently says nothing.
+ */
+export function annotationsMatchDuo(annotations: ChartAnnotations): boolean {
+  return Object.keys(annotations).some((k) => k.startsWith("synastry:"));
+}
 
-Make it FUNNY first. The comedy comes from precise, surprising recognition — the oddly specific true thing, the cosmic setup with a mundane punchline, a little twist at the end. Roast them like a friend who adores them and would defend them at the party — teasing, not cutting. Warm underneath. If a line is accurate but just stings, it failed: it's a flat diagnosis of their flaws, not a joke. Find the laugh instead. Never mean for mean's sake.
+/** Prefix a solo element id with the person it belongs to on a duo roast. */
+export const personElementId = (slot: PersonSlot, id: string) =>
+  `${slot}:${id}`;
 
-Voice: second person ("you"/"your"), specific not generic, one sentence, max ~140 characters. Every line needs a real punchline — an absurd-but-true image, an unexpected turn, or a callback to the roast. No astrology jargon-splaining. No emoji, no hashtags, no quotation marks.
+/** Split "a:planet:Sun" back into its slot and solo id. Null for solo ids. */
+export function splitPersonElementId(
+  id: string,
+): { slot: PersonSlot; id: string } | null {
+  const match = /^([ab]):(.+)$/.exec(id);
+  return match ? { slot: match[1] as PersonSlot, id: match[2] } : null;
+}
 
-Calibrate (same placement, two ways):
-- flat & a bit mean: "You perform warmth so no one ever reaches the real you." — a diagnosis, no joke, lands like a critique.
-- funny & warm: "You greet everyone like the host of a party you're quietly praying wraps by nine." — true, surprising, kind, you laugh.
+const SYNASTRY_SYMBOL: Record<SynastryAspect["type"], string> = ASPECT_SYMBOL;
 
-You'll get the full roast (match its voice and running jokes, never contradict it) and the chart elements with their data. One line per element id. Planets and aspects get the sharpest, most personal jokes; houses and signs can riff on what they hold, or the comedy of an empty room.`;
+/**
+ * Every clickable element on a duo roast: both charts' elements namespaced by
+ * person, plus the cross-aspects between them. The cross-aspects come first —
+ * they are the reason the pair bought a duo roast, and putting them at the top
+ * means a truncated model response still covers the relationship itself.
+ *
+ * `topSynastry` bounds the aspect list; a full pair produces 60+ contacts and
+ * the long tail is 6°-orb noise nobody taps.
+ */
+export function enumerateDuoElements(
+  chartA: NatalChart,
+  chartB: NatalChart,
+  options: { nameA?: string; nameB?: string; topSynastry?: number } = {},
+): ElementSpec[] {
+  const nameA = options.nameA || chartA.name || "Person 1";
+  const nameB = options.nameB || chartB.name || "Person 2";
+  const limit = options.topSynastry ?? 24;
 
-// One Opus call → a witty line per element. Facts stay deterministic; only the
-// line is model-written. On any failure, callers fall back to facts-only.
+  const out: ElementSpec[] = computeSynastry(chartA, chartB)
+    .slice(0, limit)
+    .map((s) => ({
+      id: synastryAspectId(s),
+      kind: "synastry" as const,
+      title: `${nameA}'s ${s.a} ${SYNASTRY_SYMBOL[s.type]} ${nameB}'s ${s.b}`,
+      facts: `${s.type}, orb ${s.orb.toFixed(1)}° · strength ${s.strength}/5 · between the two charts`,
+    }));
+
+  for (const [slot, chart, who] of [
+    ["a", chartA, nameA],
+    ["b", chartB, nameB],
+  ] as const) {
+    for (const e of enumerateElements(chart)) {
+      // The bi-wheel is oriented to person A's ascendant, so only A's houses
+      // and sign segments exist on screen. Generating copy for B's would spend
+      // model calls on elements nobody can ever tap.
+      if (slot === "b" && (e.kind === "house" || e.kind === "sign")) continue;
+      out.push({
+        ...e,
+        id: personElementId(slot, e.id),
+        title: `${who}'s ${e.title}`,
+      });
+    }
+  }
+
+  return out;
+}
+
+interface GenerateChartAnnotationOptions {
+  runnerUrl?: string;
+  runnerSecret?: string;
+  fetchImpl?: typeof fetch;
+  timeoutMs?: number;
+  /**
+   * Elements to write copy for. Defaults to this chart's own. Duo roasts pass
+   * enumerateDuoElements() so both charts and the contacts between them get
+   * lines from a single call.
+   */
+  elements?: ElementSpec[];
+}
+
+// The runner writes ~59 lines in chunks and takes ~100s end to end. Only the
+// async Inngest step waits on it, so the budget is generous.
+const RUNNER_TIMEOUT_MS = 300_000;
+
+// One Hermes subscription call → a witty line per element. Facts stay
+// deterministic; only the line is model-written. On any failure, callers fall
+// back to facts-only.
 export async function generateChartAnnotations(
   chart: NatalChart,
   roastText: string,
+  options: GenerateChartAnnotationOptions = {},
 ): Promise<ChartAnnotations> {
-  const elements = enumerateElements(chart);
+  const elements = options.elements ?? enumerateElements(chart);
   const annotations: ChartAnnotations = {};
   for (const e of elements) annotations[e.id] = { facts: e.facts, line: "" };
 
-  const list = elements
-    .map((e) => `${e.id} — ${e.title} (${e.facts})`)
-    .join("\n");
+  const runnerUrl = options.runnerUrl ?? process.env.ROAST_RUNNER_URL ?? "";
+  const runnerSecret =
+    options.runnerSecret ?? process.env.ROAST_RUNNER_SECRET ?? "";
+  const fetchImpl = options.fetchImpl ?? fetch;
+  if (!runnerUrl || !runnerSecret) {
+    throw new Error("Chart annotation runner not configured");
+  }
 
-  const client = new Anthropic(); // ANTHROPIC_API_KEY from env
-
-  const message = await client.messages.create({
-    model: "claude-opus-4-8",
-    max_tokens: 6000,
-    system: SYSTEM,
-    tools: [
-      {
-        name: "emit_lines",
-        description: "Return one witty roast line per chart element id.",
-        input_schema: {
-          type: "object",
-          properties: {
-            lines: {
-              type: "array",
-              items: {
-                type: "object",
-                properties: {
-                  id: { type: "string" },
-                  line: { type: "string" },
-                },
-                required: ["id", "line"],
-                additionalProperties: false,
-              },
-            },
-          },
-          required: ["lines"],
-          additionalProperties: false,
-        },
+  const response = await fetchImpl(
+    `${runnerUrl.replace(/\/+$/, "")}/chart-annotations`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${runnerSecret}`,
       },
-    ],
-    tool_choice: { type: "tool", name: "emit_lines" },
-    messages: [
-      {
-        role: "user",
-        content: `THE ROAST (for voice + continuity):\n\n${roastText}\n\n─────────\nWrite one line for each of these ${elements.length} elements:\n\n${list}`,
-      },
-    ],
-  });
+      body: JSON.stringify({
+        roastText,
+        elements: elements.map(({ id, title, facts }) => ({
+          id,
+          title,
+          facts,
+        })),
+      }),
+      signal: AbortSignal.timeout(options.timeoutMs ?? RUNNER_TIMEOUT_MS),
+    },
+  );
+  if (!response.ok) {
+    throw new Error(`Chart annotation runner failed (${response.status})`);
+  }
 
-  const block = message.content.find((b) => b.type === "tool_use");
-  const parsed = block?.input as { lines?: { id: string; line: string }[] };
-  for (const { id, line } of parsed?.lines ?? []) {
-    if (annotations[id] && typeof line === "string") {
-      annotations[id].line = line.trim();
+  const body = (await response.json()) as {
+    lines?: Array<{ id?: unknown; line?: unknown }>;
+  };
+  if (!Array.isArray(body.lines)) {
+    throw new Error("Chart annotation runner returned invalid output");
+  }
+  for (const item of body.lines) {
+    if (
+      typeof item.id === "string" &&
+      typeof item.line === "string" &&
+      annotations[item.id]
+    ) {
+      const line = item.line.trim();
+      if (line && line.length <= 300) annotations[item.id].line = line;
     }
   }
   return annotations;

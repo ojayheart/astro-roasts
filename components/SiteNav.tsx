@@ -1,28 +1,63 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useState } from "react";
 
 // Fixed top nav shared by every page. `disclaimers` shows the landing page's
-// right-hand microcopy block.
+// right-hand microcopy block. Once the page scrolls, a void scrim (gradient +
+// masked blur) fades in behind it so content never collides with the logo.
 export default function SiteNav({
   disclaimers = false,
 }: {
   disclaimers?: boolean;
 }) {
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      setScrolled(window.scrollY > 8);
+    };
+    const onScroll = () => {
+      if (!frame) frame = requestAnimationFrame(update);
+    };
+    update();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      if (frame) cancelAnimationFrame(frame);
+    };
+  }, []);
+
   return (
-    <nav className="fixed top-0 left-0 w-full p-6 md:p-8 flex justify-between items-start z-40 mix-blend-difference pointer-events-none">
-      <Link
-        href="/"
-        className="font-syne font-bold text-xl tracking-tighter uppercase leading-none pointer-events-auto"
+    <header className="fixed inset-x-0 top-0 z-40 pointer-events-none">
+      <div
+        aria-hidden
+        className={`nav-scrim absolute inset-x-0 top-0 h-32 md:h-40 transition-opacity duration-500 ease-out ${
+          scrolled ? "opacity-100" : "opacity-0"
+        }`}
+      />
+      <nav
+        aria-label="Primary"
+        className="relative flex justify-between items-start gap-6 px-4 md:px-12 lg:px-16 pt-5 md:pt-8"
       >
-        Astro
-        <br />
-        Roasts
-      </Link>
-      {disclaimers && (
-        <div className="text-xs tracking-[0.15em] uppercase text-right opacity-60">
-          * Swiss Ephemeris Data
-          <br />* Zero Sugar Coating
-        </div>
-      )}
-    </nav>
+        <Link
+          href="/"
+          aria-label="Astro Roasts home"
+          className="interactive font-syne font-bold text-xl tracking-tighter uppercase leading-none pointer-events-auto rounded-sm transition-colors hover:text-blood focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blood focus-visible:ring-offset-4 focus-visible:ring-offset-void"
+        >
+          Astro
+          <br />
+          Roasts
+        </Link>
+        {disclaimers && (
+          <div className="font-mono text-[10px] sm:text-[11px] md:text-xs leading-relaxed tracking-[0.1em] sm:tracking-[0.2em] uppercase text-right text-ash/60 whitespace-nowrap">
+            * Zero Sugar Coating
+            <br />* Bruised Ego… Almost Certain
+          </div>
+        )}
+      </nav>
+    </header>
   );
 }
