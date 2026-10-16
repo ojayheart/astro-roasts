@@ -68,3 +68,6 @@ cd .. && node --test test/apple-iap.test.ts      # server-side purchase verifica
 - **Human Design** uses the standard gate wheel (matches the Rave Mandala order) and rules, but hasn't been compared with an external calculator beyond structural tests. 
 - Astrocartography is parked in `docs/ios/parked/Cartography.swift` (engine written and tested ad hoc, no UI).
 - Draft check is rules-based; an LLM rewrite would need a new server endpoint.
+
+## Sky calendar (subscribable)
+`public/calendar/sky.ics` is a generic, no-personal-data calendar (moons, eclipses, stations, sign changes) in the AstroRoast voice. Regenerate with `python3 -I scripts/ios/gen_sky_calendar.py <first_year> <last_year>` (needs `pyswisseph`); currently 2026-2029. Apple Calendar: `webcal://astroroast.com/calendar/sky.ics`; Google: Other calendars, From URL. Personal transits still use EventKit or the exported .ics.

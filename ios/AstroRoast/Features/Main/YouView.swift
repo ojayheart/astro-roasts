@@ -156,6 +156,8 @@ struct CalendarSyncView: View {
                     }
                     VStack(spacing: 10) {
                         Button { Task { await sync() } } label: { if busy { ProgressView().tint(Palette.ink) } else { Text(model.state.calendar.enabled ? "Update my calendar" : "Add to my calendar") } }.buttonStyle(.primary).disabled(busy || planned.isEmpty)
+                        Button { if let u = URL(string: "webcal://astroroast.com/calendar/sky.ics") { UIApplication.shared.open(u) } } label: { Label("Subscribe to the sky calendar", systemImage: "calendar.badge.plus").frame(maxWidth: .infinity).frame(height: 50) }.buttonStyle(.ghost)
+                        Text("Moons, eclipses, retrogrades and sign changes for everyone. On Google Calendar: Other calendars, From URL, paste https://astroroast.com/calendar/sky.ics.").font(.system(size: 12)).foregroundStyle(Palette.text3).multilineTextAlignment(.center)
                         if let icsURL { ShareLink(item: icsURL) { Label("Export .ics for Google or Outlook", systemImage: "square.and.arrow.up").frame(maxWidth: .infinity).frame(height: 50) }.buttonStyle(.ghost) }
                         if model.state.calendar.enabled { Button("Remove AstroRoast events") { Task { await CalendarSync.removeAll(); m.state.calendar.enabled = false; status = "Removed." } }.font(.system(size: 14)).foregroundStyle(Palette.text3) }
                         if let status { Text(status).font(.system(size: 13)).foregroundStyle(Palette.moon) }
