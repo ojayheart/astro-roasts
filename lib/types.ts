@@ -33,6 +33,8 @@ export interface RoastData {
   createdAt?: string;
   stagePct?: number;
   kind?: "solo" | "couple" | "family";
+  /** What the subjects are to each other — free text, null on solo/legacy. */
+  relationship?: string;
   subjectNames?: string[];
   extraPlacements?: {
     name: string;
@@ -195,4 +197,12 @@ export interface NatalChart {
   configurations: NatalConfiguration[];
 }
 
-export type ChartResponse = { chart: NatalChart | null };
+export type ChartResponse = {
+  /** Person 1's chart. Null when it couldn't be resolved at all. */
+  chart: NatalChart | null;
+  /**
+   * Every subject's chart in position order, present only on group roasts
+   * where all of them resolved. This is what the synastry bi-wheel reads.
+   */
+  charts?: NatalChart[];
+};

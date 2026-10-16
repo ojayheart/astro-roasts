@@ -6,7 +6,7 @@
  * fine print): an empty string simply renders nothing.
  */
 
-export type FormMode = "solo" | "couple" | "family";
+export type FormMode = "solo" | "couple";
 
 export type FieldKey = "name" | "gender" | "date" | "time" | "place" | "email";
 
@@ -40,10 +40,6 @@ export const COPY = {
     couple: {
       tab: "Us two",
       subtitle: "Two charts, cross-referenced. Settles who's the problem.",
-    },
-    family: {
-      tab: "My lot",
-      subtitle: "Three to six people. Finally explains Christmas.",
     },
   } satisfies { ariaLabel: string } & Record<
     FormMode,
@@ -90,6 +86,11 @@ export const COPY = {
     },
   } satisfies Record<FieldKey, FieldCopy>,
 
+  relationship: {
+    caption: "What are you to each other?",
+    hint: "Changes the whole roast. Choose wisely.",
+  },
+
   /** Tap-to-pick gender options (value is what the roast receives). */
   genderOptions: [
     { value: "woman", label: "Woman" },
@@ -104,16 +105,11 @@ export const COPY = {
     // Works for partners and friends alike.
     label: (n: number) =>
       n === 1 ? "You" : n === 2 ? "Your person" : `Person ${n}`,
-    remove: "Remove",
-    removeAriaLabel: (n: number) => `Remove person ${n} (−€4)`,
-    add: "Drag in another relative",
-    addPriceNote: "+ €4",
   },
 
   cta: {
     solo: "Roast me. I'm fine.",
     couple: "Roast us. We're fine.",
-    family: "Ruin Christmas early",
     loading: "Doing the maths. Brace.",
   } satisfies Record<FormMode, string> & { loading: string },
 
@@ -121,7 +117,6 @@ export const COPY = {
   priceHint: {
     solo: (price: string) => `Free teaser. ${price} for the bits that hurt.`,
     couple: (price: string) => `Free teaser. ${price} to see who's worse.`,
-    family: (price: string) => `Free teaser. ${price}. Mum's paying.`,
   } satisfies Record<FormMode, (price: string) => string>,
 
   finePrint:

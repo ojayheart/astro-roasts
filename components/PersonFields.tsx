@@ -253,8 +253,6 @@ export default function PersonFields({
   value,
   onChange,
   disabled,
-  onRemove,
-  removeAriaLabel,
   error,
   showHints = true,
 }: {
@@ -263,9 +261,6 @@ export default function PersonFields({
   value: PersonFormValue;
   onChange: (v: PersonFormValue) => void;
   disabled: boolean;
-  /** When set, the person header shows an iOS-style red "Remove" action. */
-  onRemove?: () => void;
-  removeAriaLabel?: string;
   /** Field-level validation error to highlight inline. */
   error?: PersonFieldError | null;
   /** Hide helper hints (e.g. on repeated person cards) to cut noise. */
@@ -418,17 +413,6 @@ export default function PersonFields({
           />
           {label}
         </h3>
-        {onRemove && (
-          <button
-            type="button"
-            onClick={onRemove}
-            disabled={disabled}
-            aria-label={removeAriaLabel}
-            className="interactive -my-1 min-h-[44px] rounded-xl px-3 font-ui text-[15px] font-medium text-blood transition-[opacity,background-color] duration-200 hover:bg-blood/10 active:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blood/60 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            {COPY.person.remove}
-          </button>
-        )}
       </div>
       {groups}
     </section>

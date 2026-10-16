@@ -1,8 +1,8 @@
 import SignGlyph from "./SignGlyph";
 import Redacted from "./Redacted";
 
-// The product, shown before the form: one real-shaped dossier excerpt so a
-// visitor knows exactly what a roast looks like before entering the archive.
+// The product, shown before the form: one real-shaped excerpt so a visitor
+// knows exactly what a roast reads like before they take the mic.
 export default function SpecimenSection() {
   return (
     <section
@@ -14,19 +14,19 @@ export default function SpecimenSection() {
         <div className="lg:col-span-4">
           <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-blood mb-6 flex items-center gap-4">
             <span className="w-12 h-px bg-blood" />
-            Exhibit
+            The tape
           </p>
           <h2
             id="specimen-heading"
             className="font-syne font-extrabold text-4xl md:text-5xl uppercase leading-[0.9] tracking-tighter mb-8"
           >
-            One file,
+            One set,
             <br />
-            <span className="text-outline">unsealed.</span>
+            <span className="text-outline">uncut.</span>
           </h2>
           <p className="text-ash/70 text-base font-light leading-relaxed max-w-sm">
-            Every roast reads like this: your exact placements, named and
-            cross-examined. The redactions lift when the file is yours.
+            Every roast reads like this — your actual placements, said out loud
+            in front of everyone. The bleeps come off when the set is yours.
           </p>
         </div>
 
@@ -40,7 +40,7 @@ export default function SpecimenSection() {
               aria-hidden="true"
               className="absolute top-6 right-4 md:top-8 md:right-8 rotate-[8deg] border-2 border-blood/70 text-blood/70 font-syne font-extrabold uppercase tracking-[0.2em] text-xs px-3 py-1.5 select-none"
             >
-              Specimen
+              Clip
             </div>
 
             {/* Subject row — right padding keeps the stamp clear of the data */}
@@ -93,13 +93,13 @@ export default function SpecimenSection() {
 
             <div className="mt-10 pt-6 border-t border-ash/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
               <span className="font-mono text-[10px] uppercase tracking-[0.25em] text-ash/40">
-                Case 0034 · 14 pages · unlocked by subject
+                Set 0034 · 14 minutes · paid for by the subject
               </span>
               <a
-                href="#confessional"
+                href="#mic"
                 className="interactive inline-flex items-center justify-center px-6 py-3 min-h-[44px] bg-ash text-void font-syne font-bold text-sm uppercase tracking-[0.1em] hover:bg-blood hover:text-ash active:bg-blood active:text-ash focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blood focus-visible:ring-offset-2 focus-visible:ring-offset-void transition-colors duration-300"
               >
-                Open your own file
+                Take the mic
               </a>
             </div>
           </article>

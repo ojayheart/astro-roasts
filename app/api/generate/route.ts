@@ -5,7 +5,7 @@ import { users, roasts, roastSubjects } from "@/lib/db/schema";
 import { inngest } from "@/inngest/client";
 import { generateRateLimiter, getClientIp } from "@/lib/rate-limit";
 import { normalizeBirthLocation } from "@/lib/location";
-import { validateGroupRequest } from "@/lib/group";
+import { normalizeRelationship, validateGroupRequest } from "@/lib/group";
 
 export const maxDuration = 60;
 const MAX_BODY_BYTES = 30_000;
@@ -138,6 +138,7 @@ async function handleGroupGenerate(body: {
   kind: unknown;
   people: unknown;
   email?: unknown;
+  relationship?: unknown;
 }) {
   const validated = validateGroupRequest(body.kind, body.people);
   if (!validated.ok) {
@@ -147,6 +148,10 @@ async function handleGroupGenerate(body: {
     typeof body.email === "string" && body.email.length <= 254
       ? body.email
       : null;
+
+  // Unknown/absent values fall back to the kind, which is what the writer
+  // used to receive before relationships existed.
+  const relationship = normalizeRelationship(body.relationship, validated.kind);
 
   const normalizedPeople = validated.people.map((person) => ({
     name: person.name,
@@ -180,6 +185,7 @@ async function handleGroupGenerate(body: {
     .values({
       userId: userIds[0],
       kind: validated.kind,
+      relationship,
       status: "generating",
       paid: false,
       emailSent: false,
@@ -201,7 +207,7 @@ async function handleGroupGenerate(body: {
       roastId: roast.id,
       userId: userIds[0],
       kind: validated.kind,
-      relationship: validated.kind,
+      relationship,
       people: normalizedPeople,
       email,
     },

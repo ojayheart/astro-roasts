@@ -1,10 +1,18 @@
+import { headers } from "next/headers";
 import BirthForm from "@/components/BirthForm";
 import HeroSection from "@/components/HeroSection";
 import ManifestoSection from "@/components/ManifestoSection";
 import SiteNav from "@/components/SiteNav";
 import SiteFooter from "@/components/SiteFooter";
+import { pickCurrencyForCountry, readCountryFromHeaders } from "@/lib/currency";
 
-export default function Home() {
+export default async function Home() {
+  // Same geo → currency mapping the payment routes use, so the price shown
+  // matches the price charged instead of a hardcoded euro symbol.
+  const currency = pickCurrencyForCountry(
+    readCountryFromHeaders(await headers()),
+  );
+
   return (
     <>
       <SiteNav disclaimers />
@@ -13,9 +21,9 @@ export default function Home() {
         <HeroSection />
         <ManifestoSection />
 
-        {/* The Confessional Form */}
+        {/* Take-the-mic form */}
         <section
-          id="confessional"
+          id="mic"
           className="relative min-h-[100dvh] w-full py-24 md:py-32 px-4 md:px-12 lg:px-16 bg-void"
         >
           {/* Hairline divider: fades out at the edges, with a blood tick on
@@ -26,8 +34,8 @@ export default function Home() {
           />
           <div className="mx-auto w-full max-w-3xl">
             <div className="mb-10 text-center md:mb-12">
-              <p className="confessional-eyebrow mb-5 font-mono text-xs uppercase tracking-[0.2em] text-blood">
-                Exhibit A: you
+              <p className="mic-eyebrow mb-5 font-mono text-xs uppercase tracking-[0.2em] text-blood">
+                Take the mic
               </p>
               <h2 className="font-syne text-4xl font-extrabold uppercase leading-[0.9] tracking-tighter text-balance md:text-5xl">
                 Hold still.
@@ -36,7 +44,7 @@ export default function Home() {
               </h2>
             </div>
             <div className="mx-auto w-full max-w-xl">
-              <BirthForm />
+              <BirthForm currency={currency} />
             </div>
           </div>
         </section>

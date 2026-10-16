@@ -12,6 +12,8 @@ import PersonFields, {
   stackedInputClass,
   type PersonFormValue,
 } from "./PersonFields";
+import { RELATIONSHIP_TYPES, groupAmountMinorUnits } from "@/lib/group";
+import { formatPrice } from "@/lib/currency";
 import FireCursor from "./FireCursor";
 import { BIRTH_DATE_INVALID } from "./BirthDateInput";
 import { BIRTH_TIME_INVALID } from "./BirthTimeInput";
@@ -28,11 +30,13 @@ const VALUE_KEY: Record<PersonField, keyof PersonFormValue> = {
   place: "placeName",
 };
 
-export default function BirthForm() {
+export default function BirthForm({ currency = "usd" }: { currency?: string }) {
   const router = useRouter();
   const [mode, setMode] = useState<FormMode>("solo");
   const [people, setPeople] = useState<PersonFormValue[]>([EMPTY_PERSON]);
-  const [familyUnlocked, setFamilyUnlocked] = useState(false);
+  const [relationship, setRelationship] = useState<string>(
+    RELATIONSHIP_TYPES[0],
+  );
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [fieldError, setFieldError] = useState<{
@@ -44,18 +48,14 @@ export default function BirthForm() {
   useEffect(() => {
     track("birth_form_opened", {});
     const params = new URLSearchParams(window.location.search);
-    const unlocked =
-      localStorage.getItem("ar_has_roast") === "1" ||
-      params.get("mode") === "family";
-    setFamilyUnlocked(unlocked);
-    if (params.get("mode") === "family") switchMode("family");
-    if (params.get("mode") === "couple") switchMode("couple");
+    // ?mode=family used to deep-link the family form; it now lands on couple.
+    const requested = params.get("mode");
+    if (requested === "couple" || requested === "family") switchMode("couple");
   }, []);
 
   const PEOPLE_BY_MODE: Record<FormMode, number> = {
     solo: 1,
     couple: 2,
-    family: 3,
   };
 
   function switchMode(next: FormMode) {
@@ -63,7 +63,7 @@ export default function BirthForm() {
     setFieldError(null);
     setPeople((prev) => {
       const target = PEOPLE_BY_MODE[next];
-      const copy = prev.slice(0, next === "family" ? 6 : target);
+      const copy = prev.slice(0, target);
       while (copy.length < target) copy.push(EMPTY_PERSON);
       return copy;
     });
@@ -122,6 +122,7 @@ export default function BirthForm() {
         // Couple/family: group body
         body = {
           kind: mode,
+          relationship,
           email: email || undefined,
           people: people.map((p) => ({
             name: p.name,
@@ -157,18 +158,12 @@ export default function BirthForm() {
     }
   };
 
-  const price =
-    mode === "solo"
-      ? "€5"
-      : mode === "couple"
-        ? "€8"
-        : `€${8 + 4 * (people.length - 2)}`;
+  const price = formatPrice(
+    mode === "solo" ? 500 : groupAmountMinorUnits(people.length),
+    currency,
+  );
 
-  const modes: FormMode[] = [
-    "solo",
-    "couple",
-    ...(familyUnlocked ? (["family"] as const) : []),
-  ];
+  const modes: FormMode[] = ["solo", "couple"];
 
   const emailHint = COPY.fields.email.hint;
 
@@ -218,49 +213,45 @@ export default function BirthForm() {
                 ? { field: fieldError.field, message: error }
                 : null
             }
-            onRemove={
-              mode === "family" && i >= 3
-                ? () => {
-                    setPeople(people.filter((_, idx) => idx !== i));
-                    setFieldError(null);
-                  }
-                : undefined
-            }
-            removeAriaLabel={COPY.person.removeAriaLabel(i + 1)}
             showHints={i === 0}
           />
         ))}
 
-        {/* Family mode: add person row */}
-        {mode === "family" && people.length < 6 && (
-          <div className="ios-group">
-            <button
-              type="button"
-              onClick={() => setPeople([...people, EMPTY_PERSON])}
-              disabled={loading}
-              className="interactive group/add flex min-h-[52px] w-full items-center gap-3 rounded-[15px] px-4 text-left transition-colors duration-200 hover:bg-ash/[0.04] active:bg-ash/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blood/60 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <span
-                aria-hidden="true"
-                className="flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full bg-blood text-void transition-transform duration-200 group-active/add:scale-90"
+        {/* What they are to each other — changes the whole piece of writing */}
+        {mode === "couple" && (
+          <FormGroup caption={COPY.relationship.caption}>
+            <div className="px-3 pt-3 pb-3.5">
+              <div
+                role="radiogroup"
+                aria-label={COPY.relationship.caption}
+                className="flex flex-wrap gap-2"
               >
-                <svg viewBox="0 0 12 12" className="h-3 w-3" fill="none">
-                  <path
-                    d="M6 1.5v9M1.5 6h9"
-                    stroke="currentColor"
-                    strokeWidth="1.8"
-                    strokeLinecap="round"
-                  />
-                </svg>
-              </span>
-              <span className="flex-1 font-ui text-[17px] text-blood">
-                {COPY.person.add}
-              </span>
-              <span className="font-mono text-xs tracking-[0.1em] text-ash/40">
-                {COPY.person.addPriceNote}
-              </span>
-            </button>
-          </div>
+                {RELATIONSHIP_TYPES.map((r) => {
+                  const checked = relationship === r;
+                  return (
+                    <button
+                      key={r}
+                      type="button"
+                      role="radio"
+                      aria-checked={checked}
+                      disabled={loading}
+                      onClick={() => setRelationship(r)}
+                      className={`interactive h-9 rounded-full border px-3.5 font-ui text-[15px] capitalize transition-[background-color,border-color,color,transform] duration-200 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blood/60 disabled:cursor-not-allowed disabled:opacity-40 ${
+                        checked
+                          ? "border-ash bg-ash font-medium text-void"
+                          : "border-ash/15 text-ash/70 hover:border-ash/35 hover:text-ash"
+                      }`}
+                    >
+                      {r}
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="px-1 pt-3 font-ui text-[13px] leading-[18px] text-ash/40">
+                {COPY.relationship.hint}
+              </p>
+            </div>
+          </FormGroup>
         )}
 
         {/* Email */}

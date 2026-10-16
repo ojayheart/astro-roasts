@@ -5,6 +5,7 @@ import { roasts } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { verifyRoastPayment } from "@/lib/stripe";
 import { sendRoastEmailIfReady } from "@/lib/send-roast-email-if-ready";
+import { queueChartAnnotationsIfReady } from "@/lib/queue-chart-annotations";
 
 export const runtime = "nodejs";
 
@@ -70,7 +71,10 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    await db.update(roasts).set({ paid: true }).where(eq(roasts.id, roastId));
+    await db
+      .update(roasts)
+      .set({ paid: true, unlockedVia: "stripe" })
+      .where(eq(roasts.id, roastId));
   } catch (err) {
     Sentry.withScope((scope) => {
       scope.setTag("route", "/api/verify-checkout");
@@ -92,6 +96,8 @@ export async function POST(req: NextRequest) {
       Sentry.captureException(emailErr);
     });
   }
+
+  await queueChartAnnotationsIfReady(roastId);
 
   return NextResponse.json({ paid: true });
 }

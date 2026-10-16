@@ -57,6 +57,7 @@ export const roasts = pgTable(
     saturnSign: text("saturn_sign"),
     chartData: text("chart_data"), // raw formatted output from natal_chart.py
     chartJson: jsonb("chart_json"), // fast natal chart JSON for the d3 loading wheel
+    subjectCharts: jsonb("subject_charts"), // NatalChart[] in position order — what the synastry bi-wheel reads
     chartAnnotations: jsonb("chart_annotations"), // {id: {facts, line}} witty per-element copy for the interactive wheel
     status: text("status").default("generating").notNull(), // generating | ready | error
     stagePct: integer("stage_pct").default(0).notNull(), // 0-100, runner-reported progress
@@ -65,10 +66,12 @@ export const roasts = pgTable(
     draft: text("draft"), // first draft text (before validation)
     validationNotes: text("validation_notes"), // what the QA step caught/fixed
     paid: boolean("paid").default(false).notNull(),
+    unlockedVia: text("unlocked_via"), // stripe | share | admin — null on legacy rows
     emailSent: boolean("email_sent").default(false).notNull(),
     source: text("source").default("web").notNull(), // web | instagram_dm
     mcSubscriberId: text("mc_subscriber_id"), // ManyChat subscriber to DM the teaser back to
     kind: text("kind").default("solo").notNull(), // solo | couple | family
+    relationship: text("relationship"), // partners | lovers | siblings | friends | ... — null on solo/legacy
     goldLine: text("gold_line"), // most savage standalone quote — story card
     extraPlacements: jsonb("extra_placements"), // ExtraPlacement[] for persons 2..N
     createdAt: timestamp("created_at").defaultNow().notNull(),

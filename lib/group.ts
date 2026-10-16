@@ -1,5 +1,41 @@
 export type RoastKind = "solo" | "couple" | "family";
 
+/**
+ * What these people are to each other. Distinct from `kind` (how many charts
+ * we're pricing) — two people might be lovers, siblings or colleagues, and the
+ * roast is a completely different piece of writing in each case. Passed
+ * through to the writer as plain text.
+ */
+export const RELATIONSHIP_TYPES = [
+  "partners",
+  "lovers",
+  "exes",
+  "friends",
+  "best friends",
+  "siblings",
+  "family",
+  "colleagues",
+  "flatmates",
+] as const;
+
+export type RelationshipType = (typeof RELATIONSHIP_TYPES)[number];
+
+export function isRelationshipType(v: unknown): v is RelationshipType {
+  return (
+    typeof v === "string" &&
+    (RELATIONSHIP_TYPES as readonly string[]).includes(v)
+  );
+}
+
+/**
+ * Normalise a client-supplied relationship. Falls back to the roast kind so
+ * older clients (and the Instagram DM flow) keep the previous behaviour of
+ * sending "couple"/"family" as the relationship.
+ */
+export function normalizeRelationship(v: unknown, kind: RoastKind): string {
+  return isRelationshipType(v) ? v : kind;
+}
+
 export type PersonInput = {
   name: string;
   gender: string;

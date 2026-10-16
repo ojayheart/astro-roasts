@@ -5,11 +5,13 @@ import { eq } from "drizzle-orm";
 import { getStripe } from "@/lib/stripe";
 import { pickCurrencyForCountry, readCountryFromHeaders } from "@/lib/currency";
 import { groupAmountMinorUnits } from "@/lib/group";
+import { applyDiscount, isFreeAfterDiscount, lookupPromo } from "@/lib/promo";
 
 export const runtime = "nodejs";
 
 interface PaymentIntentBody {
   roastId?: unknown;
+  code?: unknown;
 }
 
 // Currency-specific amounts in minor units (cents). Match what's set on the
@@ -74,13 +76,34 @@ export async function POST(req: NextRequest) {
     amount = groupAmountMinorUnits(Math.max(subjectRows.length, 2));
   }
 
+  // Discount is resolved here, never trusted from the client. A code that
+  // zeroes the charge can't be taken by Stripe at all — the client is told to
+  // redeem it instead.
+  const promo = lookupPromo(body.code);
+  if (promo) {
+    if (isFreeAfterDiscount(amount, promo.percentOff)) {
+      return NextResponse.json({
+        free: true,
+        percentOff: promo.percentOff,
+        currency,
+      });
+    }
+    amount = applyDiscount(amount, promo.percentOff);
+  }
+
   try {
     const stripe = getStripe();
     const intent = await stripe.paymentIntents.create({
       amount,
       currency,
       automatic_payment_methods: { enabled: true },
-      metadata: { roastId, country: country ?? "" },
+      metadata: {
+        roastId,
+        country: country ?? "",
+        ...(promo
+          ? { promoCode: promo.code, percentOff: String(promo.percentOff) }
+          : {}),
+      },
       description:
         roast.kind === "solo"
           ? "Astroroast — personalized comedic essay (entertainment)"

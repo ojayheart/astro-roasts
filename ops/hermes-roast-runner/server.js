@@ -9,10 +9,13 @@ import { createServer } from "node:http";
 import { spawn } from "node:child_process";
 import { homedir } from "node:os";
 import { join } from "node:path";
+import { handleChartAnnotations } from "./chart-annotations.js";
+import { CODEX_MODEL, hasCalculatedChart, loadRoastSkill, runCodex } from "./codex.js";
+import { roastWritingPolicy } from "./roast-evidence.js";
 
 const PORT = Number(process.env.PORT || 8787);
 const SECRET = process.env.ROAST_RUNNER_SECRET;
-const MODEL = process.env.ROAST_MODEL || "claude-sonnet-5-5";
+const MODEL = process.env.ROAST_CODEX_MODEL || CODEX_MODEL;
 const TIMEOUT_MS = Number(process.env.ROAST_TIMEOUT_MS || 10 * 60 * 1000);
 const PROGRESS_URL = process.env.PROGRESS_CALLBACK_URL || "";
 const PYTHON_BIN =
@@ -26,11 +29,12 @@ if (!SECRET) {
 }
 
 // ─── DM agent: one in-voice conversational turn on the subscription ────────
-// The webhook (Vercel) posts {history, latestText}; we run one fast claude
+// The webhook (Vercel) posts {history, latestText}; we run one Codex
 // turn and return the raw action JSON. Validation happens on the web side.
 
-const DM_MODEL = process.env.DM_AGENT_MODEL || "claude-sonnet-5";
+const DM_MODEL = process.env.DM_CODEX_MODEL || MODEL;
 const DM_TIMEOUT_MS = Number(process.env.DM_AGENT_TIMEOUT_MS || 45_000);
+const ANNOTATION_MODEL = process.env.ANNOTATION_CODEX_MODEL || DM_MODEL;
 
 const DM_SYSTEM_PROMPT = `you are astroroasted — the instagram account that writes savage, scarily accurate comedic natal chart roasts. you are talking in instagram DMs.
 
@@ -90,7 +94,7 @@ async function handleDmAgent(body, send) {
   }
 
   const startedAt = Date.now();
-  const run = await runClaude({
+  const run = await runCodex({
     userPrompt: buildDmAgentPrompt({ history, latestText }),
     systemPrompt: DM_SYSTEM_PROMPT,
     model: DM_MODEL,
@@ -110,7 +114,7 @@ async function handleDmAgent(body, send) {
       stderr: run.stderr.slice(0, 300),
     });
     return send(500, {
-      error: "claude_failed",
+      error: "codex_failed",
       durationMs: Date.now() - startedAt,
     });
   }
@@ -130,7 +134,7 @@ async function handleDmAgent(body, send) {
 // ─── Phase 1: chart computation + the proven bathos write ──────────────────
 
 function buildWriteUserPrompt({ name, date, time, birthPlace, hasBirthTime }) {
-  return `Invoke the Skill tool now with skill="astro-roast" to load the full skill instructions, then follow them EXACTLY using this birth data:
+  return `Follow the supplied Astro Roast skill instructions EXACTLY using this birth data:
 
 - Name: ${name}
 - Date of birth: ${date}
@@ -152,18 +156,19 @@ function buildGroupWriteUserPrompt({ relationship, people }) {
     )
     .join("\n\n");
 
-  return `Invoke the Skill tool now with skill="astro-roast-group" to load the full skill instructions, then follow them EXACTLY. Relationship type: ${relationship}. The people:
+  return `Follow the supplied Astro Roast Group skill instructions EXACTLY. Relationship type: ${relationship}. The people:
 
 ${roster}
 
-Resolve each messy place input to exact coordinates and IANA timezone. Run the synastry engine as the skill instructs, then write ONE group roast of the dynamic. Output format, EXACTLY:
+Resolve each messy place input to exact coordinates and IANA timezone. Run the synastry engine as the skill instructs, then write ONE group roast of the dynamic. Use the actual returned schema (synastry crossAspects and overlays); never invent composite placements absent from the calculation. Also run natal_chart.py for each person and put its full raw text in that person's CHART marker below. Output format, EXACTLY:
 ${people.map((_, i) => `---CHART_${i + 1}_START---\n<person ${i + 1} full chart text>\n---CHART_${i + 1}_END---`).join("\n\n")}
 ---ROAST_START---
 <the group roast prose — no TITLE/TEASER/FULL/CALLOUTS fields>
 ---ROAST_END---
-No commentary outside the markers.`;
+No commentary outside the markers. The ROAST block must contain only the comedic reading: no geocoding, coordinates, timezone explanations, links, citations, engine or schema descriptions, tool status, or calculation caveats. All technical metadata belongs in the CHART blocks.`;
 }
 
+// Legacy helper retained for the separate live enrichment endpoint.
 // ─── claude subprocess ─────────────────────────────────────────────────────
 
 function runClaude({ userPrompt, systemPrompt, model, tools, timeoutMs }) {
@@ -284,6 +289,74 @@ function readBody(req) {
   });
 }
 
+// ─── Fast chart endpoint ────────────────────────────────────────────────────
+// Deterministic natal_chart.py --json run — no LLM. ~1s. Used by the site's
+// loading screen to render the d3 wheel while the slow roast generates.
+
+function intIn(v, lo, hi) {
+  return Number.isInteger(v) && v >= lo && v <= hi;
+}
+
+function validateChartInput(b) {
+  if (!intIn(b.year, 1800, 2100)) return "year";
+  if (!intIn(b.month, 1, 12)) return "month";
+  if (!intIn(b.day, 1, 31)) return "day";
+  if (b.hour != null && !intIn(b.hour, 0, 23)) return "hour";
+  if (b.minute != null && !intIn(b.minute, 0, 59)) return "minute";
+  if (typeof b.lat !== "number" || !Number.isFinite(b.lat) || Math.abs(b.lat) > 90) return "lat";
+  if (typeof b.lon !== "number" || !Number.isFinite(b.lon) || Math.abs(b.lon) > 180) return "lon";
+  if (typeof b.tz !== "string" || b.tz.length > 64 || !/^[A-Za-z0-9_+\-/]+$/.test(b.tz)) return "tz";
+  if (b.name != null && (typeof b.name !== "string" || b.name.length > 80)) return "name";
+  return null;
+}
+
+function handleChart(body, send) {
+  const bad = validateChartInput(body);
+  if (bad) {
+    return send(400, { error: "invalid_input", detail: bad });
+  }
+
+  const args = [
+    NATAL_CHART_PATH, "--json",
+    "--name", body.name || "Friend",
+    "--year", String(body.year),
+    "--month", String(body.month),
+    "--day", String(body.day),
+    "--lat", String(body.lat),
+    "--lon", String(body.lon),
+    "--tz", body.tz,
+  ];
+  if (body.hour != null) {
+    args.push("--hour", String(body.hour), "--minute", String(body.minute ?? 0));
+  }
+
+  const proc = spawn(PYTHON_BIN, args, {
+    timeout: 15_000,
+    killSignal: "SIGKILL",
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+
+  let stdout = "";
+  let stderr = "";
+  proc.stdout.on("data", (d) => (stdout += d.toString()));
+  proc.stderr.on("data", (d) => (stderr += d.toString()));
+  proc.on("error", (err) => {
+    send(502, { error: "chart_failed", detail: String(err).slice(0, 500) });
+  });
+  proc.on("close", (code) => {
+    if (code !== 0) {
+      console.error("chart_failed", { code, stderr: stderr.slice(0, 300) });
+      return send(502, { error: "chart_failed", detail: stderr.slice(0, 500) });
+    }
+    try {
+      return send(200, JSON.parse(stdout));
+    } catch {
+      console.error("chart_parse_failed", { stdout: stdout.slice(0, 300) });
+      return send(502, { error: "chart_failed", detail: "bad_json_from_script" });
+    }
+  });
+}
+
 const server = createServer(async (req, res) => {
   const send = (status, body) => {
     res.writeHead(status, { "content-type": "application/json" });
@@ -291,11 +364,14 @@ const server = createServer(async (req, res) => {
   };
 
   if (req.method === "GET" && req.url === "/health") {
-    return send(200, { ok: true, model: MODEL });
+    return send(200, { ok: true, provider: "codex", model: MODEL });
   }
   if (
     req.method !== "POST" ||
-    (req.url !== "/roast" && req.url !== "/dm-agent")
+    (req.url !== "/roast" &&
+      req.url !== "/dm-agent" &&
+      req.url !== "/chart" &&
+      req.url !== "/chart-annotations")
   ) {
     return send(404, { error: "not_found" });
   }
@@ -310,8 +386,16 @@ const server = createServer(async (req, res) => {
     return send(400, { error: "bad_json" });
   }
 
+  if (req.url === "/chart") {
+    return handleChart(body, send);
+  }
+
   if (req.url === "/dm-agent") {
     return handleDmAgent(body, send);
+  }
+
+  if (req.url === "/chart-annotations") {
+    return handleChartAnnotations(body, send, runCodex, ANNOTATION_MODEL);
   }
 
   const {
@@ -334,12 +418,20 @@ const server = createServer(async (req, res) => {
     return send(400, { error: "missing_fields" });
   }
 
+  let skill;
+  try {
+    skill = await loadRoastSkill(isGroup);
+  } catch (error) {
+    console.error("roast_skill_unavailable", String(error));
+    return send(500, { error: "roast_skill_unavailable" });
+  }
+
   const startedAt = Date.now();
 
   // Initial tick so the bar moves the moment the runner accepts the job.
   postProgress(roastId, 8);
 
-  // Phase 1 — write. Background creep 10→70 across the expected ~75s write.
+  // Phase 1 — write. Background creep 10→70 while Astra computes and writes.
   // If the phase finishes faster, the creep stops; if it's slower, the creep
   // caps at 70 and we wait for the real finish to jump to 78.
   const stopWriteCreep = startProgressCreep({
@@ -349,7 +441,8 @@ const server = createServer(async (req, res) => {
     durationMs: isGroup ? 150_000 : 75_000,
   });
 
-  const write = await runClaude({
+  const write = await runCodex({
+    systemPrompt: skill + roastWritingPolicy(body),
     userPrompt: isGroup
       ? buildGroupWriteUserPrompt({
           relationship:
@@ -385,7 +478,7 @@ const server = createServer(async (req, res) => {
       stderr: write.stderr.slice(0, 500),
     });
     return send(500, {
-      error: "claude_failed",
+      error: "codex_failed",
       code: write.code,
       detail: write.stderr.slice(0, 1000),
       durationMs,
@@ -394,7 +487,7 @@ const server = createServer(async (req, res) => {
 
   const chartData = extractMarkedSection(write.stdout, "CHART");
   const roastBody = extractMarkedSection(write.stdout, "ROAST");
-  if (!roastBody) {
+  if (!roastBody || (!isGroup && !hasCalculatedChart(chartData))) {
     return send(500, {
       error: "missing_structured_output",
       detail: write.stdout.slice(0, 1000),
@@ -410,7 +503,7 @@ ${roastBody}
     const charts = people.map((_, i) =>
       extractMarkedSection(write.stdout, `CHART_${i + 1}`),
     );
-    if (charts.some((c) => !c)) {
+    if (charts.some((c) => !hasCalculatedChart(c))) {
       return send(500, {
         error: "missing_structured_output",
         detail: write.stdout.slice(0, 1000),
