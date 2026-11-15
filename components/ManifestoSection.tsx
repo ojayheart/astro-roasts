@@ -1,8 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
 import ZodiacAvatar from "./ZodiacAvatar";
 import type { ZodiacSign } from "./zodiacPaths";
 
@@ -86,22 +84,23 @@ const ROAST_LINES: {
 
 const ROTATION_MS = 9000;
 
-export default function ManifestoSection() {
+const pad = (n: number) => String(n + 1).padStart(2, "0");
+
+// The argument (three lines), the evidence (real roast lines) and the method
+// (three steps). Static layout: reveals are CSS opacity fades, nothing is
+// pinned or scroll-scrubbed, so the form is never far away.
+export default function ManifestoSection({ price }: { price: string }) {
   const [active, setActive] = useState(0);
   const [paused, setPaused] = useState(false);
-  const sectionRef = useRef<HTMLElement>(null);
-  const carouselRef = useRef<HTMLDivElement>(null);
+  const exhibitsRef = useRef<HTMLDivElement>(null);
   const visibleRef = useRef(true);
 
-  // Auto-rotate carousel — paused when off-screen, when user opts out via the
-  // pause button, or under prefers-reduced-motion.
+  // Auto-rotate — paused when off-screen, when the reader opts out, or under
+  // prefers-reduced-motion.
   useEffect(() => {
-    const reduce =
-      typeof window !== "undefined" &&
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (reduce || paused) return;
-
-    const el = carouselRef.current;
+    const el = exhibitsRef.current;
     if (!el) return;
 
     const io = new IntersectionObserver(
@@ -113,8 +112,7 @@ export default function ManifestoSection() {
     io.observe(el);
 
     const id = setInterval(() => {
-      if (!visibleRef.current) return;
-      if (typeof document !== "undefined" && document.hidden) return;
+      if (!visibleRef.current || document.hidden) return;
       setActive((i) => (i + 1) % ROAST_LINES.length);
     }, ROTATION_MS);
 
@@ -124,177 +122,200 @@ export default function ManifestoSection() {
     };
   }, [paused]);
 
-  useEffect(() => {
-    gsap.registerPlugin(ScrollTrigger);
-
-    const mm = gsap.matchMedia();
-
-    // Scroll-scrub manifesto text only when reduce-motion is off.
-    mm.add("(prefers-reduced-motion: no-preference)", () => {
-      const manifestoTexts = gsap.utils.toArray<HTMLElement>(".manifesto-text");
-      const tl = gsap.timeline({
-        scrollTrigger: {
-          trigger: "#manifesto",
-          start: "top top",
-          end: "bottom bottom",
-          scrub: 1,
-        },
-      });
-      manifestoTexts.forEach((text, i) => {
-        if (i !== 0) {
-          tl.to(text, { opacity: 1, duration: 1 }, "+=0.5");
-        }
-        if (i !== manifestoTexts.length - 1) {
-          tl.to(text, { opacity: 0, duration: 1 }, "+=1");
-        }
-      });
-
-      gsap.from("#mic h2", {
-        scrollTrigger: { trigger: "#mic", start: "top 70%" },
-        y: 50,
-        opacity: 0,
-        duration: 1,
-        ease: "power3.out",
-      });
-
-      gsap.from("#mic .mic-eyebrow", {
-        scrollTrigger: { trigger: "#mic", start: "top 60%" },
-        y: 30,
-        opacity: 0,
-        duration: 1,
-        stagger: 0.2,
-        ease: "power3.out",
-      });
-
-      gsap.from("#mic form > div", {
-        scrollTrigger: { trigger: "#mic form", start: "top 70%" },
-        y: 40,
-        opacity: 0,
-        duration: 1,
-        stagger: 0.2,
-        ease: "power3.out",
-      });
-    });
-
-    // Under reduce-motion: skip the scroll-scrub and just show all manifesto
-    // text statically. Leave only the final text visible.
-    mm.add("(prefers-reduced-motion: reduce)", () => {
-      const manifestoTexts = gsap.utils.toArray<HTMLElement>(".manifesto-text");
-      manifestoTexts.forEach((text, i) => {
-        gsap.set(text, { opacity: i === manifestoTexts.length - 1 ? 1 : 0 });
-      });
-    });
-
-    return () => {
-      mm.revert();
-      ScrollTrigger.getAll().forEach((t) => t.kill());
-    };
-  }, []);
+  const steps = [
+    {
+      title: "Tell us when and where.",
+      text: "Date, place, and the time if you know it. No birth time? We leave the houses out rather than guess.",
+    },
+    {
+      title: "We cast the actual chart.",
+      text: "Every planet, placed for your exact minute and coordinates from an astronomical ephemeris. Not a sun-sign horoscope.",
+    },
+    {
+      title: "It reads you.",
+      text: `Your habits, your timing, your contradictions, in everyday scenes you will recognise. The opening is free. The whole thing is ${price}.`,
+    },
+  ];
 
   return (
-    <section
-      id="manifesto"
-      ref={sectionRef}
-      className="relative h-[200vh] md:h-[300vh] w-full bg-void"
-    >
-      <div className="sticky top-0 h-[100dvh] w-full flex items-center justify-center overflow-hidden px-4">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(26,5,0,0.8)_0%,rgba(3,3,3,1)_70%)] opacity-50" />
+    <>
+      {/* The argument */}
+      <section
+        id="manifesto"
+        className="relative w-full bg-void px-4 py-24 md:px-12 md:py-40 lg:px-16"
+      >
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_50%_at_20%_50%,rgba(26,5,0,0.9)_0%,rgba(3,3,3,0)_100%)]"
+        />
+        <div className="relative mx-auto w-full max-w-7xl">
+          <h2 className="font-syne text-[clamp(1.3rem,5.6vw,5.25rem)] font-extrabold uppercase leading-[0.95] tracking-tighter">
+            {[
+              ["Your therapist is", "too nice.", "text-outline"],
+              ["Co-star is", "too vague.", "text-outline"],
+              ["The cosmos is", "neither.", "text-blood"],
+            ].map(([claim, verdict, tone]) => (
+              <span key={claim} className="on-view block whitespace-nowrap">
+                {claim}
+                <span className={`block pl-[18%] ${tone}`}>{verdict}</span>
+              </span>
+            ))}
+          </h2>
+          <p className="on-view mt-12 max-w-md text-base leading-relaxed text-ash/75 md:ml-[18%] md:mt-16 md:text-lg">
+            A horoscope flatters twelve kinds of people at once. A roast is
+            about one. Yours comes from your own chart, and it is specific
+            enough to be uncomfortable.
+          </p>
+        </div>
+      </section>
 
-        <div className="relative z-10 w-full max-w-5xl mx-auto text-center font-syne font-bold text-4xl md:text-7xl uppercase tracking-tight leading-[1.1]">
-          <div className="manifesto-text absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full opacity-100">
-            Your therapist is
-            <br />
-            <span className="text-outline">too nice.</span>
+      {/* The evidence */}
+      <section
+        id="exhibits"
+        aria-labelledby="exhibits-title"
+        className="relative w-full scroll-mt-24 bg-void px-4 pb-24 md:px-12 md:pb-40 lg:px-16"
+      >
+        <div
+          ref={exhibitsRef}
+          className="mx-auto w-full max-w-7xl border-t border-ash/15 pt-6"
+        >
+          <div className="flex items-baseline justify-between gap-6">
+            <h2
+              id="exhibits-title"
+              className="font-mono text-xs uppercase tracking-[0.2em] text-blood"
+            >
+              What the chart actually said
+            </h2>
+            <button
+              type="button"
+              onClick={() => setPaused((p) => !p)}
+              aria-pressed={paused}
+              className="interactive -my-3 min-h-[44px] font-mono text-[11px] uppercase tracking-[0.2em] text-ash/55 transition-colors hover:text-blood"
+            >
+              {paused ? "Play" : "Pause"}
+            </button>
           </div>
-          <div className="manifesto-text absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full opacity-0">
-            Co-star is
-            <br />
-            <span className="text-outline">too vague.</span>
-          </div>
-          <div className="manifesto-text absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full opacity-0">
-            The cosmos is
-            <br />
-            <span className="text-blood">neither.</span>
-          </div>
-          <div className="manifesto-text absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full opacity-0">
+
+          <div className="mt-10 grid gap-x-10 gap-y-8 md:mt-14 lg:grid-cols-12">
+            {/* Index: a ruled list on desktop, a number strip on mobile */}
             <div
-              ref={carouselRef}
-              role="region"
-              aria-label="Sample roast lines"
-              aria-roledescription="carousel"
-              className="relative min-h-[32rem] sm:min-h-[26rem] md:min-h-[24rem] flex items-center justify-center"
+              role="tablist"
+              aria-label="Roast line"
+              aria-orientation="vertical"
+              className="-mx-4 flex overflow-x-auto px-4 lg:col-span-4 lg:mx-0 lg:block lg:overflow-visible lg:px-0"
+            >
+              {ROAST_LINES.map((t, i) => {
+                const on = i === active;
+                return (
+                  <button
+                    key={i}
+                    type="button"
+                    role="tab"
+                    id={`exhibit-tab-${i}`}
+                    aria-selected={on}
+                    aria-controls="exhibit-panel"
+                    onClick={() => {
+                      setActive(i);
+                      setPaused(true);
+                    }}
+                    className={`interactive group flex min-h-[44px] shrink-0 items-baseline gap-4 border-ash/10 px-3 text-left transition-colors duration-300 lg:w-full lg:border-b lg:px-0 lg:py-3 ${
+                      on ? "text-ash" : "text-ash/40 hover:text-ash/80"
+                    }`}
+                  >
+                    <span
+                      className={`font-mono text-xs tabular-nums tracking-[0.1em] ${on ? "text-blood" : ""}`}
+                    >
+                      {pad(i)}
+                    </span>
+                    <span className="hidden font-syne text-sm font-bold uppercase tracking-tight lg:inline">
+                      {t.author}
+                    </span>
+                    <span className="ml-auto hidden font-mono text-[11px] uppercase tracking-[0.18em] lg:inline">
+                      {t.placement}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Every line is stacked in one grid cell, so the block is as tall
+                as the longest quote and never jumps when the line changes. */}
+            <div
+              id="exhibit-panel"
+              role="tabpanel"
+              aria-labelledby={`exhibit-tab-${active}`}
+              className="grid lg:col-span-8"
             >
               {ROAST_LINES.map((t, i) => (
                 <figure
                   key={i}
                   aria-hidden={i !== active}
-                  className={`absolute inset-0 m-0 flex items-center justify-center px-1 normal-case font-normal tracking-normal transition-[opacity,transform] duration-700 ease-out ${
-                    i === active
-                      ? "opacity-100 translate-y-0"
-                      : "opacity-0 translate-y-2 pointer-events-none"
+                  className={`col-start-1 row-start-1 m-0 flex flex-col justify-between gap-8 transition-opacity duration-700 ease-out ${
+                    i === active ? "opacity-100" : "pointer-events-none opacity-0"
                   }`}
                 >
-                  <div className="testimonial-card w-full max-w-2xl rounded-[28px] p-6 text-left md:p-8">
-                    <figcaption className="flex items-center gap-3.5">
-                      <ZodiacAvatar sign={t.sign} className="h-12 w-12" />
-                      <div className="min-w-0">
-                        <div className="font-syne text-base font-bold leading-tight text-ash">
-                          {t.author}
-                        </div>
-                        <div className="mt-1 font-mono text-[11px] uppercase tracking-[0.18em] text-ash/50">
-                          {t.placement}
-                        </div>
+                  <blockquote className="font-quote text-[1.55rem] italic leading-[1.22] text-ash md:text-[2.5rem] md:leading-[1.16]">
+                    <span aria-hidden className="text-blood">
+                      &ldquo;
+                    </span>
+                    {t.quote}
+                    <span aria-hidden className="text-blood">
+                      &rdquo;
+                    </span>
+                  </blockquote>
+                  <figcaption className="flex items-center gap-3.5">
+                    <ZodiacAvatar sign={t.sign} className="h-11 w-11" />
+                    <div>
+                      <div className="font-syne text-base font-bold uppercase leading-tight tracking-tight">
+                        {t.author}
                       </div>
-                    </figcaption>
-                    <blockquote className="mt-5 text-[17px] leading-relaxed text-pretty text-ash/90 md:mt-6 md:text-xl md:leading-relaxed">
-                      &ldquo;{t.quote}&rdquo;
-                    </blockquote>
-                  </div>
+                      <div className="mt-1 font-mono text-[11px] uppercase tracking-[0.18em] text-ash/50">
+                        {t.placement}
+                      </div>
+                    </div>
+                  </figcaption>
                 </figure>
               ))}
             </div>
-
-            <div
-              role="tablist"
-              aria-label="Roast line"
-              className="mt-8 flex items-center justify-center"
-            >
-              {ROAST_LINES.map((_, i) => (
-                // 24px+ hit area; the visible pill is the inner span.
-                <button
-                  key={i}
-                  type="button"
-                  role="tab"
-                  aria-selected={i === active}
-                  aria-label={`Show roast line ${i + 1} of ${ROAST_LINES.length}`}
-                  onClick={() => setActive(i)}
-                  className="interactive group h-8 min-w-6 px-[9px] flex items-center justify-center focus-visible:outline-none"
-                >
-                  <span
-                    aria-hidden
-                    className={`block h-1.5 rounded-full transition-all duration-500 ease-out group-focus-visible:ring-2 group-focus-visible:ring-blood group-focus-visible:ring-offset-4 group-focus-visible:ring-offset-void ${
-                      i === active
-                        ? "w-8 bg-blood"
-                        : "w-1.5 bg-ash/30 group-hover:bg-ash/70"
-                    }`}
-                  />
-                </button>
-              ))}
-            </div>
-
-            <div className="mt-3 flex items-center justify-center">
-              <button
-                type="button"
-                onClick={() => setPaused((p) => !p)}
-                aria-pressed={paused}
-                className="interactive font-mono text-[11px] tracking-[0.2em] uppercase text-ash/60 hover:text-blood focus-visible:outline-none focus-visible:text-blood focus-visible:underline focus-visible:underline-offset-4 focus-visible:decoration-blood transition-colors min-h-[44px] px-3"
-              >
-                {paused ? "Play roast lines" : "Pause roast lines"}
-              </button>
-            </div>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
+
+      {/* The method */}
+      <section
+        aria-labelledby="method-title"
+        className="relative w-full bg-void px-4 pb-24 md:px-12 md:pb-40 lg:px-16"
+      >
+        <div className="mx-auto w-full max-w-7xl">
+          <h2
+            id="method-title"
+            className="font-mono text-xs uppercase tracking-[0.2em] text-blood"
+          >
+            How it goes
+          </h2>
+          <ol className="mt-6 border-b border-ash/15">
+            {steps.map((step, i) => (
+              <li
+                key={step.title}
+                className="on-view grid gap-x-10 gap-y-3 border-t border-ash/15 py-8 md:grid-cols-12 md:items-baseline md:py-10"
+              >
+                <span
+                  aria-hidden
+                  className="text-outline font-syne text-4xl font-extrabold leading-none tracking-tighter md:col-span-2 md:text-6xl"
+                >
+                  {pad(i)}
+                </span>
+                <h3 className="font-syne text-2xl font-extrabold uppercase leading-[0.95] tracking-tighter md:col-span-4 md:text-3xl">
+                  {step.title}
+                </h3>
+                <p className="max-w-xl text-base leading-relaxed text-ash/75 md:col-span-6 md:text-lg">
+                  {step.text}
+                </p>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </section>
+    </>
   );
 }

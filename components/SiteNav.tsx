@@ -3,14 +3,19 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
-// Fixed top nav shared by every page. `disclaimers` shows the landing page's
-// right-hand microcopy block. Once the page scrolls, a void scrim (gradient +
-// masked blur) fades in behind it so content never collides with the logo.
-export default function SiteNav({
-  disclaimers = false,
-}: {
-  disclaimers?: boolean;
-}) {
+const LINKS = [
+  { href: "/#exhibits", label: "Samples" },
+  { href: "/pricing", label: "Pricing" },
+  { href: "/about", label: "About" },
+];
+
+const FOCUS =
+  "rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blood focus-visible:ring-offset-4 focus-visible:ring-offset-void";
+
+// Fixed top nav shared by every page. Once the page scrolls, a void scrim
+// (gradient + masked blur) fades in behind it so content never collides with
+// the logo.
+export default function SiteNav() {
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -40,7 +45,7 @@ export default function SiteNav({
       />
       <nav
         aria-label="Primary"
-        className="relative flex justify-between items-start gap-6 px-4 md:px-12 lg:px-16 pt-5 md:pt-8"
+        className="relative flex justify-between items-center gap-6 px-4 md:px-12 lg:px-16 pt-5 md:pt-8"
       >
         <Link
           href="/"
@@ -51,12 +56,23 @@ export default function SiteNav({
           <br />
           Roasts
         </Link>
-        {disclaimers && (
-          <div className="font-mono text-[10px] sm:text-[11px] md:text-xs leading-relaxed tracking-[0.1em] sm:tracking-[0.2em] uppercase text-right text-ash/60 whitespace-nowrap">
-            * Zero Sugar Coating
-            <br />* Bruised Ego… Almost Certain
-          </div>
-        )}
+        <div className="pointer-events-auto flex items-center gap-7 font-mono text-xs uppercase tracking-[0.2em]">
+          {LINKS.map((l) => (
+            <Link
+              key={l.href}
+              href={l.href}
+              className={`interactive hidden py-2 text-ash/65 transition-colors hover:text-ash sm:inline-block ${FOCUS}`}
+            >
+              {l.label}
+            </Link>
+          ))}
+          <Link
+            href="/#mic"
+            className={`interactive border-b border-blood py-2 text-blood transition-colors hover:border-ash hover:text-ash ${FOCUS}`}
+          >
+            Roast me
+          </Link>
+        </div>
       </nav>
     </header>
   );

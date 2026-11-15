@@ -4,7 +4,11 @@ import HeroSection from "@/components/HeroSection";
 import ManifestoSection from "@/components/ManifestoSection";
 import SiteNav from "@/components/SiteNav";
 import SiteFooter from "@/components/SiteFooter";
-import { pickCurrencyForCountry, readCountryFromHeaders } from "@/lib/currency";
+import {
+  formatPrice,
+  pickCurrencyForCountry,
+  readCountryFromHeaders,
+} from "@/lib/currency";
 
 export default async function Home() {
   // Same geo → currency mapping the payment routes use, so the price shown
@@ -13,18 +17,20 @@ export default async function Home() {
     readCountryFromHeaders(await headers()),
   );
 
+  const price = formatPrice(500, currency);
+
   return (
     <>
-      <SiteNav disclaimers />
+      <SiteNav />
 
       <main id="main">
-        <HeroSection />
-        <ManifestoSection />
+        <HeroSection price={price} />
+        <ManifestoSection price={price} />
 
         {/* Take-the-mic form */}
         <section
           id="mic"
-          className="relative min-h-[100dvh] w-full py-24 md:py-32 px-4 md:px-12 lg:px-16 bg-void"
+          className="relative min-h-[100dvh] w-full scroll-mt-0 py-24 md:py-32 px-4 md:px-12 lg:px-16 bg-void"
         >
           {/* Hairline divider: fades out at the edges, with a blood tick on
               the content's left edge. */}

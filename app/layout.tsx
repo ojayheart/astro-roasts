@@ -4,6 +4,7 @@ import {
   DM_Mono,
   Instrument_Sans,
   Noto_Sans_Symbols_2,
+  Bodoni_Moda,
 } from "next/font/google";
 import "./globals.css";
 import NoiseOverlay from "@/components/NoiseOverlay";
@@ -27,6 +28,16 @@ const dmMono = DM_Mono({
 const instrumentSans = Instrument_Sans({
   subsets: ["latin"],
   variable: "--font-body",
+  display: "swap",
+});
+
+// The cutting aside — a high-contrast italic for pull quotes, set against
+// Syne's wide caps.
+const bodoni = Bodoni_Moda({
+  subsets: ["latin"],
+  variable: "--font-quote",
+  style: ["italic"],
+  weight: ["400", "500"],
   display: "swap",
 });
 
@@ -69,7 +80,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="scroll-smooth">
       <body
-        className={`${syne.variable} ${dmMono.variable} ${instrumentSans.variable} ${notoSymbols.variable} font-mono text-ash bg-void selection:bg-blood selection:text-void antialiased`}
+        className={`${syne.variable} ${dmMono.variable} ${instrumentSans.variable} ${notoSymbols.variable} ${bodoni.variable} font-mono text-ash bg-void selection:bg-blood selection:text-void antialiased`}
       >
         <a
           href="#main"

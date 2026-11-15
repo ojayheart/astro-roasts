@@ -1,80 +1,92 @@
-"use client";
-
-import { useEffect } from "react";
-import gsap from "gsap";
 import AstroWheel from "./AstroWheel";
 
-export default function HeroSection() {
-  useEffect(() => {
-    const mm = gsap.matchMedia();
-
-    mm.add("(prefers-reduced-motion: no-preference)", () => {
-      const heroLines = document.querySelectorAll(".hero-line span");
-      gsap.to(heroLines, {
-        y: "0%",
-        duration: 1.2,
-        stagger: 0.2,
-        ease: "power4.out",
-        delay: 0.5,
-      });
-
-      gsap.to(".hero-fade", {
-        opacity: 1,
-        duration: 1,
-        stagger: 0.3,
-        ease: "power2.out",
-        delay: 1.5,
-      });
-    });
-
-    mm.add("(prefers-reduced-motion: reduce)", () => {
-      gsap.set(".hero-line span", { y: "0%" });
-      gsap.set(".hero-fade", { opacity: 1 });
-    });
-
-    return () => mm.revert();
-  }, []);
-
+// Landing hero. Server-rendered and visible without JavaScript: the reveal is
+// a CSS opacity fade, so the headline and the call to action never wait on a
+// script. The wheel hangs off the right edge; the type holds the left.
+export default function HeroSection({ price }: { price: string }) {
   return (
-    <section className="relative min-h-[100dvh] w-full overflow-hidden">
-      {/* Background natal wheel */}
-      <AstroWheel className="astro-wheel-mask absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[150vw] md:w-[min(80vw,100dvh)] h-auto text-ash pointer-events-none" />
+    <section className="relative flex min-h-[100dvh] w-full flex-col overflow-hidden px-4 pb-8 pt-28 md:px-12 md:pb-10 md:pt-32 lg:px-16">
+      <AstroWheel
+        intensity={0.34}
+        className="astro-wheel-mask rise pointer-events-none absolute right-[-58vw] top-[38%] h-auto w-[150vw] -translate-y-1/2 text-ash md:right-[-22vw] md:top-1/2 md:w-[min(92vw,128dvh)]"
+      />
+      {/* Keeps the type legible where it crosses the wheel. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 bg-gradient-to-r from-void via-void/70 to-transparent md:via-void/40"
+      />
 
-      {/* Hero Typography — headline locked to the vertical center */}
-      <div className="absolute inset-0 z-10 flex items-center justify-center px-4">
-        <div className="relative w-full max-w-7xl mx-auto flex flex-col items-center text-center">
-          <h1 className="font-syne font-extrabold text-[clamp(1.25rem,7vw,8.5rem)] leading-[0.85] tracking-tighter uppercase flex flex-col items-center">
-            <div className="hero-line overflow-hidden">
-              <span className="block translate-y-[100%] whitespace-nowrap">
-                Stop blaming
-              </span>
-            </div>
-            <div className="hero-line overflow-hidden">
-              <span className="block translate-y-[100%] whitespace-nowrap text-outline">
-                your moon
-              </span>
-            </div>
-            <div className="hero-line overflow-hidden">
-              <span className="block translate-y-[100%] whitespace-nowrap text-blood">
-                sign.
-              </span>
-            </div>
-          </h1>
+      <div className="relative z-10 mx-auto flex w-full max-w-7xl flex-1 flex-col justify-end md:justify-center">
+        <p
+          className="rise mb-6 font-mono text-xs uppercase tracking-[0.2em] text-blood md:mb-8"
+          style={{ "--d": "80ms" } as React.CSSProperties}
+        >
+          Birth chart roasts
+        </p>
 
-          <p className="hero-fade absolute top-full left-1/2 -translate-x-1/2 mt-6 md:mt-8 w-full max-w-md text-sm md:text-base opacity-0 font-light text-ash/70 leading-relaxed">
-            Your birth chart, read back to you by someone who isn&apos;t being
-            polite about it. Five minutes. No warm-up.
-          </p>
+        <h1 className="font-syne text-[10.4vw] font-extrabold uppercase leading-[0.84] tracking-tighter md:text-[min(7.4vw,8.5rem)]">
+          <span className="rise block md:whitespace-nowrap">
+            Stop <br className="md:hidden" />
+            blaming
+          </span>
+          <span
+            className="rise text-outline block whitespace-nowrap"
+            style={{ "--d": "160ms" } as React.CSSProperties}
+          >
+            your moon
+          </span>
+          <span
+            className="rise block whitespace-nowrap text-blood"
+            style={{ "--d": "320ms" } as React.CSSProperties}
+          >
+            sign.
+          </span>
+        </h1>
+
+        <p
+          className="rise mt-7 max-w-[30rem] font-quote text-[1.6rem] italic leading-[1.18] text-ash md:mt-10 md:text-[2.1rem]"
+          style={{ "--d": "520ms" } as React.CSSProperties}
+        >
+          Your birth chart, read back to you by someone who isn&apos;t being
+          polite about it.
+        </p>
+
+        <div
+          className="rise mt-8 flex flex-wrap items-center gap-x-8 gap-y-5 md:mt-10"
+          style={{ "--d": "680ms" } as React.CSSProperties}
+        >
+          <a href="#mic" className="cta interactive">
+            Roast me
+          </a>
+          <a
+            href="#exhibits"
+            className="link-rule interactive font-mono text-xs uppercase tracking-[0.2em] text-ash/80"
+          >
+            Read the evidence first
+          </a>
         </div>
       </div>
 
-      {/* Scroll cue — pinned to the bottom, out of the centering calc */}
-      <div className="hero-fade absolute bottom-8 left-1/2 -translate-x-1/2 z-10 opacity-0 flex flex-col items-center gap-4">
-        <span className="text-[10px] uppercase tracking-[0.3em] opacity-50">
-          Scroll to face it
-        </span>
-        <div className="w-[1px] h-16 bg-gradient-to-b from-ash to-transparent" />
-      </div>
+      <dl
+        className="rise relative z-10 mx-auto mt-12 grid w-full max-w-7xl grid-cols-2 gap-x-6 gap-y-5 border-t border-ash/15 pt-5 md:mt-0 md:grid-cols-4"
+        style={{ "--d": "840ms" } as React.CSSProperties}
+      >
+        {[
+          ["The opening", "Free"],
+          ["The whole thing", price],
+          ["Time to verdict", "Five minutes"],
+          ["Sugar coating", "Zero"],
+        ].map(([label, value]) => (
+          <div key={label}>
+            <dt className="font-mono text-[11px] uppercase tracking-[0.2em] text-ash/50">
+              {label}
+            </dt>
+            <dd className="mt-1.5 font-syne text-lg font-bold uppercase leading-none tracking-tight md:text-xl">
+              {value}
+            </dd>
+          </div>
+        ))}
+      </dl>
     </section>
   );
 }
