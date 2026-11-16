@@ -56,7 +56,11 @@ export function buildRoastPayload(roast: RoastRecord): RoastData {
   const user = getRoastUser(roast);
   const payload = {
     id: roast.id,
-    status: roast.status as "generating" | "ready" | "error",
+    // Any other stored status (for example rate_limited) is a failed roast to
+    // the reader, and it must stop the loading screen.
+    status: (roast.status === "generating" || roast.status === "ready"
+      ? roast.status
+      : "error") as RoastData["status"],
     paid: roast.paid,
     name: user.name,
     sunSign: roast.sunSign || "",

@@ -220,20 +220,25 @@ export default function RoastClient({
   // Error state
   if (data.status === "error") {
     return (
-      <div className="min-h-screen bg-void flex items-center justify-center px-6">
-        <div className="text-center">
-          <p className="text-blood font-mono text-sm mb-4">
-            We couldn&apos;t finish this roast. The chart data is safe; the
-            writer just lost the thread.
+      <main className="flex min-h-[100dvh] flex-col justify-center bg-void px-5 py-20 md:px-12">
+        <div className="rise mx-auto w-full max-w-5xl">
+          <p className="mb-5 font-mono text-xs uppercase tracking-[0.2em] text-blood">
+            Case file · unfinished
           </p>
-          <a
-            href="/"
-            className="text-ash/60 font-mono text-xs underline hover:text-ash transition-colors"
-          >
+          <h1 className="font-syne text-[clamp(2rem,7vw,4.5rem)] font-extrabold uppercase leading-[0.9] tracking-tighter">
+            The writer lost
+            <br />
+            <span className="text-outline">the thread.</span>
+          </h1>
+          <p className="mt-7 max-w-[30rem] font-quote text-2xl italic leading-[1.2] text-ash md:text-[1.75rem]">
+            We couldn&apos;t finish this roast. Your chart is safe. A new one
+            takes about a minute.
+          </p>
+          <a href="/#mic" className="cta interactive mt-9">
             Start a new roast
           </a>
         </div>
-      </div>
+      </main>
     );
   }
 

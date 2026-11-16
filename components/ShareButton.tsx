@@ -37,9 +37,9 @@ export default function ShareButton({ roastId }: { roastId: string }) {
       type="button"
       onClick={handleShare}
       aria-live="polite"
-      className="interactive px-6 py-3 min-h-[44px] border border-ash/20 bg-void text-ash font-mono text-xs uppercase tracking-[0.15em] hover:border-blood hover:text-blood active:border-blood active:text-blood focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blood focus-visible:ring-offset-2 focus-visible:ring-offset-void transition-colors duration-300"
+      className="interactive group inline-flex min-h-[44px] items-center font-mono text-xs uppercase tracking-[0.2em] text-ash/80"
     >
-      {label}
+      <span className="link-rule group-hover:text-blood">{label}</span>
     </button>
   );
 }

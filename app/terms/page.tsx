@@ -13,21 +13,21 @@ export default function TermsPage() {
     <>
       <SiteNav />
 
-      <main className="min-h-screen bg-void text-ash pt-32 pb-24 px-4 md:px-12 lg:px-16">
-        <div className="max-w-3xl mx-auto">
-          <h1 className="font-syne font-extrabold text-5xl md:text-6xl uppercase leading-[0.9] tracking-tighter mb-12">
+      <main className="min-h-screen bg-void px-5 pb-28 pt-32 text-ash md:px-12 md:pt-40 lg:px-16">
+        <div className="rise mx-auto max-w-3xl">
+          <h1 className="mb-12 font-syne text-[clamp(2.25rem,9vw,4.75rem)] font-extrabold uppercase leading-[0.88] tracking-tighter">
             Terms of
             <br />
             <span className="text-blood">Service</span>
           </h1>
 
-          <div className="space-y-8 text-ash/80 text-sm md:text-base font-light leading-relaxed">
-            <p className="text-ash/40 text-xs uppercase tracking-[0.15em]">
+          <div className="space-y-10 text-base leading-relaxed text-ash/80 md:text-lg">
+            <p className="font-mono text-xs uppercase tracking-[0.2em] text-ash/50">
               Last updated: June 2, 2026
             </p>
 
-            <section className="space-y-4">
-              <h2 className="font-syne font-bold text-xl uppercase tracking-tighter">
+            <section className="space-y-4 border-t border-ash/15 pt-8">
+              <h2 className="font-syne text-xl font-extrabold uppercase tracking-tight text-ash md:text-2xl">
                 1. What This Is
               </h2>
               <p>
@@ -45,8 +45,8 @@ export default function TermsPage() {
               </p>
             </section>
 
-            <section className="space-y-4">
-              <h2 className="font-syne font-bold text-xl uppercase tracking-tighter">
+            <section className="space-y-4 border-t border-ash/15 pt-8">
+              <h2 className="font-syne text-xl font-extrabold uppercase tracking-tight text-ash md:text-2xl">
                 2. Eligibility
               </h2>
               <p>
@@ -55,8 +55,8 @@ export default function TermsPage() {
               </p>
             </section>
 
-            <section className="space-y-4">
-              <h2 className="font-syne font-bold text-xl uppercase tracking-tighter">
+            <section className="space-y-4 border-t border-ash/15 pt-8">
+              <h2 className="font-syne text-xl font-extrabold uppercase tracking-tight text-ash md:text-2xl">
                 3. What You Get
               </h2>
               <p>
@@ -67,8 +67,8 @@ export default function TermsPage() {
               </p>
             </section>
 
-            <section className="space-y-4">
-              <h2 className="font-syne font-bold text-xl uppercase tracking-tighter">
+            <section className="space-y-4 border-t border-ash/15 pt-8">
+              <h2 className="font-syne text-xl font-extrabold uppercase tracking-tight text-ash md:text-2xl">
                 4. Payments
               </h2>
               <p>
@@ -85,8 +85,8 @@ export default function TermsPage() {
               </p>
             </section>
 
-            <section className="space-y-4">
-              <h2 className="font-syne font-bold text-xl uppercase tracking-tighter">
+            <section className="space-y-4 border-t border-ash/15 pt-8">
+              <h2 className="font-syne text-xl font-extrabold uppercase tracking-tight text-ash md:text-2xl">
                 5. Refunds
               </h2>
               <p>
@@ -98,8 +98,8 @@ export default function TermsPage() {
               </p>
             </section>
 
-            <section className="space-y-4">
-              <h2 className="font-syne font-bold text-xl uppercase tracking-tighter">
+            <section className="space-y-4 border-t border-ash/15 pt-8">
+              <h2 className="font-syne text-xl font-extrabold uppercase tracking-tight text-ash md:text-2xl">
                 6. Your Data
               </h2>
               <p>
@@ -112,8 +112,8 @@ export default function TermsPage() {
               </p>
             </section>
 
-            <section className="space-y-4">
-              <h2 className="font-syne font-bold text-xl uppercase tracking-tighter">
+            <section className="space-y-4 border-t border-ash/15 pt-8">
+              <h2 className="font-syne text-xl font-extrabold uppercase tracking-tight text-ash md:text-2xl">
                 7. Content Disclaimer
               </h2>
               <p>
@@ -125,8 +125,8 @@ export default function TermsPage() {
               </p>
             </section>
 
-            <section className="space-y-4">
-              <h2 className="font-syne font-bold text-xl uppercase tracking-tighter">
+            <section className="space-y-4 border-t border-ash/15 pt-8">
+              <h2 className="font-syne text-xl font-extrabold uppercase tracking-tight text-ash md:text-2xl">
                 8. Intellectual Property
               </h2>
               <p>
@@ -136,8 +136,8 @@ export default function TermsPage() {
               </p>
             </section>
 
-            <section className="space-y-4">
-              <h2 className="font-syne font-bold text-xl uppercase tracking-tighter">
+            <section className="space-y-4 border-t border-ash/15 pt-8">
+              <h2 className="font-syne text-xl font-extrabold uppercase tracking-tight text-ash md:text-2xl">
                 9. Limitation of Liability
               </h2>
               <p>
@@ -148,8 +148,8 @@ export default function TermsPage() {
               </p>
             </section>
 
-            <section className="space-y-4">
-              <h2 className="font-syne font-bold text-xl uppercase tracking-tighter">
+            <section className="space-y-4 border-t border-ash/15 pt-8">
+              <h2 className="font-syne text-xl font-extrabold uppercase tracking-tight text-ash md:text-2xl">
                 10. Changes
               </h2>
               <p>
@@ -158,8 +158,8 @@ export default function TermsPage() {
               </p>
             </section>
 
-            <section className="space-y-4">
-              <h2 className="font-syne font-bold text-xl uppercase tracking-tighter">
+            <section className="space-y-4 border-t border-ash/15 pt-8">
+              <h2 className="font-syne text-xl font-extrabold uppercase tracking-tight text-ash md:text-2xl">
                 11. Contact
               </h2>
               <p>

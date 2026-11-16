@@ -1,126 +1,98 @@
-"use client";
-
-import { useEffect, useRef } from "react";
 import Link from "next/link";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
 
-// The origin story. Editorial brutalist voice — Syne display + DM Mono body,
-// void/blood/ash palette. Reveal-on-scroll is guarded per reduce-motion via
-// gsap.matchMedia (CSS can't kill JS timelines).
+// The origin story. Syne display, body grotesk for sentences, Bodoni italic
+// for the quotes. Reveals are CSS opacity only, so the page reads without
+// JavaScript and the text never slides.
 export default function AboutSection() {
-  const rootRef = useRef<HTMLElement>(null);
-
-  useEffect(() => {
-    gsap.registerPlugin(ScrollTrigger);
-    const mm = gsap.matchMedia();
-
-    mm.add("(prefers-reduced-motion: no-preference)", () => {
-      const reveals = gsap.utils.toArray<HTMLElement>("#about .about-reveal");
-      reveals.forEach((el) => {
-        gsap.from(el, {
-          scrollTrigger: { trigger: el, start: "top 85%" },
-          y: 32,
-          opacity: 0,
-          duration: 0.9,
-          ease: "power3.out",
-        });
-      });
-    });
-
-    return () => {
-      mm.revert();
-    };
-  }, []);
-
   return (
     <section
       id="about"
-      ref={rootRef}
-      className="relative w-full py-32 px-4 md:px-12 lg:px-16 bg-void border-t border-ash/10 overflow-hidden"
+      className="relative w-full overflow-hidden bg-void px-5 pb-28 pt-32 md:px-12 md:pt-40 lg:px-16"
     >
       {/* faint warmth bleeding up from the bruise */}
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(26,5,0,0.7)_0%,rgba(3,3,3,0)_60%)]" />
 
       <div className="relative z-10 max-w-3xl mx-auto">
         {/* Header */}
-        <p className="about-reveal font-mono text-xs tracking-[0.3em] uppercase text-blood mb-6">
-          * The Origin
+        <p className="rise mb-6 font-mono text-xs uppercase tracking-[0.2em] text-blood">
+          The origin
         </p>
-        <h2 className="about-reveal font-syne font-extrabold text-4xl md:text-6xl lg:text-7xl uppercase leading-[0.9] tracking-tighter mb-12">
+        <h1 className="rise mb-12 font-syne text-[clamp(2.25rem,8.5vw,4rem)] font-extrabold uppercase leading-[0.88] tracking-tighter" style={{ "--d": "120ms" } as React.CSSProperties}>
           Born on a
           <br />
           <span className="text-blood">yurt floor.</span>
-        </h2>
+        </h1>
 
         {/* Narrative */}
-        <div className="space-y-7 font-mono text-base md:text-lg font-light leading-relaxed text-ash/80">
-          <p className="about-reveal">
+        <div className="rise space-y-6 text-lg leading-relaxed text-ash/80 md:text-xl" style={{ "--d": "240ms" } as React.CSSProperties}>
+          <p className="on-view">
             Astro Roast was born after a shared meal, sitting on the floor of
             our friends&apos; yurt, reading each other&apos;s birth charts.
           </p>
-          <p className="about-reveal">
+          <p className="on-view">
             Originally we were refining the readings for another project — a
             cyclical calendar tool — but then we got{" "}
             <span className="text-ash">slightly sidetracked.</span>
           </p>
-          <p className="about-reveal">
+          <p className="on-view">
             One reading felt so accurate, so brutally honest, it had us in
             stitches.
           </p>
         </div>
 
         {/* Pull-quote 1 */}
-        <blockquote className="about-reveal callout my-12 pl-6 pr-4 py-6 border-l-2 border-blood">
-          <p className="font-mono text-lg md:text-2xl text-ash leading-snug">
+        <blockquote className="on-view my-14 border-y border-ash/15 py-8">
+          <p className="font-quote text-[1.75rem] italic leading-[1.15] text-ash md:text-[2.5rem]">
             &ldquo;This sounds more like a roast than a reading.&rdquo;
           </p>
-          <cite className="mt-4 block not-italic font-syne font-bold text-xs uppercase tracking-[0.15em] text-blood">
+          <cite className="mt-5 block font-mono text-xs uppercase not-italic tracking-[0.2em] text-blood">
             — A friend, mid-meal
           </cite>
         </blockquote>
 
-        <p className="about-reveal font-mono text-base md:text-lg font-light leading-relaxed text-ash/80">
+        <p className="on-view text-lg leading-relaxed text-ash/80 md:text-xl">
           It didn&apos;t take us long to wonder: what would a{" "}
-          <span className="text-ash">roast</span> sound like based on
+          <span className="text-ash">roast</span>{" "}
+          sound like based on
           someone&apos;s astrology?
         </p>
 
         {/* Beat */}
-        <p className="about-reveal font-syne font-extrabold text-3xl md:text-5xl uppercase tracking-tighter leading-[0.95] my-12">
+        <p className="on-view font-syne font-extrabold text-3xl md:text-5xl uppercase tracking-tighter leading-[0.95] my-12">
           Astro Roast
           <br />
           <span className="text-outline">was born.</span>
         </p>
 
-        <p className="about-reveal font-mono text-base md:text-lg font-light leading-relaxed text-ash/80">
+        <p className="on-view text-lg leading-relaxed text-ash/80 md:text-xl">
           The wild thing? The roasts felt{" "}
-          <span className="text-ash">even more accurate</span> than the
+          <span className="text-ash">even more accurate</span>{" "}
+          than the
           readings. To the point that a friend&apos;s partner messaged us:
         </p>
 
         {/* Pull-quote 2 */}
-        <blockquote className="about-reveal callout my-12 pl-6 pr-4 py-6 border-l-2 border-blood">
-          <p className="font-mono text-lg md:text-2xl text-ash leading-snug">
+        <blockquote className="on-view my-14 border-y border-ash/15 py-8">
+          <p className="font-quote text-[1.75rem] italic leading-[1.15] text-ash md:text-[2.5rem]">
             &ldquo;That&apos;s the most accurate thing I&apos;ve ever read about
             him.&rdquo;
           </p>
-          <cite className="mt-4 block not-italic font-syne font-bold text-xs uppercase tracking-[0.15em] text-blood">
+          <cite className="mt-5 block font-mono text-xs uppercase not-italic tracking-[0.2em] text-blood">
             — A friend&apos;s partner
           </cite>
         </blockquote>
 
-        <p className="about-reveal font-mono text-base md:text-lg font-light leading-relaxed text-ash/80">
+        <p className="on-view text-lg leading-relaxed text-ash/80 md:text-xl">
           Long story short: everyone wanted one. Olly made a website.{" "}
           <span className="text-ash">Now you can have one too.</span>
         </p>
 
         {/* The fine print — taken literally */}
-        <div className="about-reveal teaser-block mt-20 pl-6 py-8 pr-4">
-          <p className="font-mono text-[10px] tracking-[0.3em] uppercase text-blood mb-5">
-            * The Fine Print
+        <div className="on-view teaser-block mt-20 pl-6 py-8 pr-4">
+          <p className="mb-5 font-mono text-xs uppercase tracking-[0.2em] text-blood">
+            The fine print
           </p>
-          <div className="space-y-6 font-mono text-sm md:text-base font-light leading-relaxed text-ash/75">
+          <div className="space-y-5 text-base leading-relaxed text-ash/80 md:text-lg">
             <p>
               This started as a way of having fun with friends. But it quietly
               did something else — it let us connect in unexpected ways.
@@ -140,29 +112,29 @@ export default function AboutSection() {
         </div>
 
         {/* Metaphor specimens — rendered like roast lines */}
-        <div className="about-reveal mt-16 space-y-8">
-          <p className="font-mono text-base md:text-lg font-light leading-relaxed text-ash/80">
+        <div className="on-view mt-16 space-y-8">
+          <p className="text-lg leading-relaxed text-ash/80 md:text-xl">
             Whether you learn your inner world is —
           </p>
-          <p className="font-mono text-lg md:text-2xl italic text-ash leading-snug pl-6 border-l border-ash/20">
+          <p className="border-l border-blood pl-6 font-quote text-2xl italic leading-[1.2] text-ash md:text-[2rem]">
             &ldquo;a research library that is convinced it hasn&apos;t been
             organised properly&rdquo;
           </p>
-          <p className="font-mono text-base md:text-lg font-light leading-relaxed text-ash/80">
+          <p className="text-lg leading-relaxed text-ash/80 md:text-xl">
             — or that you&apos;ve —
           </p>
-          <p className="font-mono text-lg md:text-2xl italic text-ash leading-snug pl-6 border-l border-ash/20">
+          <p className="border-l border-blood pl-6 font-quote text-2xl italic leading-[1.2] text-ash md:text-[2rem]">
             &ldquo;spent the last thirty years perfecting the art of suffering
             beautifully&rdquo;
           </p>
-          <p className="font-mono text-base md:text-lg font-light leading-relaxed text-ash/80">
+          <p className="text-lg leading-relaxed text-ash/80 md:text-xl">
             — the right metaphor lets you take your weirdness with a bit of
             lightness.
           </p>
         </div>
 
         {/* Close + CTA */}
-        <p className="about-reveal font-syne font-extrabold text-2xl md:text-4xl uppercase tracking-tighter leading-[0.95] mt-20 mb-10">
+        <p className="on-view font-syne font-extrabold text-2xl md:text-4xl uppercase tracking-tighter leading-[0.95] mt-20 mb-10">
           Spirituality takes itself
           <br />
           <span className="text-blood">far too seriously.</span>
@@ -172,12 +144,9 @@ export default function AboutSection() {
 
         <Link
           href="/#mic"
-          className="interactive group inline-flex items-center gap-3 font-syne font-bold text-sm uppercase tracking-[0.15em] text-void bg-ash px-8 py-4 hover:bg-blood hover:text-ash transition-colors duration-300"
+          className="cta interactive"
         >
           Get your Astro Roast
-          <span className="transition-transform duration-300 group-hover:translate-x-1">
-            →
-          </span>
         </Link>
       </div>
     </section>

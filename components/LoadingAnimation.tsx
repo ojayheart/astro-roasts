@@ -230,7 +230,10 @@ export default function LoadingAnimation({
       );
     }
     return [...head, ...base.slice(1)];
-  }, [chart, partnerChart, mode, names]);
+    // Key on the names' content: a fresh array each render would restart the
+    // readout before its first line appears.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chart, partnerChart, mode, names.join("|")]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -269,7 +272,8 @@ export default function LoadingAnimation({
   // fired yet — caps at ~88% so we don't lie about being done.
   useEffect(() => {
     startedAtRef.current = performance.now();
-    const EXPECTED_MS = 90_000; // matches p50 generation time
+    // Typical generation time, measured 2026-11-16 on the precalculated path.
+    const EXPECTED_MS = mode === "duo" ? 75_000 : 60_000;
     const CREEP_CAP = 88;
 
     const timer = setInterval(() => {
@@ -286,7 +290,7 @@ export default function LoadingAnimation({
     }, 120);
 
     return () => clearInterval(timer);
-  }, [targetPct]);
+  }, [targetPct, mode]);
 
   useEffect(() => {
     if (progress >= 100 && !completedRef.current) {
@@ -307,14 +311,17 @@ export default function LoadingAnimation({
       aria-live="polite"
       aria-busy="true"
     >
-      <div
-        className="absolute inset-0 flex items-center justify-center pointer-events-none z-0"
-        aria-hidden="true"
-      >
-        <span className="font-syne font-extrabold text-[25vw] leading-none text-ash opacity-5 tracking-tighter">
-          {String(clampedProgress).padStart(2, "0")}
-        </span>
-      </div>
+      {/* Without a chart the count is the visual. With one, the wheel is. */}
+      {chart ? null : (
+        <div
+          className="absolute inset-0 flex items-center justify-center pointer-events-none z-0"
+          aria-hidden="true"
+        >
+          <span className="font-syne font-extrabold text-[25vw] leading-none text-ash opacity-5 tracking-tighter">
+            {String(clampedProgress).padStart(2, "0")}
+          </span>
+        </div>
+      )}
 
       {chart ? (
         <div
@@ -337,13 +344,13 @@ export default function LoadingAnimation({
 
       {facts.length > 0 ? (
         <div
-          className="absolute left-6 top-6 md:left-10 md:top-10 z-20 hidden md:flex flex-col gap-2 pointer-events-none"
+          className="absolute left-6 top-6 md:left-12 md:top-10 z-20 hidden md:flex flex-col gap-2 pointer-events-none"
           aria-hidden="true"
         >
           {facts.slice(0, factCount).map((fact, i) => (
             <span
               key={i}
-              className="fact-line font-mono text-[10px] tracking-[0.2em] text-ash/45 uppercase whitespace-nowrap"
+              className="fact-line font-mono text-[11px] tracking-[0.2em] text-ash/50 uppercase whitespace-nowrap"
             >
               {fact}
             </span>
@@ -351,20 +358,20 @@ export default function LoadingAnimation({
         </div>
       ) : null}
 
-      <div className="absolute bottom-24 md:bottom-32 flex flex-col items-center z-20 px-6 w-full">
+      <div className="absolute bottom-16 md:bottom-24 flex flex-col items-center z-20 px-6 w-full">
         {facts.length > 0 ? (
           <span
             key={mobileFactIndex}
-            className="fact-line md:hidden font-mono text-[9px] tracking-[0.25em] text-ash/40 uppercase mb-3 text-center"
+            className="fact-line md:hidden font-mono text-[10px] tracking-[0.2em] text-ash/50 uppercase mb-3 text-center"
             aria-hidden="true"
           >
             {facts[mobileFactIndex]}
           </span>
         ) : null}
-        <div className="min-h-[3.5rem] md:min-h-[4rem] overflow-hidden relative w-full max-w-2xl text-center flex items-center justify-center">
+        <div className="relative flex min-h-[4.5rem] w-full max-w-2xl items-center justify-center text-center md:min-h-[5.5rem]">
           <span
             key={statusIndex}
-            className="status-line font-syne font-extrabold text-xl md:text-3xl tracking-tight text-ash uppercase leading-tight"
+            className="status-line font-quote text-[1.5rem] italic leading-[1.15] text-ash md:text-[2.1rem]"
           >
             {statuses[statusIndex % statuses.length]}
           </span>
@@ -377,12 +384,19 @@ export default function LoadingAnimation({
           aria-valuemin={0}
           aria-valuemax={100}
           aria-valuenow={clampedProgress}
-          className="w-64 h-[1px] bg-bruise mt-4 relative overflow-hidden"
+          className="relative mt-5 h-px w-[min(22rem,78vw)] overflow-hidden bg-ash/15"
         >
           <div
-            className="absolute top-0 left-0 h-full bg-blood transition-all duration-300"
-            style={{ width: `${Math.min(progress, 100)}%` }}
+            className="absolute left-0 top-0 h-full w-full origin-left bg-blood transition-transform duration-300 ease-out"
+            style={{ transform: `scaleX(${Math.min(progress, 100) / 100})` }}
           />
+        </div>
+        <div
+          className="mt-3 flex w-[min(22rem,78vw)] justify-between font-mono text-[11px] uppercase tracking-[0.2em] text-ash/50 tabular-nums"
+          aria-hidden="true"
+        >
+          <span>{String(clampedProgress).padStart(2, "0")}%</span>
+          <span>{clampedProgress < 85 ? "About a minute" : "Last lines"}</span>
         </div>
       </div>
 
@@ -391,7 +405,7 @@ export default function LoadingAnimation({
         style={{ paddingBottom: "max(1.25rem, env(safe-area-inset-bottom))" }}
         aria-hidden="true"
       >
-        <p className="text-[10px] md:text-xs tracking-[0.3em] text-ash/40 uppercase">
+        <p className="font-mono text-[10px] md:text-[11px] tracking-[0.2em] text-ash/40 uppercase">
           {mode === "duo"
             ? "Written from both charts. Neither of you is the reasonable one."
             : "Written from your chart. Delivered without a warm-up."}

@@ -233,16 +233,6 @@ input:-webkit-autofill:active {
   clip-path: polygon(0 0, 100% 0, 100% 100%, 0% 100%);
 }
 
-/* Callout block */
-.callout {
-  position: relative;
-  background: linear-gradient(
-    90deg,
-    rgba(26, 5, 0, 0.8) 0%,
-    rgba(3, 3, 3, 0) 100%
-  );
-}
-
 /* Teaser block */
 .teaser-block {
   border-left: 2px solid var(--color-blood);
@@ -266,6 +256,7 @@ input:-webkit-autofill:active {
 
 /* Progress bar for full roast */
 .progress-container {
+  display: none;
   position: fixed;
   left: 2rem;
   top: 50%;
@@ -276,18 +267,30 @@ input:-webkit-autofill:active {
   z-index: 50;
 }
 
-@media (max-width: 768px) {
-  .progress-container {
-    display: none;
-  }
-}
-
 .progress-fill {
   width: 100%;
   height: 100%;
   background-color: var(--color-blood);
   transform-origin: top center;
   transform: scaleY(0);
+}
+
+/* Reading progress follows the page scroll with no script. */
+@supports (animation-timeline: scroll()) {
+  @media (min-width: 769px) {
+    .progress-container {
+      display: block;
+    }
+  }
+  .progress-fill {
+    animation: progress-grow linear both;
+    animation-timeline: scroll(root);
+  }
+}
+@keyframes progress-grow {
+  to {
+    transform: scaleY(1);
+  }
 }
 
 /* SVG Chart Glow */
@@ -299,35 +302,12 @@ input:-webkit-autofill:active {
   animation: blink 2s infinite ease-in-out;
 }
 
+/* Loading screen copy: opacity only, text never slides. */
 .status-line {
-  animation: statusFadeUp 1.4s ease-out;
+  animation: fade-in 900ms ease-out both;
 }
-
-/* Chart readout lines on the loading screen */
 .fact-line {
-  animation: factFadeIn 0.9s ease-out;
-}
-
-@keyframes factFadeIn {
-  0% {
-    opacity: 0;
-    transform: translateX(-0.4rem);
-  }
-  100% {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes statusFadeUp {
-  0% {
-    opacity: 0;
-    transform: translateY(0.6rem);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  animation: fade-in 700ms ease-out both;
 }
 
 @keyframes blink {
@@ -561,9 +541,11 @@ body {
   color: var(--color-void);
   font-family: var(--font-syne);
   font-weight: 800;
-  font-size: 1.0625rem;
+  /* Syne caps are wide: scale down on phones so labels stay on one line. */
+  font-size: clamp(0.8125rem, 3.8vw, 1.0625rem);
   line-height: 1;
   letter-spacing: -0.01em;
+  text-align: center;
   text-transform: uppercase;
   box-shadow:
     0 12px 40px -12px rgb(255 42 0 / 0.65),
