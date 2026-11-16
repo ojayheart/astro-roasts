@@ -123,7 +123,7 @@ test("Hermes server wires the authenticated chart-annotations route", async () =
     "utf8",
   );
   assert.match(source, /req\.url !== "\/chart-annotations"/);
-  assert.match(source, /handleChartAnnotations\(body, send, runCodex/);
+  assert.match(source, /handleChartAnnotations\(body, send, runQuick/);
 });
 
 const bigBody = {

@@ -10,7 +10,11 @@ export interface RoastRunnerPayload {
   birthPlace: string;
   hasBirthTime: boolean;
   evidence?: RoastEvidence;
+  coords?: BirthCoordinates;
 }
+
+/** Resolved birthplace. With it the runner casts the chart without model tools. */
+export type BirthCoordinates = { lat: number; lon: number; tz: string } | null;
 
 export interface ChartPlacements {
   sunSign: string;
@@ -45,6 +49,7 @@ export function buildRoastRunnerPayload(input: {
   time: string | null;
   birthPlace: string;
   evidence?: RoastEvidence;
+  coords?: BirthCoordinates;
 }): RoastRunnerPayload {
   return {
     roastId: input.roastId,
@@ -55,6 +60,7 @@ export function buildRoastRunnerPayload(input: {
     birthPlace: input.birthPlace,
     hasBirthTime: !!input.time,
     ...(input.evidence ? { evidence: input.evidence } : {}),
+    ...(input.coords ? { coords: input.coords } : {}),
   };
 }
 
@@ -112,13 +118,13 @@ export interface GroupRoastRunnerPayload {
   roastId: string;
   mode: "group";
   relationship: string;
-  people: Array<PersonInput & { hasBirthTime: boolean; evidence?: RoastEvidence }>;
+  people: Array<PersonInput & { hasBirthTime: boolean; evidence?: RoastEvidence; coords?: BirthCoordinates }>;
 }
 
 export function buildGroupRunnerPayload(input: {
   roastId: string;
   relationship: string;
-  people: Array<PersonInput & { evidence?: RoastEvidence }>;
+  people: Array<PersonInput & { evidence?: RoastEvidence; coords?: BirthCoordinates }>;
 }): GroupRoastRunnerPayload {
   return {
     roastId: input.roastId,

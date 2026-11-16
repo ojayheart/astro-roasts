@@ -1,31 +1,67 @@
-# Astro Roast on Codex
+# Astro Roast on Claude (Fable 5.2)
 
 The Hermes runner's `/roast`, `/chart-annotations`, and `/dm-agent` endpoints use
-Codex CLI with `gpt-6-astra` and **high** reasoning. It authenticates with the
-runner service account's ChatGPT login; the cancelled Claude subscription is
-no longer used by these endpoints. Existing roast voice and chart calculations
-are preserved. The separate metered iOS subscription backend is unchanged.
+the Claude Code CLI (`claude -p`) with `claude-fable-5-2`. It authenticates with
+the runner service account's Claude subscription login (OAuth), not an API key.
+The roast writer runs at medium effort (`ROAST_CLAUDE_EFFORT` overrides it); DM
+replies and chart annotations run at low effort. Roast voice and chart calculations are unchanged. `/enrich-agent`
+(a second tenant) shares the adapter and keeps its own model setting.
+
+History: the runner used Codex `gpt-6-astra` from 2026-09-07. Its ChatGPT login
+expired and every roast failed from 2026-10-23 until the 2026-11-14 switch.
 
 ## Runtime
 
 - Service: `roast-runner`, user `roast`, working directory `/opt/roast-runner`.
-- Codex CLI: `@openai/codex@0.153.4`; `codex login status` must succeed as `roast`.
-- Auth: `/home/roast/.codex/auth.json`, owner `roast`, mode `0600`. Never commit it.
+- Claude CLI: `@anthropic-ai/claude-code` 2.1.325 or newer (Fable 5.2 needs it).
+- Auth: `runuser -u roast -- claude auth login --claudeai` on Hermes. The login is
+  stored in `/home/roast/.claude/` and refreshes itself. Check it with
+  `claude auth status`. Do not set `CLAUDE_CODE_OAUTH_TOKEN` in
+  `/opt/roast-runner/.env`: a stale value overrides the login.
 - Voice: `/home/roast/.agents/skills/astro-roast/SKILL.md` and
   `astro-roast-group/SKILL.md`. `ROAST_SKILLS_DIR` can override that parent directory.
 - Calculators: `/home/roast/natal_chart.py`, `/home/roast/synastry_offline.py`,
   and the existing `/opt/roast-runner/venv/bin/python3` environment.
-- Model overrides: `ROAST_CODEX_MODEL`, `DM_CODEX_MODEL`, `ANNOTATION_CODEX_MODEL`.
-  Old Claude model environment variables do not affect these calls.
-- `CODEX_BIN` optionally sets an explicit CLI path.
-- Health: `GET /health` returns `provider: "codex"`, `model: "gpt-6-astra"`.
+- Model overrides: `ROAST_CLAUDE_MODEL`, `DM_CLAUDE_MODEL`, `ANNOTATION_CLAUDE_MODEL`.
+  The old `ROAST_MODEL` and `*_CODEX_MODEL` variables do not affect these calls.
+- `CLAUDE_BIN` optionally sets an explicit CLI path.
+- Health: `GET /health` returns `provider: "claude"`, `model: "claude-fable-5-2"`.
 
-Each invocation has a temporary workspace, ignores user Codex configuration,
-and is ephemeral. Prompts go over stdin. The runner reads only the CLI's final
-answer file, so progress messages and tool logs cannot contaminate output.
-Chart-writing calls have shell and web search; annotation and DM calls have
-neither. Child processes do not inherit the service's secret environment.
-Timeouts, launch failures and missing/empty final answers fail closed.
+Each invocation has a temporary workspace, ignores host settings, memory files,
+skills and MCP servers, and keeps no session. Prompts go over stdin. The runner
+reads only the final `result` of the CLI's JSON output, so tool logs cannot
+contaminate a roast. The roast writer has `Bash` and `WebSearch` only on the
+tool path (see Time to delivery); on the precalculated path, and for annotation, DM
+and enrichment calls have no tools at all (`--tools ""`). Child processes do not
+inherit the service's secret environment. There is no OS sandbox around the
+writer's shell (Codex had one): it runs as the unprivileged `roast` user.
+Timeouts, launch failures, error results and empty answers fail closed.
+
+## Time to delivery (2026-11-16)
+
+The model's thinking and writing time is most of a roast. Two changes cut it:
+
+- **Precalculated charts.** When the request carries a resolved birthplace
+  (`coords`, or `evidence.birth` for a known birth time), the runner runs
+  `natal_chart.py` and `synastry_offline.py` itself and puts the output in the
+  prompt. The writer then has no tools, makes no lookup turns and does not copy
+  the chart back out. The web pipeline resolves the place in its
+  `resolve-birthplaces` step. If a place cannot be resolved, or a calculator
+  fails, the old tool path runs (`Bash`, `WebSearch`). The response field
+  `fastPath` says which path ran.
+- **Medium effort.** Same voice and length at about 60% of the time.
+
+Measured on Hermes, same synthetic people:
+
+| Roast | Before | After |
+|---|---|---|
+| Solo, birth time known | 109 s | 49 s |
+| Solo, no birth time | — | 66 s |
+| Couple | 118 s | 50 s |
+| Solo, tool path (no resolved place) | 109 s | 68 s |
+
+To return to high effort, set `ROAST_CLAUDE_EFFORT=high` in
+`/opt/roast-runner/.env` and restart the service.
 
 ## Verify and deploy
 
@@ -63,62 +99,24 @@ resolved. These synthetic checks used no roast ID and sent no customer messages.
 
 ### Deployment checks
 
-1. Run `node --test test/codex-runner.test.ts test/chart-annotations-runner.test.ts`,
-   `npm test`, and `npm run lint`.
-2. Verify the deployed server before copying. Hermes also has live `/enrich-agent`
-   and `/transits` endpoints not yet on main. Apply the focused `server.js` diff
-   to that deployed file; do not overwrite it with main's older server. Preserve
-   the legacy Claude helper used by the separate enrichment endpoint.
-3. Back up the live `server.js` before replacing it. Deploy `codex.js` alongside it.
-4. Start a temporary systemd service with the same user and environment on port
-   8788. Test `/roast` with synthetic birth data and no `roastId`, then verify chart
-   markers, parsed prose, group charts and annotation JSON. This does not create
-   customer records or send messages.
-5. Replace the live server, restart `roast-runner`, check `/health`, and test the
-   authenticated endpoints. Stop the temporary service.
+1. Run `npm test` and `npm run lint`.
+2. `ops/hermes-roast-runner/` is the source of truth and matches the deployed
+   server as of 2026-11-14 (including `/enrich-agent` and `/transits`). Diff the
+   live files against the repo before copying, in case of a VM-only patch.
+3. Back up the live `server.js`, then copy `server.js`, `claude.js`,
+   `chart-annotations.js`, `roast-evidence.js` and `enrich-agent.js`.
+4. Start a temporary instance as `roast` with the same environment on port 8788.
+   Test `/roast` with synthetic birth data and no `roastId`, then verify chart
+   markers and prose. This creates no customer records and sends no messages.
+5. Restart `roast-runner`, check `/health`, and test the authenticated endpoints.
 
-Rollback: restore the backed-up server and restart `roast-runner`. Claude calls
-will still require a valid Claude subscription; rolling back code cannot restore it.
-
-## Ubuntu 24.04 sandbox setup
-
-Install `bubblewrap`, `apparmor-profiles`, and `apparmor-utils`. Copy
-`/usr/share/apparmor/extra-profiles/bwrap-userns-restrict` to
-`/etc/apparmor.d/bwrap-userns-restrict`, then load it with
-`apparmor_parser -r /etc/apparmor.d/bwrap-userns-restrict`.
-This is the [official Codex setup](https://learn.chatgpt.com/docs/sandboxing#prerequisites)
-for Ubuntu 24.04; keep the global user-namespace restriction enabled.
-Validate as the `roast` user with `bwrap --ro-bind / / --unshare-user -- /bin/echo OK`.
-A CLI text response alone does not prove the chart calculator can execute.
-The runner checks Sun and Moon degree rows before accepting generated output.
-
-Use a separate device login on Hermes (`runuser -u roast -- codex login --device-auth`).
-The initially copied desktop login was revoked; a fresh service-account login
-succeeded. Do not routinely overwrite it with desktop credentials.
-
-## Validation on 2026-09-07
-
-- `npm run lint`: passed.
-- `node --import tsx --test test/*.test.ts`: all 109 tests passed.
-- Plain `npm test`: 99 passed, two existing test-file load failures from
-  extensionless imports in `lib/chart-annotations.ts` and `lib/compute-chart.ts`.
-  The TypeScript loader resolves those imports; this migration does not change them.
-- Authenticated Astra-high annotation and DM endpoint checks passed on the canary.
-- Complete canary solo roast: HTTP 200, 1516 prose words, calculated chart, 175s;
-  no houses/angles mentioned for unknown birth time.
-- Complete canary couple roast: HTTP 200, 1170 words, two calculated charts, 195s.
-  Tightened the group output contract afterward to exclude technical calculation
-  notes, geocoding and citations from the customer-facing roast prose.
-- Production switched to the tested Codex adapter and patched server. Backups:
-  `/opt/roast-runner/server.js.pre-codex-20260907` and
-  `/opt/roast-runner/chart-annotations.js.pre-codex-20260907`.
-- Final public-endpoint couple roast after that prompt change: HTTP 200, 1139
-  words, two valid charts, 181s; no technical metadata or source links in prose.
-  Public chart-annotation request also returned HTTP 200 in 12s.
+Rollback: restore the backed-up server and restart `roast-runner`. The Codex
+adapter is in git history (`ops/hermes-roast-runner/codex.js` before this change)
+and needs a fresh `codex login --device-auth` as `roast`.
 
 ## Loading-page status
 
-Codex generation can take longer than three minutes. The browser must keep
+Generation can take several minutes. The browser must keep
 polling while the server reports `generating`; elapsed foreground time and
 transient network errors must not turn a running job into a failed roast.
 `lib/roast-polling.ts` pauses reads in hidden tabs, avoids overlapping requests,
