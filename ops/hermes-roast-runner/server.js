@@ -5,23 +5,31 @@
 // Phase 2 (package): cheap call to extract TITLE + CALLOUTS. TEASER/FULL are
 //   derived from the prose in code.
 
+import { roastWritingPolicy } from "./roast-evidence.js";
 import { createServer } from "node:http";
 import { spawn } from "node:child_process";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { handleChartAnnotations } from "./chart-annotations.js";
-import { CODEX_MODEL, hasCalculatedChart, loadRoastSkill, runCodex } from "./codex.js";
-import { roastWritingPolicy } from "./roast-evidence.js";
+import { CLAUDE_MODEL, hasCalculatedChart, loadRoastSkill, runClaude } from "./claude.js";
+import { handleEnrichAgent } from "./enrich-agent.js";
 
 const PORT = Number(process.env.PORT || 8787);
 const SECRET = process.env.ROAST_RUNNER_SECRET;
-const MODEL = process.env.ROAST_CODEX_MODEL || CODEX_MODEL;
+const MODEL = process.env.ROAST_CLAUDE_MODEL || CLAUDE_MODEL;
+// Medium writes the same roast in about 60% of the time of high (65 s against
+// 106 s for a solo roast, measured 2026-11-16).
+const EFFORT = process.env.ROAST_CLAUDE_EFFORT || "medium";
 const TIMEOUT_MS = Number(process.env.ROAST_TIMEOUT_MS || 10 * 60 * 1000);
 const PROGRESS_URL = process.env.PROGRESS_CALLBACK_URL || "";
 const PYTHON_BIN =
   process.env.ASTRO_PYTHON || "/opt/roast-runner/venv/bin/python3";
 const NATAL_CHART_PATH =
   process.env.NATAL_CHART_PATH || join(homedir(), "natal_chart.py");
+const TRANSITS_PATH =
+  process.env.TRANSITS_PATH || join(homedir(), "transits.py");
+const SYNASTRY_PATH =
+  process.env.SYNASTRY_PATH || join(homedir(), "synastry_offline.py");
 
 if (!SECRET) {
   console.error("ROAST_RUNNER_SECRET not set");
@@ -29,12 +37,15 @@ if (!SECRET) {
 }
 
 // ─── DM agent: one in-voice conversational turn on the subscription ────────
-// The webhook (Vercel) posts {history, latestText}; we run one Codex
+// The webhook (Vercel) posts {history, latestText}; we run one Claude
 // turn and return the raw action JSON. Validation happens on the web side.
 
-const DM_MODEL = process.env.DM_CODEX_MODEL || MODEL;
+const DM_MODEL = process.env.DM_CLAUDE_MODEL || MODEL;
 const DM_TIMEOUT_MS = Number(process.env.DM_AGENT_TIMEOUT_MS || 45_000);
-const ANNOTATION_MODEL = process.env.ANNOTATION_CODEX_MODEL || DM_MODEL;
+const ANNOTATION_MODEL = process.env.ANNOTATION_CLAUDE_MODEL || DM_MODEL;
+
+// DM replies and chart annotations are short and latency-bound: low effort.
+const runQuick = (options) => runClaude({ ...options, effort: "low" });
 
 const DM_SYSTEM_PROMPT = `you are astroroasted — the instagram account that writes savage, scarily accurate comedic natal chart roasts. you are talking in instagram DMs.
 
@@ -94,7 +105,7 @@ async function handleDmAgent(body, send) {
   }
 
   const startedAt = Date.now();
-  const run = await runCodex({
+  const run = await runQuick({
     userPrompt: buildDmAgentPrompt({ history, latestText }),
     systemPrompt: DM_SYSTEM_PROMPT,
     model: DM_MODEL,
@@ -114,7 +125,7 @@ async function handleDmAgent(body, send) {
       stderr: run.stderr.slice(0, 300),
     });
     return send(500, {
-      error: "codex_failed",
+      error: "claude_failed",
       durationMs: Date.now() - startedAt,
     });
   }
@@ -168,53 +179,90 @@ ${people.map((_, i) => `---CHART_${i + 1}_START---\n<person ${i + 1} full chart 
 No commentary outside the markers. The ROAST block must contain only the comedic reading: no geocoding, coordinates, timezone explanations, links, citations, engine or schema descriptions, tool status, or calculation caveats. All technical metadata belongs in the CHART blocks.`;
 }
 
-// Legacy helper retained for the separate live enrichment endpoint.
-// ─── claude subprocess ─────────────────────────────────────────────────────
+// ─── Fast path: the runner calculates, the model only writes ───────────────
+// When the web side already resolved the birthplace, the charts are cast here
+// in about a second. The writer then needs no tools, no lookup turns and does
+// not copy the chart back out. Any gap returns null and the tool path runs.
 
-function runClaude({ userPrompt, systemPrompt, model, tools, timeoutMs }) {
+function chartInput(person) {
+  const place = person.coords || person.evidence?.birth;
+  const [year, month, day] = String(person.date).split("-").map(Number);
+  const [hour, minute] = person.hasBirthTime
+    ? String(person.time).split(":").map(Number)
+    : [null, null];
+  const input = {
+    name: person.name,
+    year,
+    month,
+    day,
+    hour,
+    minute,
+    lat: place?.lat,
+    lon: place?.lon,
+    tz: place?.tz,
+  };
+  return validateChartInput(input) ? null : input;
+}
+
+function runPython(args, input = "") {
   return new Promise((resolve) => {
-    const args = [
-      "-p",
-      userPrompt,
-      "--model",
-      model,
-      "--output-format",
-      "text",
-      "--permission-mode",
-      "bypassPermissions",
-      "--allowed-tools",
-      tools || "",
-    ];
-    if (systemPrompt) {
-      args.push("--append-system-prompt", systemPrompt);
-    }
-    const proc = spawn("claude", args, {
-      env: {
-        ...process.env,
-        FORCE_COLOR: "0",
-        PATH: `/opt/roast-runner/venv/bin:${process.env.PATH || ""}`,
-      },
-      stdio: ["ignore", "pipe", "pipe"],
+    const proc = spawn(PYTHON_BIN, args, {
+      timeout: 20_000,
+      killSignal: "SIGKILL",
+      stdio: ["pipe", "pipe", "ignore"],
     });
-
     let stdout = "";
-    let stderr = "";
-    const timer = setTimeout(() => {
-      proc.kill("SIGTERM");
-      setTimeout(() => proc.kill("SIGKILL"), 5000);
-    }, timeoutMs || TIMEOUT_MS);
-
-    proc.stdout.on("data", (d) => (stdout += d.toString()));
-    proc.stderr.on("data", (d) => (stderr += d.toString()));
-    proc.on("close", (code) => {
-      clearTimeout(timer);
-      resolve({ code, stdout, stderr });
-    });
-    proc.on("error", (err) => {
-      clearTimeout(timer);
-      resolve({ code: -1, stdout: "", stderr: String(err) });
-    });
+    proc.stdout.on("data", (d) => (stdout += d));
+    proc.on("error", () => resolve(""));
+    proc.on("close", (code) => resolve(code === 0 ? stdout.trim() : ""));
+    proc.stdin.on("error", () => {});
+    proc.stdin.end(input);
   });
+}
+
+async function precalculate(subjects, isGroup) {
+  const inputs = subjects.map(chartInput);
+  if (inputs.some((input) => !input)) return null;
+  const [synastry, ...charts] = await Promise.all([
+    isGroup
+      ? runPython(
+          [SYNASTRY_PATH],
+          JSON.stringify({
+            people: inputs.map(({ hour, minute, ...rest }) =>
+              hour == null ? rest : { ...rest, hour, minute },
+            ),
+          }),
+        )
+      : "",
+    ...inputs.map((input) => runPython([NATAL_CHART_PATH, ...birthArgs(input)])),
+  ]);
+  if (charts.some((chart) => !hasCalculatedChart(chart))) return null;
+  if (isGroup && !synastry.startsWith('{"schema"')) return null;
+  return { charts, synastry };
+}
+
+function buildFastWriteUserPrompt({ subjects, isGroup, relationship, charts, synastry }) {
+  const people = subjects
+    .map(
+      (p, i) => `Person ${i + 1}:
+- Name: ${p.name}${p.gender ? `\n- Gender: ${p.gender}` : ""}
+- Date of birth: ${p.date}
+- Birth time: ${p.hasBirthTime ? p.time : "unknown"}
+- Place of birth: ${p.birthPlace}
+
+natal_chart.py output for person ${i + 1}:
+${charts[i]}`,
+    )
+    .join("\n\n");
+  return `Follow the supplied ${isGroup ? "Astro Roast Group" : "Astro Roast"} skill instructions EXACTLY for the reading and the voice. The lookup and calculation steps of the workflow are already done: the calculator output below is final, so do not ask for tools and do not recalculate.${isGroup ? ` Relationship type: ${relationship}. Write ONE group roast of the dynamic. Use the actual returned schema (synastry crossAspects and overlays); never invent composite placements absent from the calculation.` : ""} For anyone with no birth time, do not use houses, Ascendant, MC, or chart ruler.
+
+${people}${isGroup ? `\n\nsynastry_offline.py output:\n${synastry}` : ""}
+
+Output format, EXACTLY:
+---ROAST_START---
+<the roast prose — no TITLE/TEASER/FULL/CALLOUTS fields>
+---ROAST_END---
+No commentary outside the markers and no copy of the chart. The ROAST block must contain only the comedic reading: no coordinates, timezone explanations, links, citations, engine or schema descriptions, or calculation caveats.`;
 }
 
 function extractMarkedSection(raw, marker) {
@@ -303,35 +351,60 @@ function validateChartInput(b) {
   if (!intIn(b.day, 1, 31)) return "day";
   if (b.hour != null && !intIn(b.hour, 0, 23)) return "hour";
   if (b.minute != null && !intIn(b.minute, 0, 59)) return "minute";
-  if (typeof b.lat !== "number" || !Number.isFinite(b.lat) || Math.abs(b.lat) > 90) return "lat";
-  if (typeof b.lon !== "number" || !Number.isFinite(b.lon) || Math.abs(b.lon) > 180) return "lon";
-  if (typeof b.tz !== "string" || b.tz.length > 64 || !/^[A-Za-z0-9_+\-/]+$/.test(b.tz)) return "tz";
-  if (b.name != null && (typeof b.name !== "string" || b.name.length > 80)) return "name";
+  if (
+    typeof b.lat !== "number" ||
+    !Number.isFinite(b.lat) ||
+    Math.abs(b.lat) > 90
+  )
+    return "lat";
+  if (
+    typeof b.lon !== "number" ||
+    !Number.isFinite(b.lon) ||
+    Math.abs(b.lon) > 180
+  )
+    return "lon";
+  if (
+    typeof b.tz !== "string" ||
+    b.tz.length > 64 ||
+    !/^[A-Za-z0-9_+\-/]+$/.test(b.tz)
+  )
+    return "tz";
+  if (b.name != null && (typeof b.name !== "string" || b.name.length > 80))
+    return "name";
   return null;
 }
 
-function handleChart(body, send) {
-  const bad = validateChartInput(body);
-  if (bad) {
-    return send(400, { error: "invalid_input", detail: bad });
-  }
-
+function birthArgs(body) {
   const args = [
-    NATAL_CHART_PATH, "--json",
-    "--name", body.name || "Friend",
-    "--year", String(body.year),
-    "--month", String(body.month),
-    "--day", String(body.day),
-    "--lat", String(body.lat),
-    "--lon", String(body.lon),
-    "--tz", body.tz,
+    "--name",
+    body.name || "Friend",
+    "--year",
+    String(body.year),
+    "--month",
+    String(body.month),
+    "--day",
+    String(body.day),
+    "--lat",
+    String(body.lat),
+    "--lon",
+    String(body.lon),
+    "--tz",
+    body.tz,
   ];
   if (body.hour != null) {
-    args.push("--hour", String(body.hour), "--minute", String(body.minute ?? 0));
+    args.push(
+      "--hour",
+      String(body.hour),
+      "--minute",
+      String(body.minute ?? 0),
+    );
   }
+  return args;
+}
 
+function runPythonJson({ args, timeoutMs, error }, send) {
   const proc = spawn(PYTHON_BIN, args, {
-    timeout: 15_000,
+    timeout: timeoutMs,
     killSignal: "SIGKILL",
     stdio: ["ignore", "pipe", "pipe"],
   });
@@ -341,20 +414,90 @@ function handleChart(body, send) {
   proc.stdout.on("data", (d) => (stdout += d.toString()));
   proc.stderr.on("data", (d) => (stderr += d.toString()));
   proc.on("error", (err) => {
-    send(502, { error: "chart_failed", detail: String(err).slice(0, 500) });
+    send(502, { error, detail: String(err).slice(0, 500) });
   });
   proc.on("close", (code) => {
     if (code !== 0) {
-      console.error("chart_failed", { code, stderr: stderr.slice(0, 300) });
-      return send(502, { error: "chart_failed", detail: stderr.slice(0, 500) });
+      console.error(error, { code, stderr: stderr.slice(0, 300) });
+      return send(502, { error, detail: stderr.slice(0, 500) });
     }
     try {
       return send(200, JSON.parse(stdout));
     } catch {
-      console.error("chart_parse_failed", { stdout: stdout.slice(0, 300) });
-      return send(502, { error: "chart_failed", detail: "bad_json_from_script" });
+      console.error(`${error}_parse`, { stdout: stdout.slice(0, 300) });
+      return send(502, { error, detail: "bad_json_from_script" });
     }
   });
+}
+
+function handleChart(body, send) {
+  const bad = validateChartInput(body);
+  if (bad) {
+    return send(400, { error: "invalid_input", detail: bad });
+  }
+  return runPythonJson(
+    {
+      args: [NATAL_CHART_PATH, "--json", ...birthArgs(body)],
+      timeoutMs: 15_000,
+      error: "chart_failed",
+    },
+    send,
+  );
+}
+
+// ─── Transits endpoint ──────────────────────────────────────────────────────
+// Deterministic transits.py run, same birth-argument convention as /chart.
+// Daily/monthly/yearly generation reads this, then writes through the metered
+// API in lib/roast-model.ts — never the claude CLI.
+
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+
+function transitArgs(body) {
+  if (body.mode === "daily") {
+    if (!ISO_DATE.test(String(body.date))) return null;
+    return ["--date", body.date];
+  }
+  if (body.mode === "month") {
+    if (!intIn(body.targetYear, 1800, 2100)) return null;
+    if (!intIn(body.targetMonth, 1, 12)) return null;
+    return [
+      "--target-year",
+      String(body.targetYear),
+      "--target-month",
+      String(body.targetMonth),
+    ];
+  }
+  if (body.mode === "year") {
+    if (!ISO_DATE.test(String(body.start))) return null;
+    return ["--start", body.start];
+  }
+  return null;
+}
+
+function handleTransits(body, send) {
+  const bad = validateChartInput(body);
+  if (bad) {
+    return send(400, { error: "invalid_input", detail: bad });
+  }
+  const period = transitArgs(body);
+  if (!period) {
+    return send(400, { error: "invalid_input", detail: "mode" });
+  }
+  return runPythonJson(
+    {
+      args: [
+        TRANSITS_PATH,
+        "--mode",
+        body.mode,
+        "--json",
+        ...birthArgs(body),
+        ...period,
+      ],
+      timeoutMs: body.mode === "year" ? 120_000 : 30_000,
+      error: "transits_failed",
+    },
+    send,
+  );
 }
 
 const server = createServer(async (req, res) => {
@@ -364,14 +507,16 @@ const server = createServer(async (req, res) => {
   };
 
   if (req.method === "GET" && req.url === "/health") {
-    return send(200, { ok: true, provider: "codex", model: MODEL });
+    return send(200, { ok: true, provider: "claude", model: MODEL });
   }
   if (
     req.method !== "POST" ||
     (req.url !== "/roast" &&
       req.url !== "/dm-agent" &&
       req.url !== "/chart" &&
-      req.url !== "/chart-annotations")
+      req.url !== "/transits" &&
+      req.url !== "/chart-annotations" &&
+      req.url !== "/enrich-agent")
   ) {
     return send(404, { error: "not_found" });
   }
@@ -390,12 +535,26 @@ const server = createServer(async (req, res) => {
     return handleChart(body, send);
   }
 
+  if (req.url === "/transits") {
+    return handleTransits(body, send);
+  }
+
   if (req.url === "/dm-agent") {
     return handleDmAgent(body, send);
   }
 
   if (req.url === "/chart-annotations") {
-    return handleChartAnnotations(body, send, runCodex, ANNOTATION_MODEL);
+    return handleChartAnnotations(body, send, runQuick, ANNOTATION_MODEL);
+  }
+
+  if (req.url === "/enrich-agent") {
+    return handleEnrichAgent({
+      body,
+      send,
+      runClaude,
+      extractJsonObject,
+      isRateLimit,
+    });
   }
 
   const {
@@ -431,34 +590,42 @@ const server = createServer(async (req, res) => {
   // Initial tick so the bar moves the moment the runner accepts the job.
   postProgress(roastId, 8);
 
-  // Phase 1 — write. Background creep 10→70 while Astra computes and writes.
+  // Phase 1 — write. Background creep 10→70 while Fable computes and writes.
   // If the phase finishes faster, the creep stops; if it's slower, the creep
   // caps at 70 and we wait for the real finish to jump to 78.
   const stopWriteCreep = startProgressCreep({
     roastId,
     fromPct: 10,
     toPct: 70,
-    durationMs: isGroup ? 150_000 : 75_000,
+    durationMs: isGroup ? 90_000 : 65_000,
   });
 
-  const write = await runCodex({
+  const groupRelationship =
+    (typeof relationship === "string" && relationship.trim()) || "couple";
+  const subjects = isGroup ? people : [{ ...body, hasBirthTime: !!hasBirthTime }];
+  const precalculated = await precalculate(subjects, isGroup);
+
+  const write = await runClaude({
     systemPrompt: skill + roastWritingPolicy(body),
-    userPrompt: isGroup
-      ? buildGroupWriteUserPrompt({
-          relationship:
-            (typeof relationship === "string" && relationship.trim()) ||
-            "couple",
-          people,
+    userPrompt: precalculated
+      ? buildFastWriteUserPrompt({
+          subjects,
+          isGroup,
+          relationship: groupRelationship,
+          ...precalculated,
         })
-      : buildWriteUserPrompt({
-          name,
-          date,
-          time,
-          birthPlace,
-          hasBirthTime: !!hasBirthTime,
-        }),
+      : isGroup
+        ? buildGroupWriteUserPrompt({ relationship: groupRelationship, people })
+        : buildWriteUserPrompt({
+            name,
+            date,
+            time,
+            birthPlace,
+            hasBirthTime: !!hasBirthTime,
+          }),
     model: MODEL,
-    tools: "Bash,WebSearch,Skill",
+    tools: precalculated ? "" : "Bash,WebSearch",
+    effort: EFFORT,
   });
 
   stopWriteCreep();
@@ -474,18 +641,21 @@ const server = createServer(async (req, res) => {
       });
     }
     console.error("write_failed", {
+      fastPath: !!precalculated,
       code: write.code,
       stderr: write.stderr.slice(0, 500),
     });
     return send(500, {
-      error: "codex_failed",
+      error: "claude_failed",
       code: write.code,
       detail: write.stderr.slice(0, 1000),
       durationMs,
     });
   }
 
-  const chartData = extractMarkedSection(write.stdout, "CHART");
+  const chartData = precalculated
+    ? precalculated.charts[0]
+    : extractMarkedSection(write.stdout, "CHART");
   const roastBody = extractMarkedSection(write.stdout, "ROAST");
   if (!roastBody || (!isGroup && !hasCalculatedChart(chartData))) {
     return send(500, {
@@ -500,9 +670,9 @@ ${roastBody}
 ---ROAST_END---`;
 
   if (isGroup) {
-    const charts = people.map((_, i) =>
-      extractMarkedSection(write.stdout, `CHART_${i + 1}`),
-    );
+    const charts =
+      precalculated?.charts ||
+      people.map((_, i) => extractMarkedSection(write.stdout, `CHART_${i + 1}`));
     if (charts.some((c) => !hasCalculatedChart(c))) {
       return send(500, {
         error: "missing_structured_output",
@@ -517,6 +687,7 @@ ${roastBody}
       chartData,
       charts,
       roast,
+      fastPath: !!precalculated,
       durationMs: Date.now() - startedAt,
     });
   }
@@ -524,6 +695,7 @@ ${roastBody}
   return send(200, {
     chartData,
     roast,
+    fastPath: !!precalculated,
     durationMs: Date.now() - startedAt,
   });
 });

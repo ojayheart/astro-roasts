@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState, useRef, useId } from "react";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
 import HumanDesignChart from "./HumanDesignChart";
 import "./ChartExplorer.css";
 import {
@@ -56,12 +55,6 @@ export default function RoastWheel({
   const [annotations, setAnnotations] = useState<ChartAnnotations | null>(null);
   const [selected, setSelected] = useState<WheelSelection | null>(null);
   const [hover, setHover] = useState<HoverInfo | null>(null);
-
-  useEffect(() => {
-    // Opening the charts moves the roast's scroll-triggered paragraphs.
-    const frame = requestAnimationFrame(() => ScrollTrigger.refresh());
-    return () => cancelAnimationFrame(frame);
-  }, [expanded]);
 
   useEffect(() => {
     if (

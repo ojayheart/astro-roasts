@@ -12,21 +12,21 @@ export default function PrivacyPage() {
     <>
       <SiteNav />
 
-      <main className="min-h-screen bg-void text-ash pt-32 pb-24 px-4 md:px-12 lg:px-16">
-        <div className="max-w-3xl mx-auto">
-          <h1 className="font-syne font-extrabold text-5xl md:text-6xl uppercase leading-[0.9] tracking-tighter mb-12">
+      <main className="min-h-screen bg-void px-5 pb-28 pt-32 text-ash md:px-12 md:pt-40 lg:px-16">
+        <div className="rise mx-auto max-w-3xl">
+          <h1 className="mb-12 font-syne text-[clamp(2.25rem,9vw,4.75rem)] font-extrabold uppercase leading-[0.88] tracking-tighter">
             Privacy
             <br />
             <span className="text-blood">Policy</span>
           </h1>
 
-          <div className="space-y-8 text-ash/80 text-sm md:text-base font-light leading-relaxed">
-            <p className="text-ash/40 text-xs uppercase tracking-[0.15em]">
+          <div className="space-y-10 text-base leading-relaxed text-ash/80 md:text-lg">
+            <p className="font-mono text-xs uppercase tracking-[0.2em] text-ash/50">
               Last updated: June 2, 2026
             </p>
 
-            <section className="space-y-4">
-              <h2 className="font-syne font-bold text-xl uppercase tracking-tighter">
+            <section className="space-y-4 border-t border-ash/15 pt-8">
+              <h2 className="font-syne text-xl font-extrabold uppercase tracking-tight text-ash md:text-2xl">
                 Entertainment-Only Product
               </h2>
               <p>
@@ -39,27 +39,27 @@ export default function PrivacyPage() {
               </p>
             </section>
 
-            <section className="space-y-4">
-              <h2 className="font-syne font-bold text-xl uppercase tracking-tighter">
+            <section className="space-y-4 border-t border-ash/15 pt-8">
+              <h2 className="font-syne text-xl font-extrabold uppercase tracking-tight text-ash md:text-2xl">
                 1. What We Collect
               </h2>
               <p>We collect the minimum data needed to generate your roast:</p>
-              <ul className="space-y-2 pl-5">
+              <ul className="space-y-2">
                 <li className="flex items-start gap-3">
-                  <span className="text-blood mt-1">*</span>
+                  <span aria-hidden className="mt-[0.7em] h-px w-3 shrink-0 bg-blood" />
                   <span>
                     <strong>Birth data:</strong> date, time, and location — used
                     to calculate your natal chart
                   </span>
                 </li>
                 <li className="flex items-start gap-3">
-                  <span className="text-blood mt-1">*</span>
+                  <span aria-hidden className="mt-[0.7em] h-px w-3 shrink-0 bg-blood" />
                   <span>
                     <strong>Name:</strong> used in your roast (first name only)
                   </span>
                 </li>
                 <li className="flex items-start gap-3">
-                  <span className="text-blood mt-1">*</span>
+                  <span aria-hidden className="mt-[0.7em] h-px w-3 shrink-0 bg-blood" />
                   <span>
                     <strong>Payment data:</strong> processed entirely by Stripe
                     — we never see your card details
@@ -68,25 +68,25 @@ export default function PrivacyPage() {
               </ul>
             </section>
 
-            <section className="space-y-4">
-              <h2 className="font-syne font-bold text-xl uppercase tracking-tighter">
+            <section className="space-y-4 border-t border-ash/15 pt-8">
+              <h2 className="font-syne text-xl font-extrabold uppercase tracking-tight text-ash md:text-2xl">
                 2. How We Use It
               </h2>
               <p>Your birth data is used exclusively to:</p>
-              <ul className="space-y-2 pl-5">
+              <ul className="space-y-2">
                 <li className="flex items-start gap-3">
-                  <span className="text-blood mt-1">*</span>
+                  <span aria-hidden className="mt-[0.7em] h-px w-3 shrink-0 bg-blood" />
                   <span>
                     Calculate your natal chart (Swiss Ephemeris astronomical
                     data)
                   </span>
                 </li>
                 <li className="flex items-start gap-3">
-                  <span className="text-blood mt-1">*</span>
+                  <span aria-hidden className="mt-[0.7em] h-px w-3 shrink-0 bg-blood" />
                   <span>Generate your personalised comedic reading</span>
                 </li>
                 <li className="flex items-start gap-3">
-                  <span className="text-blood mt-1">*</span>
+                  <span aria-hidden className="mt-[0.7em] h-px w-3 shrink-0 bg-blood" />
                   <span>
                     Store your roast so you can access it via your link
                   </span>
@@ -98,8 +98,8 @@ export default function PrivacyPage() {
               </p>
             </section>
 
-            <section className="space-y-4">
-              <h2 className="font-syne font-bold text-xl uppercase tracking-tighter">
+            <section className="space-y-4 border-t border-ash/15 pt-8">
+              <h2 className="font-syne text-xl font-extrabold uppercase tracking-tight text-ash md:text-2xl">
                 3. Data Storage
               </h2>
               <p>
@@ -109,13 +109,13 @@ export default function PrivacyPage() {
               </p>
             </section>
 
-            <section className="space-y-4">
-              <h2 className="font-syne font-bold text-xl uppercase tracking-tighter">
+            <section className="space-y-4 border-t border-ash/15 pt-8">
+              <h2 className="font-syne text-xl font-extrabold uppercase tracking-tight text-ash md:text-2xl">
                 4. Third Parties
               </h2>
-              <ul className="space-y-2 pl-5">
+              <ul className="space-y-2">
                 <li className="flex items-start gap-3">
-                  <span className="text-blood mt-1">*</span>
+                  <span aria-hidden className="mt-[0.7em] h-px w-3 shrink-0 bg-blood" />
                   <span>
                     <strong>Stripe:</strong> payment processing. See{" "}
                     <a
@@ -129,13 +129,13 @@ export default function PrivacyPage() {
                   </span>
                 </li>
                 <li className="flex items-start gap-3">
-                  <span className="text-blood mt-1">*</span>
+                  <span aria-hidden className="mt-[0.7em] h-px w-3 shrink-0 bg-blood" />
                   <span>
                     <strong>Vercel:</strong> hosting and data storage
                   </span>
                 </li>
                 <li className="flex items-start gap-3">
-                  <span className="text-blood mt-1">*</span>
+                  <span aria-hidden className="mt-[0.7em] h-px w-3 shrink-0 bg-blood" />
                   <span>
                     <strong>Anthropic:</strong> AI text generation (birth data
                     sent as part of chart interpretation prompt)
@@ -144,8 +144,8 @@ export default function PrivacyPage() {
               </ul>
             </section>
 
-            <section className="space-y-4">
-              <h2 className="font-syne font-bold text-xl uppercase tracking-tighter">
+            <section className="space-y-4 border-t border-ash/15 pt-8">
+              <h2 className="font-syne text-xl font-extrabold uppercase tracking-tight text-ash md:text-2xl">
                 5. Your Rights
               </h2>
               <p>
@@ -161,8 +161,8 @@ export default function PrivacyPage() {
               </p>
             </section>
 
-            <section className="space-y-4">
-              <h2 className="font-syne font-bold text-xl uppercase tracking-tighter">
+            <section className="space-y-4 border-t border-ash/15 pt-8">
+              <h2 className="font-syne text-xl font-extrabold uppercase tracking-tight text-ash md:text-2xl">
                 6. Children
               </h2>
               <p>
@@ -171,8 +171,8 @@ export default function PrivacyPage() {
               </p>
             </section>
 
-            <section className="space-y-4">
-              <h2 className="font-syne font-bold text-xl uppercase tracking-tighter">
+            <section className="space-y-4 border-t border-ash/15 pt-8">
+              <h2 className="font-syne text-xl font-extrabold uppercase tracking-tight text-ash md:text-2xl">
                 7. Changes
               </h2>
               <p>
@@ -181,8 +181,8 @@ export default function PrivacyPage() {
               </p>
             </section>
 
-            <section className="space-y-4">
-              <h2 className="font-syne font-bold text-xl uppercase tracking-tighter">
+            <section className="space-y-4 border-t border-ash/15 pt-8">
+              <h2 className="font-syne text-xl font-extrabold uppercase tracking-tight text-ash md:text-2xl">
                 8. Contact
               </h2>
               <p>

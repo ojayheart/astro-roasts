@@ -1,7 +1,7 @@
 /**
  * 3-step Inngest roast generation pipeline.
  *
- * Step 1: Calculate evidence, then generate the roast via Codex on Hermes.
+ * Step 1: Calculate evidence, then generate the roast via Claude on Hermes.
  * Step 2: Parse, save, email.
  */
 
@@ -24,6 +24,7 @@ import { sendInstagramDm, buildDmTeaser } from "@/lib/manychat";
 import { sendInstagramDm as sendInstagramGraphDm } from "@/lib/instagram";
 import { pickGoldLine } from "@/lib/gold-line";
 import { prepareRoastEvidence } from "@/lib/roast-evidence";
+import { resolveCoordinates } from "@/lib/compute-chart";
 import type { PersonInput } from "@/lib/group";
 
 const ROAST_RUNNER_URL = process.env.ROAST_RUNNER_URL;
@@ -166,6 +167,19 @@ export const generateRoast = inngest.createFunction(
       })));
     });
 
+    // Calculated evidence already carries the resolved place. People with no
+    // birth time get it here, so the runner never needs a model lookup turn.
+    const coords = await step.run("resolve-birthplaces", async () => {
+      const places: string[] = isGroup
+        ? (people as PersonInput[]).map((person) => person.birthPlace)
+        : [city];
+      return Promise.all(places.map((place, i) =>
+        evidence[i].status === "calculated"
+          ? null
+          : resolveCoordinates(place).catch(() => null),
+      ));
+    });
+
     // ─── Step 1: Generate Chart + Roast via Hermes Runner ──────────────
     const runnerOutput = await step.run("generate-roast", async () => {
       if (!ROAST_RUNNER_URL || !ROAST_RUNNER_SECRET) {
@@ -186,6 +200,7 @@ export const generateRoast = inngest.createFunction(
                 people: (people as PersonInput[]).map((person, i) => ({
                   ...person,
                   evidence: evidence[i],
+                  coords: coords[i],
                 })),
               })
             : buildRoastRunnerPayload({
@@ -196,6 +211,7 @@ export const generateRoast = inngest.createFunction(
                 time,
                 birthPlace: city,
                 evidence: evidence[0],
+                coords: coords[0],
               }),
         ),
       });
@@ -308,8 +324,6 @@ export const generateRoast = inngest.createFunction(
             : paragraphs[0] || "";
         })();
 
-      const goldLine = fullText ? await pickGoldLine(fullText) : null;
-
       await db
         .update(roasts)
         .set({
@@ -317,10 +331,15 @@ export const generateRoast = inngest.createFunction(
           teaser: finalTeaser,
           fullText,
           callouts,
-          goldLine,
           status: "ready",
         })
         .where(eq(roasts.id, roastId));
+
+      // The share-card line is picked after the reader already has the roast.
+      const goldLine = await pickGoldLine(fullText);
+      if (goldLine) {
+        await db.update(roasts).set({ goldLine }).where(eq(roasts.id, roastId));
+      }
 
       // Gated on paid=true via shared helper. If payment landed first, the
       // webhook already sent and emailSent is true (no-op). If payment lands

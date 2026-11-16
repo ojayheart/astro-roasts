@@ -78,7 +78,14 @@ function signGlyph(d: string, i: number) {
   );
 }
 
-export default function AstroWheel({ className = "" }: { className?: string }) {
+export default function AstroWheel({
+  className = "",
+  intensity = 0.13,
+}: {
+  className?: string;
+  /** Opacity of the line work. The default sits behind centred text. */
+  intensity?: number;
+}) {
   const ticks = Array.from({ length: 360 }, (_, d) => {
     const len = d % 30 === 0 ? 0 : d % 10 === 0 ? 16 : d % 5 === 0 ? 11 : 6;
     if (!len) return null;
@@ -141,7 +148,7 @@ export default function AstroWheel({ className = "" }: { className?: string }) {
         </filter>
       </defs>
 
-      <g opacity="0.13">
+      <g opacity={intensity}>
         {/* Outer zodiac: ticks, band, glyphs */}
         <g className="astro-wheel-outer" strokeWidth="1.2">
           <circle cx={C} cy={C} r="478" />

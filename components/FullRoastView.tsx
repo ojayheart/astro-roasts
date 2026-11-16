@@ -1,8 +1,5 @@
 "use client";
 
-import { useEffect } from "react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
 import ShareButton from "./ShareButton";
 import SignGlyph from "./SignGlyph";
 import RoastWheel from "./RoastWheel";
@@ -58,54 +55,6 @@ export default function FullRoastView({
   const pairNames = isDuo
     ? [subjectNames?.[0] || name, extraPlacements![0].name]
     : null;
-  useEffect(() => {
-    gsap.registerPlugin(ScrollTrigger);
-
-    const mm = gsap.matchMedia();
-
-    mm.add("(prefers-reduced-motion: no-preference)", () => {
-      gsap.utils.toArray<HTMLElement>(".gs-reveal").forEach((elem) => {
-        gsap.fromTo(
-          elem,
-          { y: 60, autoAlpha: 0 },
-          {
-            duration: 1.2,
-            y: 0,
-            autoAlpha: 1,
-            ease: "power3.out",
-            scrollTrigger: {
-              trigger: elem,
-              start: "top 85%",
-              toggleActions: "play none none reverse",
-            },
-          },
-        );
-      });
-
-      gsap.to("#progress-fill", {
-        scaleY: 1,
-        ease: "none",
-        scrollTrigger: {
-          trigger: document.body,
-          start: "top top",
-          end: "bottom bottom",
-          scrub: 0.2,
-        },
-      });
-    });
-
-    mm.add("(prefers-reduced-motion: reduce)", () => {
-      gsap.utils.toArray<HTMLElement>(".gs-reveal").forEach((elem) => {
-        gsap.set(elem, { autoAlpha: 1, y: 0 });
-      });
-    });
-
-    return () => {
-      mm.revert();
-      ScrollTrigger.getAll().forEach((t) => t.kill());
-    };
-  }, []);
-
   const placements = [
     { label: "SUN", value: sunSign },
     { label: "MOON", value: moonSign },
@@ -162,19 +111,18 @@ export default function FullRoastView({
     <>
       {/* Scroll Progress */}
       <div className="progress-container">
-        <div className="progress-fill" id="progress-fill" />
+        <div className="progress-fill" />
       </div>
 
-      <main className="max-w-3xl mx-auto px-6 py-24 md:py-32 relative z-10">
+      <main className="relative z-10 mx-auto max-w-2xl px-5 py-16 md:px-6 md:py-24">
         {/* Header Dossier */}
-        <header className="mb-32 gs-reveal">
-          <p className="font-mono text-[10px] md:text-xs uppercase tracking-[0.15em] text-blood mb-6 flex items-center gap-4">
-            <span className="w-12 h-px bg-blood" />
+        <header className="rise mb-20 md:mb-24">
+          <p className="mb-6 font-mono text-xs uppercase tracking-[0.2em] text-blood">
             {isDuo
               ? `Both charts — ${relationship || "the pair"}, no survivors`
               : "The full set — no survivors"}
           </p>
-          <h1 className="font-syne font-extrabold text-5xl sm:text-6xl md:text-7xl tracking-tighter uppercase mb-12 text-ash leading-none">
+          <h1 className="mb-12 font-syne text-[clamp(2.25rem,9.5vw,5.25rem)] font-extrabold uppercase leading-[0.88] tracking-tighter text-ash">
             Tonight:
             <br />
             {pairNames ? (
@@ -201,9 +149,8 @@ export default function FullRoastView({
           />
 
           <h2 className="sr-only">Placements</h2>
-          <div className="border-y border-ash/10 py-8 relative bg-void">
-            <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-bruise/30 to-transparent pointer-events-none" />
-            <div className="space-y-8 relative z-10">
+          <div className="border-y border-ash/15 py-8">
+            <div className="space-y-8">
               {/* Person 1 (main) */}
               <div>
                 {subjectNames?.[0] && (
@@ -211,13 +158,13 @@ export default function FullRoastView({
                     {subjectNames[0]}
                   </p>
                 )}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-y-8 gap-x-4 font-mono text-sm uppercase tracking-[0.15em] text-ash/80">
+                <div className="grid grid-cols-2 gap-x-4 gap-y-7 md:grid-cols-4">
                   {placements.map((p) => (
                     <div key={p.label}>
-                      <span className="block text-ash/40 text-[10px] mb-2 font-medium">
+                      <span className="block font-mono text-[11px] uppercase tracking-[0.2em] text-ash/50">
                         {p.label}
                       </span>
-                      <span>
+                      <span className="mt-1.5 block font-syne text-base font-bold uppercase leading-none tracking-tight md:text-lg">
                         {p.value} <SignGlyph sign={p.value} />
                       </span>
                     </div>
@@ -243,13 +190,13 @@ export default function FullRoastView({
                     <p className="font-mono text-xs uppercase tracking-[0.15em] text-blood mb-4">
                       {ep.name}
                     </p>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-y-8 gap-x-4 font-mono text-sm uppercase tracking-[0.15em] text-ash/80">
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-7 md:grid-cols-4">
                       {rows.map((r) => (
                         <div key={r.label}>
-                          <span className="block text-ash/40 text-[10px] mb-2 font-medium">
+                          <span className="block font-mono text-[11px] uppercase tracking-[0.2em] text-ash/50">
                             {r.label}
                           </span>
-                          <span>
+                          <span className="mt-1.5 block font-syne text-base font-bold uppercase leading-none tracking-tight md:text-lg">
                             {r.value} <SignGlyph sign={r.value} />
                           </span>
                         </div>
@@ -265,26 +212,26 @@ export default function FullRoastView({
         {/* Continuous Prose */}
         <section
           aria-labelledby="reading-heading"
-          className="border-t border-ash/10 pt-20 mt-20 gs-reveal relative"
+          className="relative"
         >
           <h2 id="reading-heading" className="sr-only">
             The set
           </h2>
-          <div className="space-y-8 text-ash/85 text-lg leading-[1.8]">
+          <div className="space-y-7 text-lg leading-[1.75] text-ash/90 md:text-[1.1875rem]">
             {paragraphs.map((p, i) => {
               // Check if a callout should appear before this paragraph
               const calloutIndex = calloutPositions.indexOf(i);
               return (
                 <div key={i}>
                   {calloutIndex !== -1 && callouts[calloutIndex] && (
-                    <div className="callout border-l-2 border-blood pl-6 py-6 my-12 text-ash font-medium text-xl md:text-2xl leading-relaxed italic">
+                    <blockquote className="on-view my-14 border-y border-ash/15 py-8 font-quote text-[1.75rem] italic leading-[1.15] text-ash md:my-16 md:text-[2.5rem]">
                       &ldquo;{renderEmphasis(callouts[calloutIndex])}&rdquo;
-                    </div>
+                    </blockquote>
                   )}
                   <p
                     className={
                       i === 0
-                        ? "first-letter:font-syne first-letter:font-extrabold first-letter:text-blood first-letter:text-6xl md:first-letter:text-7xl first-letter:leading-[0.8] first-letter:float-left first-letter:mr-3 first-letter:mt-1"
+                        ? "font-quote text-[1.75rem] italic leading-[1.18] text-ash md:text-[2.1rem]"
                         : undefined
                     }
                   >
@@ -298,14 +245,14 @@ export default function FullRoastView({
 
         {/* Upsell block */}
         {!extraPlacements?.length && (
-          <div className="mt-16 border-t border-ash/15 pt-10 gs-reveal">
+          <div className="mt-20 border-t border-ash/15 pt-10">
             <p className="font-mono text-xs uppercase tracking-[0.2em] text-blood mb-3">
               Pass the mic
             </p>
-            <p className="font-syne font-bold text-2xl text-ash mb-3">
+            <p className="mb-4 font-syne text-3xl font-extrabold uppercase leading-[0.95] tracking-tighter text-ash md:text-4xl">
               Now put someone else up there with you.
             </p>
-            <p className="text-ash/60 text-sm leading-relaxed mb-6 max-w-lg">
+            <p className="mb-7 max-w-lg text-base leading-relaxed text-ash/70">
               Two charts, and then they get each other. Partners, exes,
               siblings, the friend who knows too much — you say what you are to
               each other and the roast goes after exactly that.{" "}
@@ -314,7 +261,7 @@ export default function FullRoastView({
             </p>
             <a
               href="/?mode=couple#mic"
-              className="interactive inline-block bg-ash text-void font-syne font-bold uppercase px-8 py-4 hover:bg-blood hover:text-ash transition-colors duration-300"
+              className="cta interactive"
             >
               Roast us both
             </a>
@@ -322,23 +269,23 @@ export default function FullRoastView({
         )}
 
         {/* Footer */}
-        <footer className="border-t border-ash/10 pt-16 mt-32 pb-16 gs-reveal">
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-8">
+        <footer className="mt-24 border-t border-ash/15 pb-16 pt-12">
+          <div className="flex flex-col items-start gap-7">
             <div>
-              <h3 className="font-syne font-extrabold text-2xl uppercase tracking-tight text-ash mb-2">
+              <h3 className="mb-2 font-syne text-2xl font-extrabold uppercase tracking-tight text-ash">
                 Still standing?
               </h3>
-              <p className="text-ash/50 text-sm">
+              <p className="text-base text-ash/70">
                 Send it to whoever you were thinking about the whole way
                 through.
               </p>
             </div>
 
-            <div className="flex flex-wrap gap-4">
+            <div className="flex flex-wrap items-center gap-x-8 gap-y-4">
               <ShareButton roastId={roastId} />
               <a
                 href="/"
-                className="interactive inline-flex items-center justify-center px-6 py-3 min-h-[44px] bg-blood text-white font-mono text-xs uppercase tracking-[0.15em] hover:bg-white hover:text-void active:bg-white active:text-void focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ash focus-visible:ring-offset-2 focus-visible:ring-offset-void transition-colors duration-300"
+                className="cta interactive"
               >
                 Roast someone else
               </a>
